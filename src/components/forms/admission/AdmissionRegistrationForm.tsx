@@ -227,7 +227,7 @@ export function AdmissionRegistrationForm() {
   const watchHasSibling = form.watch("has_sibling_in_ihs"); // Used for sibling section visibility
   const watchIdProof = form.watch("id_proof");
   const watchIsHomeSchooled = form.watch("is_home_schooled");
-  const watchStudiedPreviously = form.watch("been_to_school_previously");
+  // const watchStudiedPreviously = form.watch("been_to_school_previously");
   const watchCurrentSchoolState = form.watch("current_school_state");
   const watchWearsGlasses = form.watch("wears_glasses_or_lens");
   const watchHearing = form.watch("has_hearing_challenges");
@@ -241,8 +241,8 @@ export function AdmissionRegistrationForm() {
   const watchSpecialAttention = form.watch("needs_special_attention");
   const watchAllergies = form.watch("has_allergies"); // Fixed typo
   const watchMaritalStatus = form.watch("parent_marital_status"); // Used for divorce section
-  const watchParentsAreGuardians = form.watch("parents_are_guardians"); // Used for guardian section
-  const watchWhoPaysTuition = form.watch("who_is_responsible_for_paying_applicants_tuition_fee"); // Fixed typo
+  // const watchParentsAreGuardians = form.watch("parents_are_guardians"); // Used for guardian section
+  // const watchWhoPaysTuition = form.watch("who_is_responsible_for_paying_applicants_tuition_fee"); // Fixed typo
 
   // 3. Define submit handler (remains the same conceptually)
   async function onSubmit(values: AdmissionRegistrationFormData) {
