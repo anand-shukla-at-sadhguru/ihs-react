@@ -1,6 +1,8 @@
+// tsconfig.node.json
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    // "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo", // This is fine, related to composite
+    "composite": true, // <--- Add this
     "target": "ES2022",
     "lib": ["ES2023"],
     "module": "ESNext",
@@ -8,17 +10,19 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
+    "allowImportingTsExtensions": true, // This might not be needed if not importing .ts directly in vite.config.ts
+    "isolatedModules": true, // Fine if vite.config.ts is a single file not exporting types for others
     "moduleDetection": "force",
-    "noEmit": true,
+    "noEmit": false, // <--- CHANGE THIS to false (or remove the line)
+    // "declaration": true, // Optional: If you want .d.ts files for vite.config.ts
+    // "outDir": "dist-node", // Optional: If you want .js output for vite.config.ts
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noFallthroughCasesInSwitch": true
+    // "noUncheckedSideEffectImports": true // This is fine
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts"] // This is correct
 }
