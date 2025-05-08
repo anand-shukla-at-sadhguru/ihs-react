@@ -1,0 +1,47 @@
+# Node modules
+node_modules/
+.pnpm/
+.yarn/
+dist/
+build/
+dev-dist/
+.cache/
+.vite/
+coverage/
+*.log
+
+# Vite/React build output
+dist/
+*.local
+*.env
+.env.*
+!.env.example
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependency lock files (optional, keep if you want lockfile tracked)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+*.tgz
+
+# Test output
+coverage/
+.nyc_output/
+
+# Mac system files
+.AppleDouble
+.LSOverride
+
+# Optional: ignore generated types
+types/
