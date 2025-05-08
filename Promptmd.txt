@@ -1,0 +1,1231 @@
+Prompt:
+Objective: Generate the codebase and configuration for a React Starter Template built with Vite, TypeScript, Tailwind CSS, and Shadcn/ui. The template must be configured as an installable Progressive Web App (PWA) out-of-the-box, following the latest best practices.
+Core Requirements:
+Build Tool: Use Vite for fast development and optimized builds.
+Language: Use TypeScript throughout the project for type safety. Ensure strict mode is enabled in tsconfig.json.
+Framework: Use React (latest stable version).
+Styling:
+Integrate Tailwind CSS (latest version).
+Configure tailwind.config.js and postcss.config.js correctly.
+Use CSS variables for theming as recommended by Shadcn/ui.
+Set up a base global CSS file (src/index.css or src/globals.css) importing Tailwind directives and defining base styles/theme variables.
+UI Components:
+Integrate Shadcn/ui.
+Initialize Shadcn/ui using its CLI principles (generate components.json). Assume base color slate and default settings unless specified otherwise.
+Include the necessary utility function (cn) in src/lib/utils.ts (using clsx and tailwind-merge).
+Pre-install a few essential Shadcn/ui components like Button, Card, Input, and Sheet into the src/components/ui directory to demonstrate usage.
+Progressive Web App (PWA) Features:
+Use vite-plugin-pwa for configuration.
+Configure a manifest.json file with appropriate fields (short_name, name, icons, start_url, display, background_color, theme_color). Include placeholder icons of standard sizes (e.g., 192x192, 512x512).
+Configure a Service Worker using vite-plugin-pwa's generateSW strategy (Workbox) for basic offline caching (cache-first for assets, network-first for API calls if applicable later, or stale-while-revalidate as a default).
+Ensure the service worker is registered correctly in the application entry point (main.tsx or App.tsx).
+Include necessary meta tags in index.html for PWA compatibility (theme-color, viewport).
+Routing: Integrate React Router (react-router-dom v6+) for basic client-side routing. Set up at least two example routes/pages (e.g., Home, About).
+Directory Structure: Organize the code logically:
+src/
+components/: Reusable UI components (separate ui/ for Shadcn components).
+pages/: Route-level components.
+lib/: Utility functions (like utils.ts).
+assets/: Static assets (images, icons).
+hooks/: Custom React hooks.
+contexts/ or store/: (Optional but good practice) For state management if needed beyond simple props/state.
+service-worker/ (if custom SW logic is needed, though vite-plugin-pwa often handles this).
+main.tsx: App entry point.
+App.tsx: Root component with routing setup.
+index.css / globals.css: Global styles and Tailwind directives.
+public/: Static assets, including manifest.json (or generated via plugin) and PWA icons.
+Linting & Formatting:
+Set up ESLint with recommended rules for React, TypeScript (@typescript-eslint/recommended), and accessibility (eslint-plugin-jsx-a11y). Include Tailwind CSS plugin (eslint-plugin-tailwindcss).
+Set up Prettier for code formatting and ensure it integrates with ESLint (eslint-config-prettier).
+Include configuration files (.eslintrc.cjs, .prettierrc, .prettierignore).
+Add lint and format scripts to package.json.
+Development Experience:
+Ensure Vite's HMR (Hot Module Replacement) works correctly.
+Provide clear scripts in package.json for dev, build, preview, lint, format.
+Example Usage:
+Create a simple HomePage demonstrating the use of Tailwind classes and at least one pre-installed Shadcn/ui component (e.g., a Button).
+Implement basic Dark Mode toggle functionality using Tailwind's dark: variant and leveraging Shadcn/ui's theme setup (e.g., using localStorage and toggling a class on the <html> element). Include a simple toggle component.
+README.md: Generate a basic README.md outlining:
+Project purpose (React/Tailwind/Shadcn/PWA Starter).
+Key technologies used.
+Setup instructions (npm install or yarn install).
+Available scripts (dev, build, etc.).
+Brief explanation of PWA features and how to test installability.
+How to add more Shadcn/ui components.
+Best Practices Checklist:
+Use Vite + TypeScript.
+Strict TSConfig.
+Functional components and Hooks.
+Correct Tailwind/PostCSS setup.
+Shadcn/ui initialized correctly (CLI approach, components.json, utils.ts).
+vite-plugin-pwa configured for manifest and service worker generation.
+Basic offline caching strategy.
+Service worker registration.
+React Router v6+ for routing.
+ESLint + Prettier configured properly.
+Logical file structure.
+Dark mode support using Tailwind best practices.
+Clear README.
+Necessary PWA meta tags in index.html.
+Output: Provide the complete file structure and code for all necessary configuration files (vite.config.ts, tailwind.config.js, postcss.config.js, tsconfig.json, .eslintrc.cjs, .prettierrc, package.json, components.json, public/manifest.json placeholder or config for generation) and core source files (main.tsx, App.tsx, example pages/components, lib/utils.ts, index.css).
+
+Step-by-Step Guide:
+Step 1: Initialize Vite + React + TypeScript Project
+Create the project:
+npm create vite@latest my-pwa-starter --template react-ts
+# or
+# yarn create vite my-pwa-starter --template react-ts
+# or
+# pnpm create vite my-pwa-starter --template react-ts
+Use code with caution.
+Bash
+Navigate into the project directory:
+cd my-pwa-starter
+Use code with caution.
+Bash
+Install initial dependencies:
+npm install
+# or
+# yarn install
+# or
+# pnpm install
+Use code with caution.
+Bash
+Step 2: Install and Configure Tailwind CSS
+Install Tailwind dependencies:
+npm install -D tailwindcss postcss autoprefixer
+# or
+# yarn add -D tailwindcss postcss autoprefixer
+# or
+# pnpm add -D tailwindcss postcss autoprefixer
+Use code with caution.
+Bash
+Initialize Tailwind CSS:
+npx tailwindcss init -p
+Use code with caution.
+Bash
+(This creates tailwind.config.js and postcss.config.js)
+Configure tailwind.config.js:
+Update the content array to scan your source files.
+Set darkMode to "class".
+Extend the theme for Shadcn/ui variables (keyframes, animations).
+// tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: ["class"], // Enable class-based dark mode
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}', // Scan all ts/tsx files in src
+  ],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      colors: { // Example using Shadcn's slate - adapt if you chose a different base
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")], // Required by Shadcn/ui
+}
+Use code with caution.
+JavaScript
+Verify postcss.config.js:
+// postcss.config.js
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+Use code with caution.
+JavaScript
+Create global CSS file (src/index.css):
+Replace the contents of src/index.css (or create src/globals.css and import it in main.tsx instead).
+Add Tailwind directives and Shadcn/ui CSS variables.
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Example using Shadcn's slate - adapt if needed */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem; /* Default Shadcn radius */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1; /* Enable optional ligatures */
+  }
+}
+Use code with caution.
+Css
+Import CSS in src/main.tsx:
+Ensure import './index.css' is present at the top.
+// src/main.tsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css' // Make sure this line exists
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+Use code with caution.
+TypeScript
+Install tailwindcss-animate: (Required plugin for Shadcn/ui)
+npm install -D tailwindcss-animate
+# or
+# yarn add -D tailwindcss-animate
+# or
+# pnpm add -D tailwindcss-animate
+Use code with caution.
+Bash
+Step 3: Setup Shadcn/ui
+(Since we are generating the codebase, we manually replicate the key parts of npx shadcn-ui@latest init)
+Install utility dependencies:
+npm install class-variance-authority clsx tailwind-merge lucide-react @radix-ui/react-slot
+# or
+# yarn add class-variance-authority clsx tailwind-merge lucide-react @radix-ui/react-slot
+# or
+# pnpm add class-variance-authority clsx tailwind-merge lucide-react @radix-ui/react-slot
+Use code with caution.
+Bash
+(Note: @radix-ui/react-slot and lucide-react are common dependencies for Shadcn components like Button).
+Create components.json: (This file informs the Shadcn CLI where things are)
+// components.json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/index.css", // or src/globals.css if you used that
+    "baseColor": "slate", // Base color used for variables
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components", // Using TS path alias
+    "utils": "@/lib/utils"    // Using TS path alias
+  }
+}
+Use code with caution.
+Json
+Create src/lib/utils.ts:
+// src/lib/utils.ts
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+Use code with caution.
+TypeScript
+Configure TypeScript Paths (tsconfig.json):
+Add baseUrl and paths to compilerOptions.
+// tsconfig.json (add/update compilerOptions)
+{
+  "compilerOptions": {
+    // ... other options
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true, // Ensure strict mode is enabled
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"] // Define the alias
+    }
+  },
+  "include": ["src", "vite.config.ts", "postcss.config.js", "tailwind.config.js", "components.json"], // Include config files
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+Use code with caution.
+Json
+Install Vite TSConfig Paths Plugin: (To make Vite understand the @/* alias)
+npm install -D vite-tsconfig-paths
+# or
+# yarn add -D vite-tsconfig-paths
+# or
+# pnpm add -D vite-tsconfig-paths
+Use code with caution.
+Bash
+Update vite.config.ts to use the paths plugin:
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths' // Import the plugin
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    react(),
+    tsconfigPaths() // Add the plugin
+  ],
+})
+Use code with caution.
+TypeScript
+Manually Add Example Shadcn/ui Components:
+Create the directory src/components/ui.
+Add the following files (copy basic implementations from Shadcn/ui documentation or use the content below):
+src/components/ui/button.tsx
+// src/components/ui/button.tsx
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+Use code with caution.
+TypeScript
+src/components/ui/card.tsx
+// src/components/ui/card.tsx
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+Use code with caution.
+TypeScript
+src/components/ui/input.tsx
+// src/components/ui/input.tsx
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = "Input"
+
+export { Input }
+Use code with caution.
+TypeScript
+src/components/ui/sheet.tsx (Requires Radix UI Dialog)
+Install dependency: npm install @radix-ui/react-dialog or yarn add @radix-ui/react-dialog
+// src/components/ui/sheet.tsx
+import * as React from "react"
+import * as SheetPrimitive from "@radix-ui/react-dialog"
+import { cva, type VariantProps } from "class-variance-authority"
+import { X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const Sheet = SheetPrimitive.Root
+
+const SheetTrigger = SheetPrimitive.Trigger
+
+const SheetClose = SheetPrimitive.Close
+
+const SheetPortal = SheetPrimitive.Portal
+
+const SheetOverlay = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <SheetPrimitive.Overlay
+    className={cn(
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+    ref={ref}
+  />
+))
+SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
+
+const sheetVariants = cva(
+  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  {
+    variants: {
+      side: {
+        top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        bottom:
+          "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
+        right:
+          "inset-y-0 right-0 h-full w-3/4  border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
+      },
+    },
+    defaultVariants: {
+      side: "right",
+    },
+  }
+)
+
+interface SheetContentProps
+  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
+    VariantProps<typeof sheetVariants> {}
+
+const SheetContent = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Content>,
+  SheetContentProps
+>(({ side = "right", className, children, ...props }, ref) => (
+  <SheetPortal>
+    <SheetOverlay />
+    <SheetPrimitive.Content
+      ref={ref}
+      className={cn(sheetVariants({ side }), className)}
+      {...props}
+    >
+      {children}
+      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+      </SheetPrimitive.Close>
+    </SheetPrimitive.Content>
+  </SheetPortal>
+))
+SheetContent.displayName = SheetPrimitive.Content.displayName
+
+const SheetHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col space-y-2 text-center sm:text-left",
+      className
+    )}
+    {...props}
+  />
+)
+SheetHeader.displayName = "SheetHeader"
+
+const SheetFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className
+    )}
+    {...props}
+  />
+)
+SheetFooter.displayName = "SheetFooter"
+
+const SheetTitle = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <SheetPrimitive.Title
+    ref={ref}
+    className={cn("text-lg font-semibold text-foreground", className)}
+    {...props}
+  />
+))
+SheetTitle.displayName = SheetPrimitive.Title.displayName
+
+const SheetDescription = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <SheetPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+SheetDescription.displayName = SheetPrimitive.Description.displayName
+
+export {
+  Sheet,
+  SheetPortal,
+  SheetOverlay,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+}
+Use code with caution.
+TypeScript
+Step 4: Integrate React Router
+Install React Router:
+npm install react-router-dom
+# or
+# yarn add react-router-dom
+# or
+# pnpm add react-router-dom
+Use code with caution.
+Bash
+Create Page Components:
+Create directory src/pages.
+src/pages/HomePage.tsx
+src/pages/AboutPage.tsx
+(Content for these will be added in Step 7)
+Update src/App.tsx for Routing:
+// src/App.tsx
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import HomePage from '@/pages/HomePage'; // Using alias
+import AboutPage from '@/pages/AboutPage'; // Using alias
+import DarkModeToggle from '@/components/DarkModeToggle'; // Will create this later
+
+function App() {
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        <header className="container mx-auto py-4 px-6 flex justify-between items-center border-b">
+          <nav className="flex gap-4">
+            <Link to="/" className="text-lg font-semibold hover:text-primary">Home</Link>
+            <Link to="/about" className="text-lg font-semibold hover:text-primary">About</Link>
+          </nav>
+          <DarkModeToggle /> {/* Placeholder for toggle */}
+        </header>
+        <main className="flex-grow container mx-auto py-8 px-6">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            {/* Add other routes here */}
+          </Routes>
+        </main>
+        <footer className="container mx-auto py-4 px-6 text-center text-muted-foreground text-sm border-t">
+          © {new Date().getFullYear()} My PWA Starter
+        </footer>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+Use code with caution.
+TypeScript
+Step 5: Implement PWA Features (vite-plugin-pwa)
+Install vite-plugin-pwa:
+npm install -D vite-plugin-pwa
+# or
+# yarn add -D vite-plugin-pwa
+# or
+# pnpm add -D vite-plugin-pwa
+Use code with caution.
+Bash
+Create PWA Icons:
+Create placeholder icons in the public/ directory (or replace with your actual icons):
+public/icons/icon-192x192.png (e.g., a simple 192x192 colored square)
+public/icons/icon-512x512.png (e.g., a simple 512x512 colored square)
+public/icons/maskable-icon-512x512.png (optional, but recommended for better Android integration)
+public/icons/apple-touch-icon.png (optional, for iOS home screen)
+Update index.html:
+Add theme color meta tag and PWA link tags.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    {/* PWA Meta Tags */}
+    <meta name="description" content="My React PWA Starter Template" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a"> {/* Match dark background */}
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180">
+    <link rel="mask-icon" href="/vite.svg" color="#FFFFFF"> {/* Example mask icon */}
+    {/* Manifest will be injected by vite-plugin-pwa */}
+
+    <title>React PWA Starter</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+Use code with caution.
+Html
+Configure vite-plugin-pwa in vite.config.ts:
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
+import { VitePWA } from 'vite-plugin-pwa' // Import PWA plugin
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    react(),
+    tsconfigPaths(),
+    VitePWA({
+      registerType: 'autoUpdate', // Automatically update SW
+      injectRegister: 'auto', // Inject SW registration script
+      devOptions: {
+        enabled: true // Enable PWA in development for testing
+      },
+      manifest: {
+        name: 'React PWA Starter',
+        short_name: 'ReactPWA',
+        description: 'A starter template for React PWAs with Vite, TS, Tailwind, and Shadcn/ui.',
+        theme_color: '#ffffff', // Light theme color
+        background_color: '#ffffff', // Splash screen background
+        display: 'standalone', // App-like display
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: '/icons/icon-192x192.png', // Path relative to public folder
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: '/icons/icon-512x512.png', // Path relative to public folder
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: '/icons/maskable-icon-512x512.png', // Maskable icon
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable', // Important for maskable icons
+          },
+        ],
+      },
+      workbox: {
+        // Workbox options for service worker generation
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,ttf,eot}'], // Cache these file types
+        runtimeCaching: [ // Example caching strategies
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+            }
+          },
+          // Example: Cache API calls with NetworkFirst
+          // {
+          //   urlPattern: /^https:\/\/api\.example\.com\/.*/i,
+          //   handler: 'NetworkFirst',
+          //   options: {
+          //     cacheName: 'api-cache',
+          //     expiration: {
+          //       maxEntries: 50,
+          //       maxAgeSeconds: 60 * 60 * 24 * 1 // 1 day
+          //     },
+          //     cacheableResponse: {
+          //       statuses: [0, 200]
+          //     }
+          //   }
+          // }
+        ]
+      }
+    })
+  ],
+})
+Use code with caution.
+TypeScript
+Step 6: Setup Linting and Formatting
+Install ESLint & Prettier dependencies:
+npm install -D eslint prettier eslint-config-prettier eslint-plugin-prettier eslint-plugin-react eslint-plugin-react-hooks @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-jsx-a11y eslint-plugin-tailwindcss
+# or
+# yarn add -D eslint prettier eslint-config-prettier eslint-plugin-prettier eslint-plugin-react eslint-plugin-react-hooks @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-jsx-a11y eslint-plugin-tailwindcss
+# or
+# pnpm add -D eslint prettier eslint-config-prettier eslint-plugin-prettier eslint-plugin-react eslint-plugin-react-hooks @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-jsx-a11y eslint-plugin-tailwindcss
+Use code with caution.
+Bash
+Create .eslintrc.cjs: (Use .cjs for Node config files)
+// .eslintrc.cjs
+module.exports = {
+  root: true,
+  env: { browser: true, es2020: true, node: true },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended', // Uses TS recommended rules
+    'plugin:react/recommended',             // Uses React recommended rules
+    'plugin:react/jsx-runtime',             // Supports new JSX transform
+    'plugin:react-hooks/recommended',       // Enforces Hooks rules
+    'plugin:jsx-a11y/recommended',          // Accessibility rules
+    'plugin:tailwindcss/recommended',       // Tailwind rules
+    'plugin:prettier/recommended',          // Integrates Prettier with ESLint
+  ],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'vite.config.ts', 'postcss.config.js', 'tailwind.config.js'],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: ['./tsconfig.json', './tsconfig.node.json'], // Point ESLint to your TS config
+    tsconfigRootDir: __dirname,
+  },
+  plugins: ['react-refresh', 'jsx-a11y', 'tailwindcss'],
+  settings: {
+    react: {
+      version: 'detect', // Automatically detect React version
+    },
+    tailwindcss: {
+      // Optional: Set settings if needed, often auto-detected
+      // callees: ["cn"], // Recognise custom cn helper
+      // config: "tailwind.config.js" // Path to config if not default
+    }
+  },
+  rules: {
+    'react-refresh/only-export-components': [
+      'warn',
+      { allowConstantExport: true },
+    ],
+    'react/prop-types': 'off', // Not needed with TypeScript
+    '@typescript-eslint/no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }], // Warn on unused vars, allowing _ prefix
+    'prettier/prettier': ['warn', {}, { usePrettierrc: true }], // Warn on Prettier rules
+    'tailwindcss/no-custom-classname': 'off', // Allows custom classnames alongside Tailwind
+    'jsx-a11y/anchor-is-valid': 'warn', // Warn about invalid anchors (useful with React Router's Link)
+  },
+}
+Use code with caution.
+JavaScript
+Create .prettierrc:
+// .prettierrc
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "plugins": ["prettier-plugin-tailwindcss"] // Auto-sort Tailwind classes
+}
+Use code with caution.
+Json
+Install prettier-plugin-tailwindcss:
+npm install -D prettier-plugin-tailwindcss
+# or
+# yarn add -D prettier-plugin-tailwindcss
+# or
+# pnpm add -D prettier-plugin-tailwindcss
+Use code with caution.
+Bash
+Create .prettierignore:
+# .prettierignore
+dist
+node_modules
+coverage
+*.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+Use code with caution.
+Add Scripts to package.json:
+// package.json (add/update "scripts")
+{
+  // ... other fields
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "preview": "vite preview"
+  },
+  // ... dependencies/devDependencies
+}
+Use code with caution.
+Json
+Step 7: Create Example Usage & Dark Mode Toggle
+Create src/hooks/useTheme.ts:
+// src/hooks/useTheme.ts
+import { useEffect, useState } from 'react';
+
+type Theme = 'dark' | 'light' | 'system';
+
+export function useTheme(): [Theme, (theme: Theme) => void] {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme') as Theme) || 'system';
+    }
+    return 'system'; // Default for SSR or initial load before mount
+  });
+
+  useEffect(() => {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const currentTheme = theme === 'system' ? (isDarkMode ? 'dark' : 'light') : theme;
+
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(currentTheme);
+
+    // Update meta theme-color
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+       metaThemeColor.setAttribute('content', currentTheme === 'dark' ? '#0f172a' : '#ffffff');
+    }
+
+  }, [theme]);
+
+  const setTheme = (newTheme: Theme) => {
+    localStorage.setItem('theme', newTheme);
+    setThemeState(newTheme);
+  };
+
+  // Optional: Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+        if (theme === 'system') {
+            const newSystemTheme = mediaQuery.matches ? 'dark' : 'light';
+            const root = window.document.documentElement;
+            root.classList.remove('light', 'dark');
+            root.classList.add(newSystemTheme);
+             const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', newSystemTheme === 'dark' ? '#0f172a' : '#ffffff');
+            }
+        }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
+
+
+  return [theme, setTheme];
+}
+Use code with caution.
+TypeScript
+Create src/components/DarkModeToggle.tsx:
+// src/components/DarkModeToggle.tsx
+import { Moon, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button'; // Use alias
+import { useTheme } from '@/hooks/useTheme'; // Use alias
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu" // You might need to add dropdown: npm install @radix-ui/react-dropdown-menu
+
+export default function DarkModeToggle() {
+  const [, setTheme] = useTheme(); // Current theme state not directly used here, but hook manages effect
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme('light')}>
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('dark')}>
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('system')}>
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+Use code with caution.
+TypeScript
+Install Dropdown dependency:
+npm install @radix-ui/react-dropdown-menu
+# or
+# yarn add @radix-ui/react-dropdown-menu
+# or
+# pnpm add @radix-ui/react-dropdown-menu
+Use code with caution.
+Bash
+Add dropdown-menu.tsx to src/components/ui (copy from Shadcn/ui docs or use npx shadcn-ui@latest add dropdown-menu).
+Update src/pages/HomePage.tsx:
+// src/pages/HomePage.tsx
+import { Button } from "@/components/ui/button"; // Use alias
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"; // Use alias
+import { Input } from "@/components/ui/input"; // Use alias
+import { useState } from "react";
+
+export default function HomePage() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Welcome to the Starter!</CardTitle>
+          <CardDescription>This is a demo page using Tailwind and Shadcn/ui components.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p>
+            Vite + React + TypeScript + Tailwind CSS + Shadcn/ui + PWA
+          </p>
+          <div className="flex items-center space-x-4">
+            <Button onClick={() => setCount((c) => c + 1)}>
+              Count is: {count}
+            </Button>
+            <Input placeholder="Example Input" className="max-w-xs" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Try toggling dark mode using the button in the header. Check the browser console for PWA service worker messages.
+          </p>
+        </CardContent>
+      </Card>
+
+      <div className="p-6 border rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">PWA Information</h2>
+          <p>This application is configured as a Progressive Web App (PWA).</p>
+          <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+              <li>Check your browser's developer tools (Application tab > Manifest & Service Workers) to inspect the PWA configuration.</li>
+              <li>On supported browsers/platforms (like Chrome on Desktop/Android, Safari on iOS), you should see an install prompt (often in the address bar).</li>
+              <li>Once installed, the app can work offline thanks to the service worker caching assets.</li>
+          </ul>
+      </div>
+    </div>
+  );
+}
+Use code with caution.
+TypeScript
+Create src/pages/AboutPage.tsx:
+// src/pages/AboutPage.tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function AboutPage() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>About This Starter</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>
+          This starter template provides a foundation for building modern React applications with:
+        </p>
+        <ul className="list-disc list-inside mt-4 space-y-1">
+          <li>Vite for fast development and builds</li>
+          <li>TypeScript for type safety</li>
+          <li>Tailwind CSS for utility-first styling</li>
+          <li>Shadcn/ui for accessible and composable UI components</li>
+          <li>React Router for client-side routing</li>
+          <li>Progressive Web App (PWA) features for offline support and installability</li>
+          <li>ESLint and Prettier for code quality</li>
+        </ul>
+         <p className="mt-4 text-muted-foreground text-sm">
+            Refer to the README for more details on setup and usage.
+         </p>
+      </CardContent>
+    </Card>
+  );
+}
+Use code with caution.
+TypeScript
+Update App.tsx to include the Theme logic (using the hook):
+Import useTheme hook.
+Call the hook within the App component (even if you don't use the returned values directly here, the hook's useEffect needs to run).
+// src/App.tsx
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import HomePage from '@/pages/HomePage';
+import AboutPage from '@/pages/AboutPage';
+import DarkModeToggle from '@/components/DarkModeToggle';
+import { useTheme } from '@/hooks/useTheme'; // Import the hook
+
+function App() {
+  useTheme(); // Initialize theme listener and application
+
+  return (
+    <Router>
+      {/* Rest of the App component remains the same... */}
+      <div className="min-h-screen flex flex-col">
+        <header className="container mx-auto py-4 px-6 flex justify-between items-center border-b">
+          <nav className="flex gap-4">
+            <Link to="/" className="text-lg font-semibold hover:text-primary">Home</Link>
+            <Link to="/about" className="text-lg font-semibold hover:text-primary">About</Link>
+          </nav>
+          <DarkModeToggle />
+        </header>
+        <main className="flex-grow container mx-auto py-8 px-6">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+          </Routes>
+        </main>
+        <footer className="container mx-auto py-4 px-6 text-center text-muted-foreground text-sm border-t">
+          © {new Date().getFullYear()} My PWA Starter
+        </footer>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
