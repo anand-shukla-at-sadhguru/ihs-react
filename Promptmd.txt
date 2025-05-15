@@ -1229,3 +1229,50 @@ function App() {
 }
 
 export default App;
+
+/home/isha/Desktop/FrontBack/IHS-frontend/
+├── components.json
+├── dev-dist/
+│   ├── sw.js
+│   └── workbox-ce4f0d5f.js
+├── index.html
+├── package.json
+├── postcss.config.js
+├── public/
+│   └── icons/
+│       ├── apple-touch-icon.png
+│       ├── icon-192x192.png
+│       ├── icon-512x512.png
+│       └── maskable-icon-512x512.png
+├── README.md
+├── src/
+│   ├── App.tsx
+│   ├── components/
+│   │   ├── app-sidebar.tsx
+│   │   ├── DarkModeToggle.tsx
+│   │   ├── forms/
+│   │   │   └── admission/
+│   │   │       ├── AdmissionRegistrationForm.tsx
+│   │   │       └── admissionRegistrationSchema.ts
+│   │   └── ui/
+│   │       ├── breadcrumb.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── country-dropdown.tsx
+│   │       ├── input.tsx
+│   │       ├── sheet.tsx
+│   │       ├── sidebar.tsx
+│   │       └── tabs.tsx
+│   ├── hooks/
+│   │   └── useTheme.ts
+│   ├── lib/
+│   │   └── utils.ts
+│   ├── main.tsx
+│   ├── pages/
+│   │   ├── AboutPage.tsx
+│   │   └── HomePage.tsx
+│   └── index.css
+├── tailwind.config.js
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts

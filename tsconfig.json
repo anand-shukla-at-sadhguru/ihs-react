@@ -4,10 +4,17 @@
     // ... other options
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
-
+    "types": [
+      "vite/client",
+      "node"
+    ],
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -15,27 +22,31 @@
     "isolatedModules": true,
     "noEmit": true, // This is correct for the main app
     "jsx": "react-jsx",
-
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
   "include": [
     "src", // This is correct, your application source code
     // "vite.config.ts", // <--- REMOVE THIS
     "postcss.config.js", // Fine, these are JS files, TS might just check them if "allowJs": true
-    "tailwind.config.js",// Fine
-    "components.json"    // Fine
+    "tailwind.config.js", // Fine
+    "components.json" // Fine
   ],
-  "references": [{ "path": "./tsconfig.node.json" }], // This is correct
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ], // This is correct
   "exclude": [
     "node_modules",
     "dist",

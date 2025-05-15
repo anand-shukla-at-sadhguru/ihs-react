@@ -1,7 +1,52 @@
 // src/schemas/admissionRegistrationSchema.ts
 import { z } from 'zod';
-
+import { isValidPhoneNumber } from 'react-phone-number-input';
 // Helper to create Zod unions from Frappe Select options string (more robust than z.enum)
+
+// File validation helper
+const fileSchema = z
+  .any()
+  .refine(
+    (file) => {
+      if (!file) return false;
+      // Accept FileList or single File
+      const f = file instanceof File ? file : (file?.[0] instanceof File ? file[0] : null);
+      if (!f) return false;
+      const allowedTypes = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+      ];
+      const extAllowed = allowedTypes.includes(f.type);
+      const sizeAllowed = f.size <= 5 * 1024 * 1024;
+      return extAllowed && sizeAllowed;
+    },
+    {
+      message:
+        "File must be .pdf, .jpg, .jpeg, or .png and not exceed 5MB.",
+    }
+  );
+
+// Textarea (max 200 chars)
+const textareaSchema = z
+  .string()
+  .max(200, { message: "Maximum 200 characters allowed." })
+  .min(1, { message: "This field is required." });
+
+// Helper to get last N academic years as strings (e.g., "2023-24")
+const getLastNAcademicYears = (n: number): string[] => {
+  const years: string[] = [];
+  const now = new Date();
+  let year = now.getFullYear();
+  for (let i = 0; i < n; i++) {
+    const nextYear = (year + 1).toString().slice(-2);
+    years.push(`${year}-${nextYear}`);
+    year--;
+  }
+  return years;
+};
+
 const createEnumSchema = (optionsString: string | null | undefined) => {
   if (!optionsString) return z.string().optional().or(z.literal('')); // Allow empty string for optional selects
   const options = optionsString.split('\n').map(o => o.trim()).filter(o => o.length > 0);
@@ -16,37 +61,259 @@ const createEnumSchema = (optionsString: string | null | undefined) => {
   return z.union(literals as any).or(z.literal('')).optional();
 };
 
+const currentYear = new Date().getFullYear();
+
+const e164PhoneSchema = z.string()
+  .refine(value => {
+    if (!value || value.trim() === '') return true; // Allow empty for optional fields
+    return isValidPhoneNumber(value);
+  }, {
+    message: "Invalid phone number format. Please include country code.",
+  });
+
+// Helper for required E.164 phone numbers
+const requiredE164PhoneSchema = e164PhoneSchema.refine(
+  value => value && value.trim() !== '',
+  { message: "Phone number is required." }
+);
+
+const languageProficiencyLevels = ['Native', 'Advanced', 'Intermediate', 'Basic'] as const;
+const knownLanguagesList = ['English', 'Tamil', 'Hindi', 'French', 'German', 'Spanish', 'Arabic', 'Mandarin', 'Japanese', 'Other'] as const;
+const individualLanguageSchema = z.object({
+  language: z.enum(knownLanguagesList, { required_error: "Please select a language." }),
+  proficiency: z.enum(languageProficiencyLevels, { required_error: "Please select proficiency." }),
+  // if 'Other' language is selected, you might want a field for specification:
+  // other_language_name: z.string().optional(), // Add this if 'Other' is an option in knownLanguagesList
+});
+export type IndividualLanguageData = z.infer<typeof individualLanguageSchema>;
+
+// --- Define Schema for Individual Sibling Entry ---
+const individualSiblingSchema = z.object({
+  sibling_first_name: z.string().min(1, "Sibling's First Name is required."),
+  sibling_last_name: z.string().min(1, "Sibling's Last Name is required."),
+  sibling_roll_number: z.string().min(1, "Sibling's Roll Number is required."),
+  sibling_date_of_birth: z.string() // Using string for date input, can refine further
+    .min(1, { message: "Sibling's Date of Birth is required." })
+    .refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
+    .refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date value' })
+    .refine(val => {
+      const d = new Date(val);
+      const now = new Date();
+      return d < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }, { message: "Sibling's Date of Birth must be in the past." }),
+  sibling_gender: createEnumSchema('\nMale\nFemale\nOther').refine(val => val !== undefined && val !== '', { message: "Sibling's Gender is required." }),
+});
+export type IndividualSiblingData = z.infer<typeof individualSiblingSchema>;
+
+const classLevelOptions = ['LKG', 'UKG', 'Class I', 'Class II', 'Class III', 'Class IV', 'Class V', 'Class VI', 'Class VII', 'Class VIII', 'Class IX', 'Class X', 'Class XI', 'Class XII'] as const;
+const boardAffiliationOptions = "CBSE – Central Board of Secondary Education\nICSE - Indian Certificate of Secondary Education\nSSC - Secondary School Certificate\nIB - International Baccalaureate\nCambridge International\nState Board\nOther";
+const individualPreviousSchoolSchema = z.object({
+  prev_school_name: z.string().min(1, "School Name is required."),
+  prev_school_board_affiliation: createEnumSchema(boardAffiliationOptions).refine(val => val !== undefined && val !== '', { message: "Board Affiliation is required." }),
+  prev_school_from_year: z.number({ invalid_type_error: "From Year must be a number.", required_error: "From Year is required." })
+    .int({ message: "From Year must be a whole number." })
+    .min(2000, { message: "From Year must be 2000 or later." })
+    .max(currentYear, { message: `From Year cannot be later than ${currentYear}.` }),
+  prev_school_to_year: z.number({ invalid_type_error: "To Year must be a number.", required_error: "To Year is required." })
+    .int({ message: "To Year must be a whole number." })
+    .min(2000, { message: "To Year must be 2000 or later." })
+    .max(currentYear, { message: `To Year cannot be later than ${currentYear}.` }),
+  prev_school_from_class: z.enum(classLevelOptions, { required_error: "From Class is required." }),
+  prev_school_to_class: z.enum(classLevelOptions, { required_error: "To Class is required." }),
+  prev_school_country: z.string().min(1, "Country is required."),
+  prev_school_zip_code: z.string().min(1, "Zipcode is required.")
+    .regex(/^[a-zA-Z0-9\s-]{3,20}$/, { message: "Invalid zipcode format." }), // Basic zipcode regex
+  prev_school_report_card: fileSchema.refine(file => file !== undefined && file !== null, { message: "Report card is required." }), // Make file required
+  // prev_school_other_board_affiliation: z.string().optional(), // If 'Other' board selected
+}).superRefine((data, ctx) => {
+  // To Year must be >= From Year
+  if (data.prev_school_from_year && data.prev_school_to_year && data.prev_school_to_year < data.prev_school_from_year) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['prev_school_to_year'],
+      message: 'To Year must be greater than or equal to From Year.',
+    });
+  }
+  // To Class must be >= From Class (assuming classLevelOptions is ordered)
+  if (data.prev_school_from_class && data.prev_school_to_class) {
+    const fromClassIndex = classLevelOptions.indexOf(data.prev_school_from_class);
+    const toClassIndex = classLevelOptions.indexOf(data.prev_school_to_class);
+    if (toClassIndex < fromClassIndex) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['prev_school_to_class'],
+        message: 'To Class must be the same as or later than From Class.',
+      });
+    }
+  }
+  // If board is 'Other', then 'prev_school_other_board_affiliation' could be made required
+  // if (data.prev_school_board_affiliation === 'Other' && (!data.prev_school_other_board_affiliation || data.prev_school_other_board_affiliation.trim() === '')) {
+  //   ctx.addIssue({ ... path: ['prev_school_other_board_affiliation'] ... });
+  // }
+});
+export type IndividualPreviousSchoolData = z.infer<typeof individualPreviousSchoolSchema>;
+
+const previousApplicationYears = getLastNAcademicYears(5);
+const appliedForEnum = ['Class II', 'Class V', 'Class VIII', 'Class XI'] as const;
+
+const PARENT_RELATION_OPTIONS = ['Father', 'Mother'] as const;
+const PARENT_EDUCATION_LEVEL_OPTIONS_STRING = "Class VIII or below\nSSLC/ PUC\nHigher Secondary\nGraduate\nPost-Graduate\nM. Phil\nPhD\nPost-Doctoral";
+const PARENT_PROFESSION_OPTIONS_STRING = "Academia-Professors, Research Scholars, Scientists\nArts, Music, Entertainment\nArchitecture and Construction\nAgriculture\nArmed Forces\nBanking and Finance and Financial Services\nBusinessman/ Entrepreneur\nEducation and Training\nInformation Technology\nHealthcare\nOthers";
+
+// --- Schema for an Individual Parent Detail ---
+export const individualParentDetailSchema = z.object({
+  // Basic Information
+  parent_first_name: z.string().min(1, "Parent's First Name is required."),
+  parent_last_name: z.string().min(1, "Parent's Last Name is required."),
+  parent_relation: z.enum(PARENT_RELATION_OPTIONS, { required_error: "Parent's Relation is required." }),
+  parent_nationality: z.string().min(1, "Parent's Nationality is required."),
+  parent_country_of_residence: z.string().min(1, "Parent's Country of Residence is required."),
+
+  // Contact Information (per parent)
+  parent_contact_email: z.string().email("Invalid email format.").min(1, "Parent's Contact Email is required."),
+  parent_contact_phone: requiredE164PhoneSchema,
+  parent_is_whatsapp_same: z.boolean().default(true),
+  parent_whatsapp_number: e164PhoneSchema.optional(),
+
+  // Parent Address
+  parent_is_address_same_as_applicant: createEnumSchema('Yes\nNo').refine(val => val !== undefined && val !== '', { message: "Please specify if address is same as applicant's communication address." }),
+
+  // Parent Address Details (Conditional)
+  parent_address_country: z.string().optional(),
+  parent_address_zipcode: z.string().regex(/^[a-zA-Z0-9\s-]{3,20}$/, { message: "Invalid zipcode format." }).optional(),
+  parent_address_state: z.string().optional(),
+  parent_address_city: z.string().optional(),
+  parent_address_line1: z.string().optional(),
+  parent_address_line2: z.string().optional(), // User marked M, will be required if parent_is_address_same_as_applicant is No
+
+  // Educational Information
+  parent_education: createEnumSchema(PARENT_EDUCATION_LEVEL_OPTIONS_STRING).refine(val => val !== undefined && val !== '', { message: "Parent's Education level is required." }),
+  parent_field_of_study: z.string().min(1, "Field of Study is required."),
+
+  // Professional Information
+  parent_profession: createEnumSchema(PARENT_PROFESSION_OPTIONS_STRING).refine(val => val !== undefined && val !== '', { message: "Parent's Profession is required." }),
+  parent_organization_name: z.string().min(1, "Organization Name is required."),
+  parent_designation: z.string().min(1, "Designation is required."),
+  parent_annual_income: z.string()
+    .regex(/^\d+$/, "Annual Income must contain only digits.")
+    .min(1, "Annual Income is required."),
+}).superRefine((data, ctx) => {
+  if (data.parent_is_whatsapp_same === false) {
+    if (!data.parent_whatsapp_number || data.parent_whatsapp_number.trim() === '') {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_whatsapp_number'], message: 'WhatsApp Number is required.' });
+    } else if (data.parent_whatsapp_number && !isValidPhoneNumber(data.parent_whatsapp_number)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_whatsapp_number'], message: 'Invalid WhatsApp number format.' });
+    }
+  }
+  if (data.parent_is_address_same_as_applicant === 'No') {
+    if (!data.parent_address_country) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_address_country'], message: "Country is required for parent's address." });
+    if (!data.parent_address_zipcode) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_address_zipcode'], message: "Zipcode is required for parent's address." });
+    // else if (!/^[a-zA-Z0-9\s-]{3,20}$/.test(data.parent_address_zipcode) ) { // Already handled by field regex
+    //     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_address_zipcode'], message: "Invalid zipcode format for parent's address." });
+    // }
+    if (!data.parent_address_state) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_address_state'], message: "State is required for parent's address." });
+    if (!data.parent_address_city) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_address_city'], message: "City is required for parent's address." });
+    if (!data.parent_address_line1) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_address_line1'], message: "Address Line 1 is required for parent's address." });
+    if (!data.parent_address_line2) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['parent_address_line2'], message: "Address Line 2 is required for parent's address." });
+  }
+});
+export type IndividualParentDetailData = z.infer<typeof individualParentDetailSchema>;
+
+const GUARDIAN_RELATION_OPTIONS_STRING = "Grand Father\nGrand Mother\nSibling\nUncle\nAunt\nFamily Friend\nOther";
+export const individualGuardianDetailSchema = z.object({
+  // Basic Information
+  guardian_relation_with_applicant: createEnumSchema(GUARDIAN_RELATION_OPTIONS_STRING).refine(val => val !== undefined && val !== '', { message: "Guardian's Relation with Applicant is required." }),
+  guardian_first_name: z.string().min(1, "Guardian's First Name is required."),
+  guardian_last_name: z.string().min(1, "Guardian's Last Name is required."),
+  guardian_nationality: z.string().min(1, "Guardian's Nationality is required."),
+  guardian_country_of_residence: z.string().min(1, "Guardian's Country of Residence is required."),
+
+  // Contact Information
+  guardian_contact_email: z.string().email("Invalid email format.").min(1, "Guardian's Contact Email is required."),
+  guardian_contact_phone: requiredE164PhoneSchema,
+  guardian_is_whatsapp_same: z.boolean().default(true),
+  guardian_whatsapp_number: e164PhoneSchema.optional(),
+
+  // Guardian Address
+  guardian_is_address_same_as_applicant: createEnumSchema('Yes\nNo').refine(val => val !== undefined && val !== '', { message: "Please specify if address is same as applicant's communication address." }),
+
+  // Guardian Address Details (Conditional)
+  guardian_address_country: z.string().optional(),
+  guardian_address_zipcode: z.string().regex(/^[a-zA-Z0-9\s-]{3,20}$/, { message: "Invalid zipcode format." }).optional(),
+  guardian_address_state: z.string().optional(),
+  guardian_address_city: z.string().optional(),
+  guardian_address_line1: z.string().optional(),
+  guardian_address_line2: z.string().optional(), // Marked M by user
+
+  // Educational Information
+  guardian_education: createEnumSchema(PARENT_EDUCATION_LEVEL_OPTIONS_STRING).refine(val => val !== undefined && val !== '', { message: "Guardian's Education level is required." }),
+  guardian_field_of_study: z.string().min(1, "Field of Study is required."),
+
+  // Professional Information - EXCLUDED FOR NOW as per your field list for guardian. Add if needed.
+
+}).superRefine((data, ctx) => {
+  // Conditional: WhatsApp Number
+  if (data.guardian_is_whatsapp_same === false) {
+    if (!data.guardian_whatsapp_number || data.guardian_whatsapp_number.trim() === '') {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_whatsapp_number'], message: "Guardian's WhatsApp Number is required." });
+    } else if (data.guardian_whatsapp_number && !isValidPhoneNumber(data.guardian_whatsapp_number)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_whatsapp_number'], message: "Invalid Guardian's WhatsApp number format." });
+    }
+  }
+  // Conditional: Guardian Address Details
+  if (data.guardian_is_address_same_as_applicant === 'No') {
+    if (!data.guardian_address_country) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_address_country'], message: "Country is required for guardian's address." });
+    if (!data.guardian_address_zipcode) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_address_zipcode'], message: "Zipcode is required for guardian's address." });
+    if (!data.guardian_address_state) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_address_state'], message: "State is required for guardian's address." });
+    if (!data.guardian_address_city) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_address_city'], message: "City is required for guardian's address." });
+    if (!data.guardian_address_line1) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_address_line1'], message: "Address Line 1 is required for guardian's address." });
+    if (!data.guardian_address_line2) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardian_address_line2'], message: "Address Line 2 is required for guardian's address." });
+  }
+});
+export type IndividualGuardianDetailData = z.infer<typeof individualGuardianDetailSchema>;
 // --- Main Admission Schema ---
 export const admissionRegistrationSchema = z.object({
   // Application Details
   application_year: z.string().min(1, { message: 'Application Academic Year is required.' }), // Example: Treat Link as string ID
-  applied_for: z.string().min(1, { message: 'Applied For is required.' }), // Link to IHS Admission Grade (string ID)
+  applied_for: z.enum(['Class II', 'Class V', 'Class VIII', 'Class XI'], { message: 'Applied For is required.' }), // Link to IHS Admission Grade (string ID)
   applicant_user: z.string().optional(), // Link to User (string ID)
 
   // Previous Application
   applied_to_ihs_before: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please select if you applied before.' }),
   // --> Conditional Fields for Previous Application
-  previous_application_application_year: z.string().optional(), // Link to IHS Academic Year (string ID)
-  previous_application_applied_for: z.string().optional(), // Link to IHS Admission Grade (string ID)
+  previous_application_application_year: z.enum(previousApplicationYears as [string, ...string[]], { message: 'Previous Application Year is required.' }).optional(),
+  previous_application_applied_for: z.enum(appliedForEnum, { message: 'Previously Applied For grade is required.' }).optional(),
   previous_application_remarks: z.string().optional(),
 
   // Personal Information
-  full_name: z.string().min(1, { message: 'Full Name is required.' }),
+  first_name: z.string().min(1, { message: 'First Name is required.' }),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(1, { message: 'Last Name is required.' }),
+  age: z.number({ invalid_type_error: 'Age must be a number.' })
+    .min(3, { message: 'Age must be at least 3.' })
+    .max(100, { message: 'Age must be at most 100.' }),
   gender: createEnumSchema('\nMale\nFemale\nOther').refine(val => val !== undefined && val !== '', { message: 'Gender is required.' }),
   // --> Conditional
   other_gender: z.string().optional(),
   nationality: z.string().min(1, { message: 'Nationality is required.' }), // Link to Country (string ID/Name)
   country_of_residence: z.string().min(1, { message: 'Country of Residence is required.' }), // Link to Country (string ID/Name)
   country: z.string().min(1, { message: 'Country of Birth is required.' }), // Link to Country (string ID/Name)
-  date_of_birth: z.string() // Use string for date input initially, refine for format/validity
-      .min(1, { message: 'Date of Birth is required.' })
-      .refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' }) // Basic format check
-      .refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date value' }),
-  age: z.string().optional(), // Often calculated, keep optional
+  date_of_birth: z
+    .string()
+    .min(1, { message: 'Date of Birth is required.' })
+    .refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
+    .refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date value' })
+    .refine(val => {
+      const d = new Date(val);
+      const now = new Date();
+      // Only allow strictly past dates (not today)
+      return d < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }, { message: 'Date of Birth must be in the past.' }),
 
   // Communication Address
   comm_address_country: z.string().min(1, { message: 'Country is required.' }),
-  comm_address_area_code: z.string().min(1, { message: 'Area Code/ Pincode is required.' }),
+  comm_address_area_code: z.string().min(1, { message: "Area Code/ Pincode is required." })
+    .regex(/^\d{5,9}$/, { message: 'Area Code/ Pincode must be a number between 5 and 9 digits.' }),
   comm_address_line_1: z.string().min(1, { message: 'Address Line 1 is required.' }),
   comm_address_line_2: z.string().optional(),
   comm_address_city: z.string().min(1, { message: 'City/ Town is required.' }),
@@ -64,64 +331,63 @@ export const admissionRegistrationSchema = z.object({
   // Languages
   mother_tongue: z.string().min(1, { message: 'Mother Tongue is required.' }),
   // --> Conditional
-  second_language: z.string().optional(), // Link to IHS Admission Second Language (string ID)
-  third_language: z.string().optional(), // Link to IHS Admission Third Language (string ID)
   // Table field kept for now, adjust if needed
-  optional_language_table: z.array(z.object({ /* Define fields */ }).optional()).optional(),
+  languages_known: z.array(individualLanguageSchema)
+    .min(1, { message: "Please add at least one language." }),
 
   // Sibling Information (Individual Fields)
   has_sibling_in_ihs: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify if applicant has sibling(s) in IHS.' }),
-  // --> Conditional Sibling Fields (Add more like sibling_2_full_name etc. if needed)
-  sibling_1_full_name: z.string().optional(),
-  sibling_1_grade_status: z.string().optional().describe("e.g., 'Studying in Class V', 'Completed Class XII'"), // Example description
-  sibling_1_school_name: z.string().optional().describe("If studying in IHS"),
-
+  // --- NEW: Student Siblings Table ---
+  student_siblings: z.array(individualSiblingSchema).optional(), // Array will be required conditionally
   // Supporting Documents (Using z.any() for files, refine validation as needed)
-  recent_photograph: z.any().optional().refine(file => !!file, { message: 'Recent Photograph is required.' }),
-  birth_certificate: z.any().optional().refine(file => !!file, { message: 'Birth Certificate is required.' }),
+  recent_photograph: fileSchema.refine(file => file !== undefined && file !== null, { message: "Recent Photograph is required." }),
+  birth_certificate: fileSchema.refine(file => file !== undefined && file !== null, { message: "Birth Certificate is required." }),
   id_proof: createEnumSchema('\nAadhaar Card\nPassport').refine(val => val !== undefined && val !== '', { message: 'ID Proof type is required.' }),
-  id_proof_document: z.any().optional().refine(file => !!file, { message: 'ID Proof Document is required.' }),
+  id_proof_document: fileSchema.refine(file => file !== undefined && file !== null, { message: "ID Proof Document is required." }),
   // --> Conditional ID Proof Details
-  aadhaar_number: z.string().optional(),
+  aadhaar_number: z.string()
+    .length(12, { message: "Aadhaar Number must be exactly 12 digits." })
+    .regex(/^\d+$/, { message: "Aadhaar Number must contain only digits." })
+    .optional(),
   passport_number: z.string().optional(),
   place_of_issue: z.string().optional(),
   date_of_issue: z.string().optional()
-      .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
-      .refine(val => !val || !isNaN(Date.parse(val)), { message: 'Invalid date value' }),
+    .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
+    .refine(val => !val || !isNaN(Date.parse(val)), { message: 'Invalid date value' }),
   date_of_expiry: z.string().optional()
-      .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
-      .refine(val => !val || !isNaN(Date.parse(val)), { message: 'Invalid date value' }),
+    .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
+    .refine(val => !val || !isNaN(Date.parse(val)), { message: 'Invalid date value' }),
 
   // Academics Tab ---------------------
   // Current School Information
   is_home_schooled: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify if applicant is home schooled.' }),
   // --> Conditional Current School Fields
   current_school_name: z.string().optional(),
-  board_affiliation: z.string().optional(), // Link to IHS Board Affiliation (string ID)
-  board_affiliation_data2: z.string().optional(), // Frappe sometimes has redundant fields, clarify which one to use
-  phone_number: z.string().optional(), // Phone type
+  current_school_board_affiliation: createEnumSchema('\nCBSE\nICSE\nSSC').optional(), // Now a dropdown
+  current_school_phone_number: e164PhoneSchema.optional(), // Phone type
   current_school_country: z.string().optional(), // Link to Country (string ID/Name)
   current_school_area_code: z.string().optional(),
   current_school_city: z.string().optional(),
   current_school_state: z.string().optional(),
-  email_address: z.string().email({ message: "Invalid email format." }).optional(), // Email type
+  current_school_email_address: z.string().email({ message: "Invalid email format." }).optional(), // Email type
   current_school_a_line1: z.string().optional(),
   current_school_a_line2: z.string().optional(),
 
   // Previous School Information
   was_the_applicant_ever_home_schooled: createEnumSchema('\nYes\nNo').optional(), // Conditionally visible Select
   been_to_school_previously: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify if applicant studied previously.' }),
-  // Table field kept for now, adjust if needed
-  previous_schools: z.array(z.object({ /* Define fields */ }).optional()).optional(),
+  // --- Conditional Previous School Fields ---
+  // --- NEW: Previous Schools Table ---
+  previous_schools: z.array(individualPreviousSchoolSchema).optional(),
   // --> Conditional Additional Info
   emis_id: z.string().optional(),
 
   // More Information (Academics)
-  academic_strengths_and_weaknesses: z.string().min(1, { message: 'Academic Strengths and Weaknesses are required.' }),
-  hobbies_interests_and_extra_curricular_activities: z.string().min(1, { message: 'Hobbies, Interests and Extra-Curricular Activities are required.' }),
-  other_details_of_importance: z.string().optional(),
-  temperament_and_personality: z.string().min(1, { message: 'Temperament and Personality are required.' }),
-  special_learning_needs_or_learning_disability: z.string().min(1, { message: 'Special Learning Needs or Learning Disability information is required.' }),
+  academic_strengths_and_weaknesses: textareaSchema,
+  hobbies_interests_and_extra_curricular_activities: textareaSchema,
+  other_details_of_importance: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  temperament_and_personality: textareaSchema,
+  special_learning_needs_or_learning_disability: textareaSchema,
 
   // Health Tab --------------------------
   // Basic Health Information (Vaccines)
@@ -136,7 +402,7 @@ export const admissionRegistrationSchema = z.object({
   done_rubella_vaccine: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Rubella vaccine status required.' }),
   done_varicella_vaccine: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Varicella vaccine status required.' }),
   other_vaccines: z.string().optional(),
-  vaccine_certificates: z.any().optional().refine(file => !!file, { message: 'Vaccine Certificate(s) are required.' }),
+  vaccine_certificates: fileSchema.optional(),
 
   // Additional Health Information
   blood_group: createEnumSchema('\nBlood Group A+\nBlood Group A-\nBlood Group B+\nBlood Group B-\nBlood Group O+\nBlood Group O-\nBlood Group AB+\nBlood Group AB-').refine(val => val !== undefined && val !== '', { message: 'Blood Group is required.' }),
@@ -145,8 +411,9 @@ export const admissionRegistrationSchema = z.object({
   right_eye_power: z.string().optional(),
   left_eye_power: z.string().optional(),
   // --> Conditional Hygiene Training (For Class II)
-  is_toilet_trained: createEnumSchema('\nYes\nNo').optional(),
-  wets_bed: createEnumSchema('\nYes\nNo').optional(),
+  is_toilet_trained: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify if the applicant is toilet trained.' }),
+  wets_bed: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify if the applicant wets the bed.' }),
+  bed_wet_frequency: z.string().optional(), // Details if wets_bed is 'Yes'
 
   // Physical and Mental Health Information
   has_hearing_challenges: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify regarding hearing challenges.' }),
@@ -163,7 +430,7 @@ export const admissionRegistrationSchema = z.object({
   injury_details: z.string().optional(),
   on_medication: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify regarding regular medication.' }),
   medication_details: z.string().optional(), // Fixed typo
-  medical_prescription: z.any().optional(), // File upload, conditional
+  medical_prescription: fileSchema.optional(), // File upload, conditional
   has_health_issue: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify regarding history of health issues.' }),
   health_issue_details: z.string().optional(),
   was_hospitalized: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify regarding history of hospitalization.' }),
@@ -175,35 +442,24 @@ export const admissionRegistrationSchema = z.object({
   has_allergies: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: 'Please specify regarding allergies.' }), // Fixed typo
   allergy_details: z.string().optional(),
 
-  // Parents & Guardians Tab (Individual Fields) -------------
-  // --> Mother's Details
-  mother_full_name: z.string().min(1, "Mother's Full Name is required."),
-  mother_email: z.string().email({ message: "Invalid email format." }).optional(),
-  mother_phone: z.string().min(1, "Mother's Phone Number is required."),
-  mother_occupation: z.string().optional(),
-  mother_education: z.string().optional(),
-  // Add other mother fields as needed from the 'IHS Student Applicant Parent' DocType
-
-  // --> Father's Details
-  father_full_name: z.string().min(1, "Father's Full Name is required."),
-  father_email: z.string().email({ message: "Invalid email format." }).optional(),
-  father_phone: z.string().min(1, "Father's Phone Number is required."),
-  father_occupation: z.string().optional(),
-  father_education: z.string().optional(),
-  // Add other father fields as needed
+  // --- NEW: Students Parents Table ---
+  students_parents: z.array(individualParentDetailSchema)
+    .min(1, "At least one parent's details (Father/Mother) are required.")
+    .max(2, "A maximum of two parent entries (Father/Mother) are allowed."),
 
   parent_marital_status: createEnumSchema('\nMarried\nSeparated\nDivorced\nSingle Parent').refine(val => val !== undefined && val !== '', { message: 'Parent Marital Status is required.' }),
   // --> Conditional Divorce Details
   who_is_responsible_for_paying_applicants_tuition_fee: createEnumSchema('\nFather\nMother\nBoth').optional(), // Fixed typo
-  court_order_document: z.any().optional(), // File upload, conditional
+  court_order_document: fileSchema.optional(), // File upload, conditional
   who_is_allowed_to_receive_school_communication: createEnumSchema('\nFather\nMother\nBoth').optional(),
-  legal_rights_document: z.any().optional(), // File upload, conditional
+  legal_rights_document: fileSchema.optional(), // File upload, conditional
   who_is_allowed_to_receive_report_cards: createEnumSchema('\nFather\nMother\nBoth').optional(),
   visit_rights: createEnumSchema('\nFather\nMother\nBoth').optional(),
 
   // Guardian Information (Kept as table for now, modify if needed)
-  parents_are_guardians: createEnumSchema('\nYes\nNo').optional(),
-  guardian_information: z.array(z.object({ /* Define fields */ }).optional()).optional(), // Table Field
+  parents_are_local_guardians: createEnumSchema('\nYes\nNo').refine(val => val !== undefined && val !== '', { message: "Please specify if parents are the local guardians." }), // Changed field name slightly for clarity
+  // guardian_information: z.array(z.object({ /* Define fields */ }).optional()).optional(),
+  student_guardians: z.array(individualGuardianDetailSchema).optional(),
 
   // Preferences and More Tab (Conditional on Class XI) ----------
   group_a: createEnumSchema('\nPhysics\nAccounts\nHistory').optional(),
@@ -211,34 +467,34 @@ export const admissionRegistrationSchema = z.object({
   group_b: createEnumSchema('\nChemistry\nEconomics').optional(),
   group_d: createEnumSchema('\nMathematics\nEnvironmental Studies\nFine Arts').optional(),
   // Question Responses
-  q1_applicant_response: z.string().optional(),
-  q2_applicant_response: z.string().optional(),
-  q3_applicant_response: z.string().optional(),
-  q4_applicant_response: z.string().optional(),
-  q5_applicant_response: z.string().optional(),
-  q6_applicant_response: z.string().optional(),
-  q7_applicant_response: z.string().optional(),
-  q1_parent_response: z.string().optional(),
-  q2_parent_response: z.string().optional(),
-  q3_parent_response: z.string().optional(),
-  q4_parent_response: z.string().optional(),
-  q5_parent_response: z.string().optional(),
-  q6_parent_response: z.string().optional(),
+  q1_applicant_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q2_applicant_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q3_applicant_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q4_applicant_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q5_applicant_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q6_applicant_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q7_applicant_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q1_parent_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q2_parent_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q3_parent_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q4_parent_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q5_parent_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
+  q6_parent_response: z.string().max(200, { message: "Maximum 200 characters allowed." }).optional(),
 
   // Declaration
   // Use z.literal(true) for required checkboxes
   tnc_check: z.boolean().optional(), // Keep optional for now, refine logic in superRefine
   date: z.string() // Use string for date input initially
-      .min(1, { message: 'Date is required.' })
-      .refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
-      .refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date value' }),
+    .min(1, { message: 'Date is required.' })
+    .refine(val => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: 'Invalid date format (YYYY-MM-DD)' })
+    .refine(val => !isNaN(Date.parse(val)), { message: 'Invalid date value' }),
   place: z.string().min(1, { message: 'Place is required.' }),
 
   // Application Fees Tab -------------------
   // Billing Details
   billing_name: z.string().min(1, { message: 'Billing Full Name is required.' }),
-  billing_phone: z.string().min(1, { message: 'Billing Phone is required.' }),
-  billing_email: z.string().min(1, { message: 'Billing Email is required.' }).email({ message: 'Invalid Billing Email format.' }),
+  billing_phone: requiredE164PhoneSchema,
+  billing_email: z.string().email({ message: 'Invalid Billing Email format.' }),
   billing_country: z.string().min(1, { message: 'Billing Country is required.' }), // Link to Country (string ID/Name)
   billing_area_code: z.string().min(1, { message: 'Billing Area Code/ Pincode is required.' }),
   billing_city: z.string().min(1, { message: 'Billing City/ Town is required.' }),
@@ -268,85 +524,89 @@ export const admissionRegistrationSchema = z.object({
   interview_feedback: z.string().optional(),
 
 })
-.superRefine((data, ctx) => {
+  .superRefine((data, ctx) => {
     // --- Conditional Requirements ---
 
     // Previous Application Details
     if (data.applied_to_ihs_before === 'Yes') {
-        if (!data.previous_application_application_year) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previous_application_application_year'], message: 'Previous Application Year is required.' });
-        if (!data.previous_application_applied_for) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previous_application_applied_for'], message: 'Previously Applied For grade is required.' });
+      if (!data.previous_application_application_year) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previous_application_application_year'], message: 'Previous Application Year is required.' });
+      if (!data.previous_application_applied_for) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previous_application_applied_for'], message: 'Previously Applied For grade is required.' });
     }
 
     // Other Gender/Religion/Community
     if (data.gender === 'Other' && !data.other_gender) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_gender'], message: 'Please specify gender.' });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_gender'], message: 'Please specify gender.' });
     }
     if (data.religion === 'Other' && !data.other_religion) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_religion'], message: 'Please specify religion.' });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_religion'], message: 'Please specify religion.' });
     }
     if (data.community === 'Other' && !data.other_community) {
-         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_community'], message: 'Please specify community.' });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_community'], message: 'Please specify community.' });
     }
 
-    // Languages based on 'Applied For'
-    // Ensure applied_for value matches exactly the option string from Frappe
-    if ((data.applied_for === 'Class V' || data.applied_for === 'Class VIII') && !data.second_language) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['second_language'], message: 'Second Language is required for the selected grade.' });
-    }
-    if (data.applied_for === 'Class VIII' && !data.third_language) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['third_language'], message: 'Third Language is required for the selected grade.' });
-    }
-
-    // Sibling Details (Using individual fields)
+    // --- NEW: Conditional Requirement for student_siblings table ---
     if (data.has_sibling_in_ihs === 'Yes') {
-        if (!data.sibling_1_full_name) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['sibling_1_full_name'], message: "Sibling's Full Name is required." });
-        if (!data.sibling_1_grade_status) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['sibling_1_grade_status'], message: "Sibling's Grade/Status is required." });
-        // Add checks for sibling_1_school_name if mandatory when 'Yes'
+      if (!data.student_siblings || data.student_siblings.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['student_siblings'], // Attach error to the array field itself
+          message: "Please provide details for at least one sibling."
+        });
+      }
     }
 
     // ID Proof Details
     if (data.id_proof === 'Aadhaar Card' && !data.aadhaar_number) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['aadhaar_number'], message: 'Aadhaar Number is required.' });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['aadhaar_number'], message: 'Aadhaar Number is required.' });
     }
     if (data.id_proof === 'Passport') {
-        if (!data.passport_number) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['passport_number'], message: 'Passport Number is required.' });
-        if (!data.place_of_issue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['place_of_issue'], message: 'Place of Issue is required.' });
-        if (!data.date_of_issue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['date_of_issue'], message: 'Date of Issue is required.' });
-        // Check if date_of_issue is valid before checking expiry if needed
-        if (!data.date_of_expiry) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['date_of_expiry'], message: 'Date of Expiry is required.' });
+      if (!data.passport_number) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['passport_number'], message: 'Passport Number is required.' });
+      if (!data.place_of_issue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['place_of_issue'], message: 'Place of Issue is required.' });
+      if (!data.date_of_issue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['date_of_issue'], message: 'Date of Issue is required.' });
+      // Check if date_of_issue is valid before checking expiry if needed
+      if (!data.date_of_expiry) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['date_of_expiry'], message: 'Date of Expiry is required.' });
     }
 
     // Current School Details
     if (data.is_home_schooled === 'No') {
-        if (!data.current_school_name) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_name'], message: 'School Name is required.' });
-        // Check one of the board fields - assuming board_affiliation_data2 is the one to use
-        if (!data.board_affiliation_data2) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['board_affiliation_data2'], message: 'Board Affiliation is required.' });
-        if (!data.phone_number) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['phone_number'], message: 'School Phone Number is required.' });
-        if (!data.current_school_country) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_country'], message: 'School Country is required.' });
-        if (!data.current_school_city) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_city'], message: 'School City/ Town is required.' });
-        if (!data.email_address) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['email_address'], message: 'School Email Address is required.' });
-        if (!data.current_school_a_line1) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_a_line1'], message: 'School Address Line 1 is required.' });
-        // Conditional select 'was_the_applicant_ever_home_schooled'
-        if (data.was_the_applicant_ever_home_schooled === undefined || data.was_the_applicant_ever_home_schooled === '') {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['was_the_applicant_ever_home_schooled'], message: 'Please specify if applicant was ever home schooled.' });
+      if (!data.current_school_name) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_name'], message: 'School Name is required.' });
+      // Require board_affiliation (dropdown) instead of board_affiliation_data2
+      if (!data.current_school_board_affiliation) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_board_affiliation'], message: 'Board Affiliation is required.' });
+      if (data.is_home_schooled === 'No') {
+        if (!data.current_school_phone_number || data.current_school_phone_number.trim() === '') {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_phone_number'], message: 'School Phone Number is required.' });
+        } else if (!isValidPhoneNumber(data.current_school_phone_number)) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_phone_number'], message: 'Invalid School Phone Number format.' });
         }
+        // ... other current school conditional checks
+      }
+      if (!data.current_school_country) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_country'], message: 'School Country is required.' });
+      if (!data.current_school_city) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_city'], message: 'School City/ Town is required.' });
+      if (!data.current_school_email_address) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_email_address'], message: 'School Email Address is required.' });
+      if (!data.current_school_a_line1) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['current_school_a_line1'], message: 'School Address Line 1 is required.' });
+      // Conditional select 'was_the_applicant_ever_home_schooled'
+      if (data.was_the_applicant_ever_home_schooled === undefined || data.was_the_applicant_ever_home_schooled === '') {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['was_the_applicant_ever_home_schooled'], message: 'Please specify if applicant was ever home schooled.' });
+      }
     }
-
-    // Previous Schools Table (Keep if table is used)
-    // if (data.been_to_school_previously === 'Yes' && (!data.previous_schools || data.previous_schools.length === 0)) {
-    //      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previous_schools'], message: 'Please provide details for at least one previous school.' });
-    // }
 
     // Eye Power
     if (data.wears_glasses_or_lens === 'Yes') {
-        if (!data.right_eye_power) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['right_eye_power'], message: 'Right Eye Power is required.' });
-        if (!data.left_eye_power) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['left_eye_power'], message: 'Left Eye Power is required.' });
+      if (!data.right_eye_power) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['right_eye_power'], message: 'Right Eye Power is required.' });
+      if (!data.left_eye_power) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['left_eye_power'], message: 'Left Eye Power is required.' });
     }
 
     // Hygiene Training (Class II)
     if (data.applied_for === 'Class II') { // Ensure exact match with Frappe option
-         if (data.is_toilet_trained === undefined || data.is_toilet_trained === '') ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['is_toilet_trained'], message: 'Toilet training status is required for Class II.' });
-         if (data.wets_bed === undefined || data.wets_bed === '') ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['wets_bed'], message: 'Bed-wetting status is required for Class II.' });
+      if (data.is_toilet_trained === undefined || data.is_toilet_trained === '') ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['is_toilet_trained'], message: 'Toilet training status is required for Class II.' });
+      if (data.wets_bed === undefined || data.wets_bed === '') ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['wets_bed'], message: 'Bed-wetting status is required for Class II.' });
+      if (data.wets_bed === 'Yes' && (!data.bed_wet_frequency || data.bed_wet_frequency.trim() === '')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['bed_wet_frequency'],
+          message: 'Please provide bed wetting frequency details.'
+        });
+      }
     }
 
     // Health Challenge Details
@@ -358,22 +618,42 @@ export const admissionRegistrationSchema = z.object({
     // Other Medical Details
     if (data.has_injury === 'Yes' && !data.injury_details) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['injury_details'], message: 'Please provide details about the injury/accident.' });
     if (data.on_medication === 'Yes') {
-        if (!data.medication_details) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['medication_details'], message: 'Please provide details about the medication.' }); // Fixed typo
-        if (!data.medical_prescription) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['medical_prescription'], message: 'Medical Prescription attachment is required.' });
+      if (!data.medication_details) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['medication_details'], message: 'Please provide details about the medication.' }); // Fixed typo
+      if (!data.medical_prescription) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['medical_prescription'], message: 'Medical Prescription attachment is required.' });
     }
     if (data.has_health_issue === 'Yes' && !data.health_issue_details) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['health_issue_details'], message: 'Please provide details about the health issue.' });
     if (data.was_hospitalized === 'Yes' && !data.hospitalization_details) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['hospitalization_details'], message: 'Please provide details about the hospitalization.' });
     if (data.needs_special_attention === 'Yes' && !data.attention_details) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['attention_details'], message: 'Please provide details about the special attention needed.' });
     if (data.has_allergies === 'Yes' && !data.allergy_details) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['allergy_details'], message: 'Please provide details about the allergies.' }); // Fixed typo
 
+    if (data.students_parents && data.students_parents.length === 2) {
+      if (data.students_parents[0].parent_relation === data.students_parents[1].parent_relation) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['students_parents', 1, 'parent_relation'], // Error on the second parent's relation
+          message: "Parent relations must be unique (e.g., one Father, one Mother)."
+        });
+      }
+    }
+
+    if (data.parents_are_local_guardians === 'No') {
+      if (!data.student_guardians || data.student_guardians.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['student_guardian'], // Attach error to the array field itself
+          message: "Please provide details for at least one local guardian if parents are not the local guardians."
+        });
+      }
+      // Zod will automatically validate each item in the student_guardian array against individualGuardianDetailSchema
+    }
     // Divorce Details
     if (data.parent_marital_status === 'Divorced') {
-        if (!data.who_is_responsible_for_paying_applicants_tuition_fee) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['who_is_responsible_for_paying_applicants_tuition_fee'], message: 'Please specify who pays tuition fees.' }); // Fixed typo
-        if (!data.court_order_document) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['court_order_document'], message: 'Court Order attachment is required.' });
-        if (!data.who_is_allowed_to_receive_school_communication) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['who_is_allowed_to_receive_school_communication'], message: 'Please specify who receives communication.' });
-        if (!data.legal_rights_document) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['legal_rights_document'], message: 'Legal Rights attachment is required.' });
-        if (!data.who_is_allowed_to_receive_report_cards) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['who_is_allowed_to_receive_report_cards'], message: 'Please specify who receives report cards.' });
-        if (!data.visit_rights) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['visit_rights'], message: 'Please specify who can visit the child.' });
+      if (!data.who_is_responsible_for_paying_applicants_tuition_fee) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['who_is_responsible_for_paying_applicants_tuition_fee'], message: 'Please specify who pays tuition fees.' }); // Fixed typo
+      if (!data.court_order_document) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['court_order_document'], message: 'Court Order attachment is required.' });
+      if (!data.who_is_allowed_to_receive_school_communication) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['who_is_allowed_to_receive_school_communication'], message: 'Please specify who receives communication.' });
+      if (!data.legal_rights_document) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['legal_rights_document'], message: 'Legal Rights attachment is required.' });
+      if (!data.who_is_allowed_to_receive_report_cards) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['who_is_allowed_to_receive_report_cards'], message: 'Please specify who receives report cards.' });
+      if (!data.visit_rights) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['visit_rights'], message: 'Please specify who can visit the child.' });
     }
 
     // Guardian Table (Keep if table is used)
@@ -383,18 +663,18 @@ export const admissionRegistrationSchema = z.object({
 
     // Class XI Subject Preferences
     if (data.applied_for === 'Class XI') { // Ensure exact match with Frappe option
-        if (!data.group_a) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_a'], message: 'Group A subject selection is required.' });
-        if (!data.group_b) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_b'], message: 'Group B subject selection is required.' });
-        if (!data.group_c) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_c'], message: 'Group C subject selection is required.' });
-        if (!data.group_d) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_d'], message: 'Group D subject selection is required.' });
+      if (!data.group_a) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_a'], message: 'Group A subject selection is required.' });
+      if (!data.group_b) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_b'], message: 'Group B subject selection is required.' });
+      if (!data.group_c) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_c'], message: 'Group C subject selection is required.' });
+      if (!data.group_d) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['group_d'], message: 'Group D subject selection is required.' });
     }
 
     // T&C Checkbox (Example: required if date is filled)
     if (data.date && !data.tnc_check) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['tnc_check'], message: 'Please agree to the declaration.' });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['tnc_check'], message: 'Please agree to the declaration.' });
     }
 
-});
+  });
 
 // Infer the TypeScript type
 export type AdmissionRegistrationFormData = z.infer<typeof admissionRegistrationSchema>;
