@@ -77,12 +77,12 @@ const parseSelectOptions = (optionsString: string | null | undefined): string[] 
 };
 
 // Helper to get current academic year string (e.g., "2024-25")
-function getCurrentAcademicYear() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const nextYear = (year + 1).toString().slice(-2);
-    return `${year}-${nextYear}`;
-}
+// function getCurrentAcademicYear() {
+//     const now = new Date();
+//     const year = now.getFullYear();
+//     const nextYear = (year + 1).toString().slice(-2);
+//     return `${year}-${nextYear}`;
+// }
 
 // Helper to get last N academic years as strings (e.g., "2023-24")
 function getLastNAcademicYears(n: number): string[] {
