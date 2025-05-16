@@ -77,12 +77,12 @@ const parseSelectOptions = (optionsString: string | null | undefined): string[] 
 };
 
 // Helper to get current academic year string (e.g., "2024-25")
-// function getCurrentAcademicYear() {
-//     const now = new Date();
-//     const year = now.getFullYear();
-//     const nextYear = (year + 1).toString().slice(-2);
-//     return `${year}-${nextYear}`;
-// }
+function getCurrentAcademicYear() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const nextYear = (year + 1).toString().slice(-2);
+    return `${year}-${nextYear}`;
+}
 
 // Helper to get last N academic years as strings (e.g., "2023-24")
 function getLastNAcademicYears(n: number): string[] {
@@ -137,6 +137,9 @@ export function AdmissionRegistrationForm() {
         // @ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormData exactly
         resolver: zodResolver(admissionRegistrationSchema),
         // Updated default values reflecting the flattened schema for parents/siblings
+        defaultValues: {
+            application_year: getCurrentAcademicYear(),
+        },
         mode: 'onBlur', // Validate on blur
     });
     // 2. Watch fields (Keep existing watches, they are still relevant for conditional logic)
@@ -516,36 +519,36 @@ export function AdmissionRegistrationForm() {
 
             console.log("JSON Payload Prepared:", payload);
 
-            const response = await fetch('http://test-qa-ihs.isha.in/student-register', {
-                method: 'POST',
-                credentials: 'include', // Important: sends cookies for authentication
-                headers: {
-                    // Correct Content-Type for JSON
-                    'Content-Type': 'application/json'
-                },
-                // Send the stringified plain object, NOT FormData
-                body: JSON.stringify(payload)
-            });
+            // const response = await fetch('http://test-qa-ihs.isha.in/student-register', {
+            //     method: 'POST',
+            //     credentials: 'include', // Important: sends cookies for authentication
+            //     headers: {
+            //         // Correct Content-Type for JSON
+            //         'Content-Type': 'application/json'
+            //     },
+            //     // Send the stringified plain object, NOT FormData
+            //     body: JSON.stringify(payload)
+            // });
 
             // --- Check Response ---
-            if (!response.ok) {
-                // Try to parse error response from Odoo
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch (e) {
-                    // If response is not JSON
-                    errorData = { message: response.statusText };
-                }
-                console.error("Submission Error:", response.status, errorData);
-                alert(`Submission failed: ${errorData?.message || 'Unknown error'}`);
-                // You might want more specific error handling based on errorData.error
-                return; // Stop execution on error
-            }
+            // if (!response.ok) {
+            //     // Try to parse error response from Odoo
+            //     let errorData;
+            //     try {
+            //         errorData = await response.json();
+            //     } catch (e) {
+            //         // If response is not JSON
+            //         errorData = { message: response.statusText };
+            //     }
+            //     console.error("Submission Error:", response.status, errorData);
+            //     alert(`Submission failed: ${errorData?.message || 'Unknown error'}`);
+            //     // You might want more specific error handling based on errorData.error
+            //     return; // Stop execution on error
+            // }
 
             // --- Handle Success ---
-            const successData = await response.json(); // Assuming Odoo returns JSON on success too
-            console.log("Form submitted successfully!", successData);
+            // const successData = await response.json(); // Assuming Odoo returns JSON on success too
+            // console.log("Form submitted successfully!", successData);
             alert("Form submitted successfully!"); // Or use a toast notification
 
         } catch (error) {
