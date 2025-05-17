@@ -258,12 +258,20 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                     )} />
                     <FormField control={control} name={`${pathPrefix}.parent_nationality`} render={({ field }) => (
                         <FormItem><FormLabel>Nationality<span className="text-destructive"> *</span></FormLabel><FormControl>
-                            <CountryDropdown value={field.value} onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.parent_nationality`); }} placeholder="Select Nationality" />
+                            <CountryDropdown
+                                value={field.value}
+                                onBlur={field.onBlur}
+                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.parent_nationality`); }}
+                                placeholder="Select Nationality" />
                         </FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={control} name={`${pathPrefix}.parent_country_of_residence`} render={({ field }) => (
                         <FormItem><FormLabel>Country of Residence<span className="text-destructive"> *</span></FormLabel><FormControl>
-                            <CountryDropdown value={field.value} onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.parent_country_of_residence`); }} placeholder="Select Country of Residence" />
+                            <CountryDropdown
+                                value={field.value}
+                                onBlur={field.onBlur}
+                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.parent_country_of_residence`); }}
+                                placeholder="Select Country of Residence" />
                         </FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
@@ -334,6 +342,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                             <FormItem><FormLabel>Country<span className="text-destructive"> *</span></FormLabel><FormControl>
                                 <CountryDropdown
                                     value={field.value}
+                                    onBlur={field.onBlur}
                                     onChange={(country?: Country) => {
                                         const countryName = country?.name || "";
                                         field.onChange(countryName);

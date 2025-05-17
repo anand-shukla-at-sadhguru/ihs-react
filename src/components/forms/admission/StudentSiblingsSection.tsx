@@ -38,15 +38,14 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
     // useFieldArray is no longer called here
 
     return (
-        <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
-            <h3 className="font-medium text-md mb-3">Sibling Information Details</h3>
+        <div className="md:col-span-2 lg:col-span-3">
             <div className="space-y-4">
                 {fields.map((item, index) => ( // Use the passed 'fields'
                     <div key={item.id} className="p-4 border rounded-md space-y-3 relative">
                         <div className="flex justify-between items-center mb-2">
                             <h4 className="text-sm font-semibold">Sibling {index + 1}</h4>
                             {/* Show remove button for any item, as min 1 is handled by schema & auto-append */}
-                            <Button
+                            {index >= 1 && <Button
                                 type="button"
                                 variant="destructive"
                                 size="sm"
@@ -54,7 +53,7 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
                                 className="w-full sm:w-auto"
                             >
                                 Remove Sibling
-                            </Button>
+                            </Button>}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
                             <FormField
@@ -63,7 +62,7 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>First Name<span className="text-destructive"> *</span></FormLabel>
-                                        <FormControl><Input placeholder="Sibling's First Name" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormControl><Input placeholder="First Name" {...field} value={field.value ?? ''} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -74,7 +73,7 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Last Name<span className="text-destructive"> *</span></FormLabel>
-                                        <FormControl><Input placeholder="Sibling's Last Name" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormControl><Input placeholder="Last Name" {...field} value={field.value ?? ''} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -85,7 +84,7 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Roll Number<span className="text-destructive"> *</span></FormLabel>
-                                        <FormControl><Input placeholder="Sibling's Roll Number" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormControl><Input placeholder="Roll Number" {...field} value={field.value ?? ''} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}

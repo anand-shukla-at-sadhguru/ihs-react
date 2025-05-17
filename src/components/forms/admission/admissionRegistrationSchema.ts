@@ -79,12 +79,26 @@ const requiredE164PhoneSchema = e164PhoneSchema.refine(
 
 const languageProficiencyLevels = ['Native', 'Advanced', 'Intermediate', 'Basic'] as const;
 const knownLanguagesList = ['English', 'Tamil', 'Hindi', 'French', 'German', 'Spanish', 'Arabic', 'Mandarin', 'Japanese', 'Other'] as const;
-const individualLanguageSchema = z.object({
-  language: z.enum(knownLanguagesList, { required_error: "Please select a language." }),
-  proficiency: z.enum(languageProficiencyLevels, { required_error: "Please select proficiency." }),
-  // if 'Other' language is selected, you might want a field for specification:
-  // other_language_name: z.string().optional(), // Add this if 'Other' is an option in knownLanguagesList
-});
+export const individualLanguageSchema = z.object({
+  language: z.enum(knownLanguagesList, {
+    required_error: "Please select a language.",
+  }),
+  proficiency: z.enum(languageProficiencyLevels, {
+    required_error: "Please select proficiency.",
+  }),
+  other_language_name: z.string().optional(), // New field for specifying "Other"
+})
+  .superRefine((data, ctx) => {
+    if (data.language === 'Other') {
+      if (!data.other_language_name || data.other_language_name.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['other_language_name'], // Error will be shown on this field
+          message: 'Please specify the language name.',
+        });
+      }
+    }
+  });
 export type IndividualLanguageData = z.infer<typeof individualLanguageSchema>;
 
 // --- Define Schema for Individual Sibling Entry ---
@@ -293,7 +307,6 @@ export const admissionRegistrationSchema = z.object({
     .min(3, { message: 'Age must be at least 3.' })
     .max(100, { message: 'Age must be at most 100.' }),
   gender: createEnumSchema('\nMale\nFemale\nOther').refine(val => val !== undefined && val !== '', { message: 'Gender is required.' }),
-  // --> Conditional
   other_gender: z.string().optional(),
   nationality: z.string().min(1, { message: 'Nationality is required.' }), // Link to Country (string ID/Name)
   country_of_residence: z.string().min(1, { message: 'Country of Residence is required.' }), // Link to Country (string ID/Name)
@@ -313,7 +326,7 @@ export const admissionRegistrationSchema = z.object({
   // Communication Address
   comm_address_country: z.string().min(1, { message: 'Country is required.' }),
   comm_address_area_code: z.string().min(1, { message: "Area Code/ Pincode is required." })
-    .regex(/^\d{5,9}$/, { message: 'Area Code/ Pincode must be a number between 5 and 9 digits.' }),
+    .regex(/^\d{4,9}$/, { message: 'Area Code/ Pincode must be a number between 5 and 9 digits.' }),
   comm_address_line_1: z.string().min(1, { message: 'Address Line 1 is required.' }),
   comm_address_line_2: z.string().optional(),
   comm_address_city: z.string().min(1, { message: 'City/ Town is required.' }),
@@ -525,18 +538,27 @@ export const admissionRegistrationSchema = z.object({
 
 })
   .superRefine((data, ctx) => {
-    // --- Conditional Requirements ---
-
     // Previous Application Details
     if (data.applied_to_ihs_before === 'Yes') {
       if (!data.previous_application_application_year) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previous_application_application_year'], message: 'Previous Application Year is required.' });
       if (!data.previous_application_applied_for) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['previous_application_applied_for'], message: 'Previously Applied For grade is required.' });
     }
 
-    // Other Gender/Religion/Community
-    if (data.gender === 'Other' && !data.other_gender) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_gender'], message: 'Please specify gender.' });
+
+    console.error("----------------------------------------------------------");
+    console.error("--- FULL SCHEMA (HEAVILY COMMENTED): SUPER REFINE EXECUTED ---");
+    console.error("FULL SCHEMA (HEAVILY COMMENTED): Received data:", JSON.parse(JSON.stringify(data)));
+    console.error("----------------------------------------------------------");
+
+    console.warn(`FULL SCHEMA (HEAVILY COMMENTED): Gender Check - data.gender: "${data.gender}", data.other_gender: "${data.other_gender}"`);
+    const otherGenderIsEmpty = (!data.other_gender || data.other_gender.trim() === '');
+    console.warn(`FULL SCHEMA (HEAVILY COMMENTED): Gender Conditions - (data.gender === 'Other') is ${data.gender === 'Other'}, (otherGenderIsEmpty) is ${otherGenderIsEmpty}`);
+
+    if (data.gender === 'Other' && otherGenderIsEmpty) {
+      console.error("--- FULL SCHEMA (HEAVILY COMMENTED): ADDING 'other_gender' ERROR ---");
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_gender'], message: 'Please specify gender (from FULL schema - HEAVILY COMMENTED).' });
     }
+    // ... other checks ...;
     if (data.religion === 'Other' && !data.other_religion) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['other_religion'], message: 'Please specify religion.' });
     }
@@ -673,8 +695,13 @@ export const admissionRegistrationSchema = z.object({
     if (data.date && !data.tnc_check) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['tnc_check'], message: 'Please agree to the declaration.' });
     }
-
+    console.error("--- FULL SCHEMA: SUPER REFINE FINISHED ---");
+    console.error("----------------------------------------------------------");
   });
-
+console.log(
+  "%cSCHEMA EXPORT CHECK (HEAVILY COMMENTED): admissionRegistrationSchema._def.effect?.type IS:",
+  "color: blue; font-weight: bold;",
+  admissionRegistrationSchema._def.effect?.type
+);
 // Infer the TypeScript type
 export type AdmissionRegistrationFormData = z.infer<typeof admissionRegistrationSchema>;

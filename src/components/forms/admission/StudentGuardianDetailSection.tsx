@@ -231,12 +231,19 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                     <FormField control={control} name={`${pathPrefix}.guardian_last_name`} render={({ field }) => (<FormItem><FormLabel>Last Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Guardian's Last Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={control} name={`${pathPrefix}.guardian_nationality`} render={({ field }) => (
                         <FormItem><FormLabel>Nationality<span className="text-destructive"> *</span></FormLabel><FormControl>
-                            <CountryDropdown value={field.value} onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.guardian_nationality`); }} placeholder="Select Nationality" />
+                            <CountryDropdown
+                                onBlur={field.onBlur}
+                                value={field.value}
+                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.guardian_nationality`); }}
+                                placeholder="Select Nationality" />
                         </FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={control} name={`${pathPrefix}.guardian_country_of_residence`} render={({ field }) => (
                         <FormItem><FormLabel>Country of Residence<span className="text-destructive"> *</span></FormLabel><FormControl>
-                            <CountryDropdown value={field.value} onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.guardian_country_of_residence`); }} placeholder="Select Country of Residence" />
+                            <CountryDropdown
+                                value={field.value}
+                                onBlur={field.onBlur}
+                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.guardian_country_of_residence`); }} placeholder="Select Country of Residence" />
                         </FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
@@ -294,15 +301,18 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 items-end">
                         <FormField control={control} name={`${pathPrefix}.guardian_address_country`} render={({ field }) => (
                             <FormItem><FormLabel>Country<span className="text-destructive"> *</span></FormLabel><FormControl>
-                                <CountryDropdown value={field.value} onChange={(country?: Country) => {
-                                    const countryName = country?.name || "";
-                                    field.onChange(countryName);
-                                    trigger(`${pathPrefix}.guardian_address_country`);
-                                    setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                                    setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                                    setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                                    setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]); setGuardianAddrError(null);
-                                }} placeholder="Select Country" />
+                                <CountryDropdown
+                                    value={field.value}
+                                    onBlur={field.onBlur}
+                                    onChange={(country?: Country) => {
+                                        const countryName = country?.name || "";
+                                        field.onChange(countryName);
+                                        trigger(`${pathPrefix}.guardian_address_country`);
+                                        setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                                        setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]); setGuardianAddrError(null);
+                                    }} placeholder="Select Country" />
                             </FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={control} name={`${pathPrefix}.guardian_address_zipcode`} render={({ field, fieldState }) => (
