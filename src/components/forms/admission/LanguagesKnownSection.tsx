@@ -17,11 +17,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { AdmissionRegistrationFormData, IndividualLanguageData } from './admissionRegistrationSchema'; // Adjust path as needed
+// Ensure this path and types are correct for your Yup setup
+import type { AdmissionRegistrationFormDataYup, IndividualLanguageDataYup } from './yupSchema'; // ADJUST PATH AND TYPE NAME
 import { LANGUAGE_OPTIONS, PROFICIENCY_OPTIONS } from './admissionFormTabUtils';
 
 interface LanguagesKnownSectionProps {
-    control: Control<AdmissionRegistrationFormData>;
+    // Use the Yup inferred type for the main form data
+    control: Control<AdmissionRegistrationFormDataYup>;
 }
 
 export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ control }) => {
@@ -30,17 +32,18 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
         name: "languages_known"
     });
 
-    // Get trigger and getFieldState from useFormContext if you need to implement onBlur validation for these selects
-    const { watch, trigger, getFieldState } = useFormContext<AdmissionRegistrationFormData>();
+    const { watch, trigger, getFieldState, setValue } = useFormContext<AdmissionRegistrationFormDataYup>();
 
     return (
         <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
             <h3 className="font-medium text-md mb-3">Languages Known</h3>
             <div className="space-y-4">
-                {languageFields.map((item: FieldArrayWithId<AdmissionRegistrationFormData, "languages_known", "id">, index: number) => {
+                {languageFields.map((item: FieldArrayWithId<AdmissionRegistrationFormDataYup, "languages_known", "id">, index: number) => {
                     const languageFieldName = `languages_known.${index}.language` as const;
                     const proficiencyFieldName = `languages_known.${index}.proficiency` as const;
-                    // const otherLanguageFieldName = `languages_known.${index}.other_language_name` as const; // If you add this field to schema
+                    const otherLanguageFieldName = `languages_known.${index}.other_language_name` as const; // Correct field name
+
+                    const currentLanguageValue = watch(languageFieldName); // Watch the current language selection
 
                     return (
                         <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-end gap-4 p-3 border rounded-md">
@@ -52,8 +55,18 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                                         <FormItem>
                                             <FormLabel>Language<span className="text-destructive"> *</span></FormLabel>
                                             <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value ?? ''} // Ensure value is empty string if null/undefined for placeholder
+                                                onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    // If switching away from 'Other', clear the other_language_name field
+                                                    if (value !== 'Other') {
+                                                        setValue(otherLanguageFieldName, undefined, { shouldValidate: true });
+                                                    }
+                                                    trigger(languageFieldName); // Trigger validation for the language field itself
+                                                    if (value === 'Other') { // Optionally trigger other_language_name when 'Other' is selected
+                                                        trigger(otherLanguageFieldName);
+                                                    }
+                                                }}
+                                                value={field.value ?? ''}
                                                 onOpenChange={(isOpen) => {
                                                     if (!isOpen) {
                                                         field.onBlur();
@@ -83,8 +96,11 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                                         <FormItem>
                                             <FormLabel>Proficiency<span className="text-destructive"> *</span></FormLabel>
                                             <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value ?? ''} // Ensure value is empty string if null/undefined for placeholder
+                                                onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    trigger(proficiencyFieldName);
+                                                }}
+                                                value={field.value ?? ''}
                                                 onOpenChange={(isOpen) => {
                                                     if (!isOpen) {
                                                         field.onBlur();
@@ -106,49 +122,36 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                                     )}
                                 />
                             </div>
-                            {watch(languageFieldName) === 'Other' && (
+
+                            {/* Conditionally render the "Specify Other Language" field */}
+                            {currentLanguageValue === 'Other' && (
                                 <div className="flex-1 w-full sm:w-auto">
                                     <FormField
                                         control={control}
-                                        // IMPORTANT: If you want to store the "Other" language name separately,
-                                        // you MUST add 'other_language_name: z.string().optional()' to your
-                                        // 'individualLanguageSchema' in 'admissionRegistrationSchema.ts'.
-                                        // And then use that field name here.
-                                        // For now, this example assumes you might overwrite the 'language' field,
-                                        // which is generally NOT recommended if 'language' is an enum.
-                                        // It's better to have a dedicated 'other_language_name' field.
-                                        // name={otherLanguageFieldName} // << Preferred if schema has it
-                                        name={`languages_known.${index}.language`} // << TEMPORARY: Reuses language field. NOT IDEAL.
-                                        // Zod will complain if this value isn't in the enum.
-                                        // You should ideally use a new field like `other_language_spec`
-                                        // and make it conditionally required in your schema.
+                                        name={otherLanguageFieldName} // *** USE THE CORRECT FIELD NAME ***
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Specify Other Language<span className="text-destructive"> *</span></FormLabel>
-                                                <FormControl><Input
-                                                    placeholder="Language name"
-                                                    {...field}
-                                                    // If reusing 'language' field, this onChange might need care to not break enum
-                                                    value={''} // Always empty when displayed
-                                                    onChange={(e) => {
-                                                        // If using a dedicated field, just field.onChange(e.target.value)
-                                                        // If reusing `language`, this is tricky. Best to use a separate field.
-                                                        field.onChange(e.target.value);
-                                                    }}
-                                                /></FormControl>
-                                                <FormMessage />
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Enter language name"
+                                                        {...field} // This handles value and onChange correctly for this field
+                                                        onBlur={() => { // Trigger validation on blur
+                                                            field.onBlur();
+                                                            if (getFieldState(otherLanguageFieldName).isTouched) {
+                                                                trigger(otherLanguageFieldName);
+                                                            }
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage /> {/* This will show Yup validation errors for other_language_name */}
                                             </FormItem>
                                         )}
                                     />
                                 </div>
                             )}
-                            <div className="w-full sm:w-auto mt-2 sm:mt-0 self-end pb-[2px]"> {/* Adjusted alignment for button */}
-                                {/* Show remove button only if it's not the first item AND there's more than one item.
-                                    Your schema requires min(1) for languages_known, so we can always allow removal
-                                    if length > 1, and ensure the first one is never removed if it's the only one.
-                                    The schema min(1) will show an error if all are removed.
-                                */}
-                                {index >= 1 && ( // Only show if more than 1 item exists
+                            <div className="w-full sm:w-auto mt-2 sm:mt-0 self-end pb-[2px]">
+                                {languageFields.length > 1 && ( // Allow removing if more than one language entry
                                     <Button
                                         type="button"
                                         variant="destructive"
@@ -168,10 +171,10 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                     variant="outline"
                     size="sm"
                     onClick={() => appendLanguage({
-                        language: '' as any, // Start with empty string to show placeholder
-                        proficiency: '' as any, // Start with empty string
-                        // other_language_name: '' // if using this field and it's in schema
-                    } as IndividualLanguageData)} // Type assertion
+                        language: undefined,     // Default to undefined for Yup optional/required strings
+                        proficiency: undefined,  // Default to undefined
+                        other_language_name: undefined // Default to undefined
+                    } as unknown as IndividualLanguageDataYup)} // Ensure type matches Yup
                     className="mt-2"
                 >
                     Add Language

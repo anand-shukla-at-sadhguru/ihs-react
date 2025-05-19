@@ -21,22 +21,17 @@ import {
 } from "@/components/ui/select";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import { PhoneInput } from "@/components/ui/phone-input";
-import type { AdmissionRegistrationFormData } from './admissionRegistrationSchema'; // Adjust path
-import type { Country } from './AdmissionRegistrationForm'; // Or from shared types
+import type { AdmissionRegistrationFormDataYup } from './yupSchema'; // Use Yup schema type
 import { countries } from "country-data-list";
-
-const GUARDIAN_RELATION_OPTIONS_STRING = "Grand Father\nGrand Mother\nSibling\nUncle\nAunt\nFamily Friend\nOther";
-const GUARDIAN_RELATION_OPTIONS = GUARDIAN_RELATION_OPTIONS_STRING.split('\n').map(o => o.trim()).filter(Boolean);
-const GUARDIAN_EDUCATION_LEVEL_OPTIONS_STRING = "Class VIII or below\nSSLC/ PUC\nHigher Secondary\nGraduate\nPost-Graduate\nM. Phil\nPhD\nPost-Doctoral";
-const GUARDIAN_EDUCATION_LEVEL_OPTIONS = GUARDIAN_EDUCATION_LEVEL_OPTIONS_STRING.split('\n').map(o => o.trim()).filter(Boolean);
+import { Country, GUARDIAN_RELATION_OPTIONS_YUP, PARENT_EDUCATION_LEVEL_OPTIONS_YUP, PARENT_PROFESSION_OPTIONS_YUP } from './admissionFormTabUtils';
 
 interface StudentGuardianDetailSectionProps {
-    control: Control<AdmissionRegistrationFormData, any>;
+    control: Control<AdmissionRegistrationFormDataYup, any>;
     index: number;
     removeGuardian: UseFieldArrayRemove;
     totalGuardians: number;
-    getValues: UseFormGetValues<AdmissionRegistrationFormData>;
-    setValue: UseFormSetValue<AdmissionRegistrationFormData>;
+    getValues: UseFormGetValues<AdmissionRegistrationFormDataYup>;
+    setValue: UseFormSetValue<AdmissionRegistrationFormDataYup>;
 }
 
 export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSectionProps> = ({
@@ -45,8 +40,9 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
     removeGuardian,
     getValues,
     setValue,
+    totalGuardians
 }) => {
-    const { watch, trigger } = useFormContext<AdmissionRegistrationFormData>();
+    const { watch, trigger } = useFormContext<AdmissionRegistrationFormDataYup>();
     const pathPrefix = `student_guardians.${index}` as const;
 
     const watchGuardianIsWhatsappSame = watch(`${pathPrefix}.guardian_is_whatsapp_same`);
@@ -69,8 +65,8 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
         setGuardianAddrError(null);
 
         const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
-        const rhfStateField = `${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData;
-        const rhfCityField = `${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData;
+        const rhfStateField = `${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup;
+        const rhfCityField = `${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup;
 
         try {
             const response = await fetch(apiUrl);
@@ -120,14 +116,14 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
         ] as unknown as Parameters<typeof trigger>[0]; // Correct type for trigger
 
         if (watchGuardianIsAddressSame === 'Yes') {
-            setValue(`${pathPrefix}.guardian_address_country` as keyof AdmissionRegistrationFormData, getValues("comm_address_country"), { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormData, getValues("comm_address_area_code"), { shouldValidate: true });
+            setValue(`${pathPrefix}.guardian_address_country` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_country"), { shouldValidate: true });
+            setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_area_code"), { shouldValidate: true });
             const appState = getValues("comm_address_state");
             const appCity = getValues("comm_address_city");
-            setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData, appState, { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData, appCity, { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_line1` as keyof AdmissionRegistrationFormData, getValues("comm_address_line_1"), { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_line2` as keyof AdmissionRegistrationFormData, getValues("comm_address_line_2") || "", { shouldValidate: true });
+            setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, appState, { shouldValidate: true });
+            setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, appCity, { shouldValidate: true });
+            setValue(`${pathPrefix}.guardian_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_1"), { shouldValidate: true });
+            setValue(`${pathPrefix}.guardian_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_2") || "", { shouldValidate: true });
 
             setGuardianAddrStateOptions(appState ? [appState] : []);
             setGuardianAddrCityOptions(appCity ? [appCity] : []);
@@ -136,12 +132,12 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
             activeFetchIdentifier.current = null;
             if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
         } else if (watchGuardianIsAddressSame === 'No') {
-            setValue(`${pathPrefix}.guardian_address_country` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.guardian_address_country`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.guardian_address_zipcode`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_line1` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.guardian_address_line1`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_line2` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.guardian_address_line2`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_country` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_country`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_zipcode`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_line1`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_line2`) || "", { shouldValidate: false });
 
             setGuardianAddrStateOptions([]);
             setGuardianAddrCityOptions([]);
@@ -173,16 +169,16 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                     }, 800);
                 } else {
                     setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]);
-                    setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                     setGuardianAddrError(guardianAddressCountryName ? `Invalid country or ISO code not found.` : "Select country.");
                     setIsGuardianAddrLoading(false); activeFetchIdentifier.current = null;
                 }
             } else {
                 setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]);
                 if (!guardianAddressCountryName || !guardianAddressZipcode || (guardianAddressZipcode && guardianAddressZipcode.length < 3 && guardianAddressZipcode.length > 0)) {
-                    setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                 }
                 if (guardianAddressCountryName && guardianAddressZipcode && guardianAddressZipcode.length > 0 && guardianAddressZipcode.length < 3) {
                     setGuardianAddrError("Zipcode is too short.");
@@ -210,23 +206,44 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
         <div className="p-4 border rounded-md space-y-6 bg-blue-50 dark:bg-blue-900/20 shadow-sm mt-4">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
-                    Local Guardian {index + 1} Details
+                    Guardian Details
                 </h3>
-                <Button type="button" variant="destructive" className="w-auto" size="sm" onClick={() => removeGuardian(index)}>
+                {totalGuardians > 1 && <Button type="button" variant="destructive" className="w-auto" size="sm" onClick={() => removeGuardian(index)}>
                     Remove Guardian {index + 1}
-                </Button>
+                </Button>}
             </div>
 
             {/* Basic Information */}
             <div className="pt-3 border-t border-dashed border-indigo-300 dark:border-indigo-700">
                 <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Basic Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-                    <FormField control={control} name={`${pathPrefix}.guardian_relation_with_applicant`} render={({ field }) => (
-                        <FormItem><FormLabel>Relation with Applicant<span className="text-destructive"> *</span></FormLabel>
-                            <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_relation_with_applicant`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Relation" /></SelectTrigger></FormControl>
-                                <SelectContent>{GUARDIAN_RELATION_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                            </Select><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                        control={control}
+                        name={`${pathPrefix}.guardian_relation_with_applicant`}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Relation with Applicant<span className="text-destructive"> *</span></FormLabel>
+                                <Select
+                                    onValueChange={(value) => {
+                                        field.onChange(value);
+                                        trigger(`${pathPrefix}.guardian_relation_with_applicant`);
+                                    }}
+                                    onOpenChange={(isOpen) => {
+                                        if (!isOpen) {
+                                            field.onBlur();
+                                            trigger(`${pathPrefix}.guardian_relation_with_applicant`);
+                                        }
+                                    }}
+                                >
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Relation" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        {GUARDIAN_RELATION_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <FormField control={control} name={`${pathPrefix}.guardian_first_name`} render={({ field }) => (<FormItem><FormLabel>First Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Guardian's First Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={control} name={`${pathPrefix}.guardian_last_name`} render={({ field }) => (<FormItem><FormLabel>Last Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Guardian's Last Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={control} name={`${pathPrefix}.guardian_nationality`} render={({ field }) => (
@@ -256,7 +273,10 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                     <FormField control={control} name={`${pathPrefix}.guardian_contact_email`} render={({ field }) => (<FormItem><FormLabel>Contact Email Address<span className="text-destructive"> *</span></FormLabel><FormControl><Input type="email" placeholder="Email Address" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={control} name={`${pathPrefix}.guardian_contact_phone`} render={({ field }) => (
                         <FormItem><FormLabel>Contact Phone Number<span className="text-destructive"> *</span></FormLabel><FormControl>
-                            <PhoneInput defaultCountry="IN" placeholder="Enter phone number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_contact_phone`); }} value={field.value ?? ''} />
+                            <PhoneInput
+                                placeholder="Enter phone number"
+                                {...field}
+                                onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_contact_phone`); }} value={field.value ?? ''} />
                         </FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={control} name={`${pathPrefix}.guardian_is_whatsapp_same`} render={({ field }) => (
@@ -274,7 +294,10 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                     {watchGuardianIsWhatsappSame === false && (
                         <FormField control={control} name={`${pathPrefix}.guardian_whatsapp_number`} render={({ field }) => (
                             <FormItem className="lg:col-start-2"><FormLabel>WhatsApp Number<span className="text-destructive"> *</span></FormLabel><FormControl>
-                                <PhoneInput defaultCountry="IN" placeholder="Enter WhatsApp number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_whatsapp_number`); }} value={field.value ?? ''} />
+                                <PhoneInput
+                                    placeholder="Enter WhatsApp number"
+                                    {...field}
+                                    onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_whatsapp_number`); }} value={field.value ?? ''} />
                             </FormControl><FormMessage /></FormItem>
                         )} />
                     )}
@@ -287,7 +310,15 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
                     <FormField control={control} name={`${pathPrefix}.guardian_is_address_same_as_applicant`} render={({ field }) => (
                         <FormItem><FormLabel>Address same as Applicant's Communication Address?<span className="text-destructive"> *</span></FormLabel>
-                            <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_is_address_same_as_applicant`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Yes/No" /></SelectTrigger></FormControl>
+                            <Select
+                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_is_address_same_as_applicant`); }}
+                                onOpenChange={(isOpen) => {
+                                    if (!isOpen) {
+                                        field.onBlur();
+                                        trigger(`${pathPrefix}.guardian_is_address_same_as_applicant`);
+                                    }
+                                }}
+                                value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Yes/No" /></SelectTrigger></FormControl>
                                 <SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
@@ -308,9 +339,9 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                                         const countryName = country?.name || "";
                                         field.onChange(countryName);
                                         trigger(`${pathPrefix}.guardian_address_country`);
-                                        setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                                        setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                                        setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                                         setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]); setGuardianAddrError(null);
                                     }} placeholder="Select Country" />
                             </FormControl><FormMessage /></FormItem>
@@ -325,7 +356,15 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                         )} />
                         <FormField control={control} name={`${pathPrefix}.guardian_address_state`} render={({ field }) => (
                             <FormItem><FormLabel>State<span className="text-destructive"> *</span></FormLabel>
-                                <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_address_state`); }} value={field.value ?? ''} disabled={isGuardianAddrLoading || guardianAddrStateOptions.length === 0 || !guardianAddressZipcode || !guardianAddressCountryName}>
+                                <Select
+                                    onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_address_state`); }} value={field.value ?? ''} disabled={isGuardianAddrLoading || guardianAddrStateOptions.length === 0 || !guardianAddressZipcode || !guardianAddressCountryName}
+                                    onOpenChange={(isOpen) => {
+                                        if (!isOpen) {
+                                            field.onBlur();
+                                            trigger(`${pathPrefix}.guardian_address_state`);
+                                        }
+                                    }}
+                                >
                                     <FormControl><SelectTrigger><SelectValue placeholder={isGuardianAddrLoading ? "Loading..." : (guardianAddrStateOptions.length > 0 ? "Select state" : "Enter country & zipcode")} /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         {guardianAddrStateOptions.length > 0 ? guardianAddrStateOptions.map(s => <SelectItem key={`${pathPrefix}-state-${s}`} value={s}>{s}</SelectItem>)
@@ -335,7 +374,8 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                         )} />
                         <FormField control={control} name={`${pathPrefix}.guardian_address_city`} render={({ field }) => (
                             <FormItem><FormLabel>City<span className="text-destructive"> *</span></FormLabel>
-                                <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_address_city`); }} value={field.value ?? ''} disabled={isGuardianAddrLoading || guardianAddrCityOptions.length === 0 || !guardianAddressZipcode || !guardianAddressCountryName}>
+                                <Select
+                                    onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_address_city`); }} value={field.value ?? ''} disabled={isGuardianAddrLoading || guardianAddrCityOptions.length === 0 || !guardianAddressZipcode || !guardianAddressCountryName}>
                                     <FormControl><SelectTrigger><SelectValue placeholder={isGuardianAddrLoading ? "Loading..." : (guardianAddrCityOptions.length > 0 ? "Select city" : "Enter country & zipcode")} /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         {guardianAddrCityOptions.length > 0 ? guardianAddrCityOptions.map(c => <SelectItem key={`${pathPrefix}-city-${c}`} value={c}>{c}</SelectItem>)
@@ -355,11 +395,63 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     <FormField control={control} name={`${pathPrefix}.guardian_education`} render={({ field }) => (
                         <FormItem><FormLabel>Education<span className="text-destructive"> *</span></FormLabel>
-                            <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_education`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Education Level" /></SelectTrigger></FormControl>
-                                <SelectContent>{GUARDIAN_EDUCATION_LEVEL_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                            <Select
+                                onOpenChange={(isOpen) => {
+                                    if (!isOpen) {
+                                        field.onBlur();
+                                        trigger(`${pathPrefix}.guardian_education`);
+                                    }
+                                }}
+                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_education`); }} value={field.value ?? ''}
+                            ><FormControl><SelectTrigger><SelectValue placeholder="Select Education Level" /></SelectTrigger></FormControl>
+                                <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
-                    <FormField control={control} name={`${pathPrefix}.guardian_field_of_study`} render={({ field }) => (<FormItem><FormLabel>Field of Study<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="e.g., Arts, Engineering" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${pathPrefix}.guardian_field_of_study`} render={({ field }) => (<FormItem><FormLabel>Field of Study<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="e.g., Computer Science, Arts" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+            </div>
+            {/* Professional Information - WITH NEW FIELDS */}
+            <div className="pt-3 mt-4 border-t border-dashed border-slate-300 dark:border-slate-700">
+                <h4 className="text-md font-semibold mb-3 text-slate-600 dark:text-slate-300">Professional Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+                    <FormField
+                        control={control}
+                        name={`${pathPrefix}.guardian_profession`}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Profession<span className="text-destructive"> *</span></FormLabel>
+                                <Select
+                                    onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_education`); }}
+                                    onOpenChange={(isOpen) => {
+                                        if (!isOpen) {
+                                            field.onBlur();
+                                            trigger(`${pathPrefix}.guardian_profession`);
+                                        }
+                                    }}
+                                    value={field.value ?? ''}
+                                >
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Profession" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        {PARENT_PROFESSION_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField control={control} name={`${pathPrefix}.guardian_organization_name`} render={({ field }) => (
+                        <FormItem><FormLabel>Organization Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Organization Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={control} name={`${pathPrefix}.guardian_designation`} render={({ field }) => (
+                        <FormItem><FormLabel>Designation<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Designation" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={control} name={`${pathPrefix}.guardian_annual_income`} render={({ field }) => (
+                        <FormItem className="md:col-span-2 lg:col-span-1"> {/* Adjusted for better layout potentially */}
+                            <FormLabel>Annual Income (INR)<span className="text-destructive"> *</span></FormLabel>
+                            <FormControl><Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="e.g., 1000000" {...field} value={field.value ?? ''} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
                 </div>
             </div>
         </div>

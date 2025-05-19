@@ -10,7 +10,7 @@ export default function AdmissionProcedure({ onAgree }: AdmissionProcedureProps)
       <div className="bg-muted/50 rounded-lg p-4 sm:p-6 md:p-8 max-w-3xl mx-auto shadow-sm">
         <h2 className="text-xl text-center font-semibold border-b pb-2">Application Instructions</h2>
         <div className="mb-3">
-          <strong className="block mb-2 text-base">PLEASE NOTE DOWN THE FOLLOWING:</strong>
+          <strong className="block mb-2 text-base mt-2">PLEASE NOTE DOWN THE FOLLOWING:</strong>
         </div>
         <ul className="list-disc list-inside space-y-3 text-xs sm:text-sm">
           <li>

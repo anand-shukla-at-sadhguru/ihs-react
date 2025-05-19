@@ -21,23 +21,23 @@ import {
 } from "@/components/ui/select";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import { PhoneInput } from "@/components/ui/phone-input";
-import type { AdmissionRegistrationFormData } from './admissionRegistrationSchema';
-import type { Country } from './AdmissionRegistrationForm';
+import type { AdmissionRegistrationFormDataYup } from './yupSchema';
+
 import { countries } from "country-data-list";
+import { Country, PARENT_EDUCATION_LEVEL_OPTIONS_YUP } from './admissionFormTabUtils';
 
 const PARENT_RELATION_OPTIONS = ['Father', 'Mother'] as const;
-const PARENT_EDUCATION_LEVEL_OPTIONS_STRING = "Class VIII or below\nSSLC/ PUC\nHigher Secondary\nGraduate\nPost-Graduate\nM. Phil\nPhD\nPost-Doctoral";
-const PARENT_EDUCATION_LEVEL_OPTIONS = PARENT_EDUCATION_LEVEL_OPTIONS_STRING.split('\n').map(o => o.trim()).filter(Boolean);
+
 const PARENT_PROFESSION_OPTIONS_STRING = "Academia-Professors, Research Scholars, Scientists\nArts, Music, Entertainment\nArchitecture and Construction\nAgriculture\nArmed Forces\nBanking and Finance and Financial Services\nBusinessman/ Entrepreneur\nEducation and Training\nInformation Technology\nHealthcare\nOthers";
 const PARENT_PROFESSION_OPTIONS = PARENT_PROFESSION_OPTIONS_STRING.split('\n').map(o => o.trim()).filter(Boolean);
 
 interface StudentParentDetailSectionProps {
-    control: Control<AdmissionRegistrationFormData>;
+    control: Control<AdmissionRegistrationFormDataYup>;
     index: number;
     removeParent: (index: number) => void;
     totalParents: number;
-    getValues: UseFormGetValues<AdmissionRegistrationFormData>;
-    setValue: UseFormSetValue<AdmissionRegistrationFormData>;
+    getValues: UseFormGetValues<AdmissionRegistrationFormDataYup>;
+    setValue: UseFormSetValue<AdmissionRegistrationFormDataYup>;
 }
 
 export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProps> = ({
@@ -48,7 +48,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
     getValues,
     setValue,
 }) => {
-    const { watch, trigger } = useFormContext<AdmissionRegistrationFormData>();
+    const { watch, trigger } = useFormContext<AdmissionRegistrationFormDataYup>();
     const pathPrefix = `students_parents.${index}` as const;
 
     const watchIsWhatsappSame = watch(`${pathPrefix}.parent_is_whatsapp_same`);
@@ -72,8 +72,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
         setParentAddrError(null);
 
         const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
-        const rhfStateField = `${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormData;
-        const rhfCityField = `${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormData;
+        const rhfStateField = `${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup;
+        const rhfCityField = `${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup;
 
         try {
             const response = await fetch(apiUrl);
@@ -118,7 +118,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
     }, [setValue, pathPrefix, trigger]); // `setIsParentAddrLoading`, `setParentAddrError`, `setParentAddrStateOptions`, `setParentAddrCityOptions` are stable setters
 
     useEffect(() => {
-        const fieldsToTrigger: Path<AdmissionRegistrationFormData>[] = [
+        const fieldsToTrigger: Path<AdmissionRegistrationFormDataYup>[] = [
             `${pathPrefix}.parent_address_country`,
             `${pathPrefix}.parent_address_zipcode`,
             `${pathPrefix}.parent_address_state`,
@@ -128,14 +128,14 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
         ];
 
         if (watchIsAddressSame === 'Yes') {
-            setValue(`${pathPrefix}.parent_address_country` as keyof AdmissionRegistrationFormData, getValues("comm_address_country"), { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormData, getValues("comm_address_area_code"), { shouldValidate: true });
+            setValue(`${pathPrefix}.parent_address_country` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_country"), { shouldValidate: true });
+            setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_area_code"), { shouldValidate: true });
             const appState = getValues("comm_address_state");
             const appCity = getValues("comm_address_city");
-            setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormData, appState, { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormData, appCity, { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_line1` as keyof AdmissionRegistrationFormData, getValues("comm_address_line_1"), { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_line2` as keyof AdmissionRegistrationFormData, getValues("comm_address_line_2") || "", { shouldValidate: true });
+            setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, appState, { shouldValidate: true });
+            setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, appCity, { shouldValidate: true });
+            setValue(`${pathPrefix}.parent_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_1"), { shouldValidate: true });
+            setValue(`${pathPrefix}.parent_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_2") || "", { shouldValidate: true });
 
             setParentAddrStateOptions(appState ? [appState] : []);
             setParentAddrCityOptions(appCity ? [appCity] : []);
@@ -144,12 +144,12 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             activeFetchIdentifier.current = null; // Clear any pending fetch idea
             if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current); // Clear debounce
         } else if (watchIsAddressSame === 'No') {
-            setValue(`${pathPrefix}.parent_address_country` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.parent_address_country`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.parent_address_zipcode`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_line1` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.parent_address_line1`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_line2` as keyof AdmissionRegistrationFormData, getValues(`${pathPrefix}.parent_address_line2`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.parent_address_country` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_country`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_zipcode`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+            setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+            setValue(`${pathPrefix}.parent_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_line1`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.parent_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_line2`) || "", { shouldValidate: false });
 
             setParentAddrStateOptions([]);
             setParentAddrCityOptions([]);
@@ -196,16 +196,16 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                     }, 800);
                 } else { // Invalid country name
                     setParentAddrStateOptions([]); setParentAddrCityOptions([]);
-                    setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                     setParentAddrError(parentAddressCountryName ? `Invalid country or ISO code not found.` : "Select country.");
                     setIsParentAddrLoading(false); activeFetchIdentifier.current = null;
                 }
             } else { // Conditions for fetch not met
                 setParentAddrStateOptions([]); setParentAddrCityOptions([]);
                 if (!parentAddressCountryName || !parentAddressZipcode || (parentAddressZipcode && parentAddressZipcode.length < 3 && parentAddressZipcode.length > 0)) {
-                    setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                    setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                 }
                 if (parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length > 0 && parentAddressZipcode.length < 3) {
                     setParentAddrError("Zipcode is too short.");
@@ -235,10 +235,15 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
         <div className="p-4 border rounded-md space-y-6 bg-slate-50 dark:bg-slate-800/30 shadow-sm">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                    Parent {index + 1} Details
+                    Parent Details
                 </h3>
                 {totalParents > 1 && (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeParent(index)} className="text-destructive hover:bg-destructive/10">
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        className="w-full sm:w-auto"
+                        size="sm"
+                        onClick={() => removeParent(index)}>
                         Remove Parent {index + 1}
                     </Button>
                 )}
@@ -252,7 +257,18 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                     <FormField control={control} name={`${pathPrefix}.parent_last_name`} render={({ field }) => (<FormItem><FormLabel>Last Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Last Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={control} name={`${pathPrefix}.parent_relation`} render={({ field }) => (
                         <FormItem><FormLabel>Relation<span className="text-destructive"> *</span></FormLabel>
-                            <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_relation`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Relation" /></SelectTrigger></FormControl>
+                            <Select
+                                onValueChange={(value) => {
+                                    field.onChange(value);
+                                    trigger(`${pathPrefix}.parent_relation`);
+                                }}
+                                onOpenChange={(isOpen) => {
+                                    if (!isOpen) {
+                                        field.onBlur();
+                                        trigger(`${pathPrefix}.parent_relation`);
+                                    }
+                                }}
+                                value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Relation" /></SelectTrigger></FormControl>
                                 <SelectContent>{PARENT_RELATION_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
@@ -284,7 +300,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                     <FormField control={control} name={`${pathPrefix}.parent_contact_email`} render={({ field }) => (<FormItem><FormLabel>Contact Email Address<span className="text-destructive"> *</span></FormLabel><FormControl><Input type="email" placeholder="Email Address" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={control} name={`${pathPrefix}.parent_contact_phone`} render={({ field }) => (
                         <FormItem><FormLabel>Contact Phone Number<span className="text-destructive"> *</span></FormLabel><FormControl>
-                            <PhoneInput defaultCountry="IN" placeholder="Enter phone number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_contact_phone`); }} value={field.value ?? ''} />
+                            <PhoneInput
+                                placeholder="Enter phone number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_contact_phone`); }} value={field.value ?? ''} />
                         </FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={control} name={`${pathPrefix}.parent_is_whatsapp_same`} render={({ field }) => (
@@ -302,7 +319,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                     {watchIsWhatsappSame === false && (
                         <FormField control={control} name={`${pathPrefix}.parent_whatsapp_number`} render={({ field }) => (
                             <FormItem className="lg:col-start-2"><FormLabel>WhatsApp Number<span className="text-destructive"> *</span></FormLabel><FormControl>
-                                <PhoneInput defaultCountry="IN" placeholder="Enter WhatsApp number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_whatsapp_number`); }} value={field.value ?? ''} />
+                                <PhoneInput
+                                    placeholder="Enter WhatsApp number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_whatsapp_number`); }} value={field.value ?? ''} />
                             </FormControl><FormMessage /></FormItem>
                         )} />
                     )}
@@ -319,6 +337,12 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                 onValueChange={(value) => {
                                     field.onChange(value);
                                     trigger(`${pathPrefix}.parent_is_address_same_as_applicant`);
+                                }}
+                                onOpenChange={(isOpen) => {
+                                    if (!isOpen) {
+                                        field.onBlur();
+                                        trigger(`${pathPrefix}.parent_is_address_same_as_applicant`);
+                                    }
                                 }}
                                 value={field.value ?? ''}
                             >
@@ -347,9 +371,9 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                         const countryName = country?.name || "";
                                         field.onChange(countryName);
                                         trigger(`${pathPrefix}.parent_address_country`);
-                                        setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false }); // Clear zip on country change
-                                        setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
-                                        setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormData, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false }); // Clear zip on country change
+                                        setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                                         setParentAddrStateOptions([]);
                                         setParentAddrCityOptions([]);
                                         setParentAddrError(null);
@@ -372,7 +396,9 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                     <FormControl><SelectTrigger><SelectValue placeholder={isParentAddrLoading ? "Loading..." : (parentAddrStateOptions.length > 0 ? "Select state" : "Enter country & zipcode")} /></SelectTrigger></FormControl>
                                     <SelectContent>
                                         {parentAddrStateOptions.length > 0 ? parentAddrStateOptions.map(s => <SelectItem key={`${pathPrefix}-state-${s}`} value={s}>{s}</SelectItem>)
-                                            : <SelectItem value="no-opts" disabled>{!parentAddressCountryName ? "Select country" : (parentAddressZipcode && parentAddressZipcode.length >= 3 ? "No states found" : "Enter zipcode")}</SelectItem>}
+                                            : <SelectItem
+                                                value="no-opts"
+                                                disabled>{!parentAddressCountryName ? "Select country" : (parentAddressZipcode && parentAddressZipcode.length >= 3 ? "No states found" : "Enter zipcode")}</SelectItem>}
                                     </SelectContent>
                                 </Select><FormMessage /></FormItem>
                         )} />
@@ -387,7 +413,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                 </Select><FormMessage /></FormItem>
                         )} />
                         <FormField control={control} name={`${pathPrefix}.parent_address_line1`} render={({ field }) => (<FormItem><FormLabel>Address Line 1<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Address Line 1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={control} name={`${pathPrefix}.parent_address_line2`} render={({ field }) => (<FormItem><FormLabel>Address Line 2<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Address Line 2" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={control} name={`${pathPrefix}.parent_address_line2`} render={({ field }) => (<FormItem><FormLabel>Address Line 2<span className="text-destructive"></span></FormLabel><FormControl><Input placeholder="Address Line 2" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                 </div>
             )}
@@ -398,8 +424,16 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     <FormField control={control} name={`${pathPrefix}.parent_education`} render={({ field }) => (
                         <FormItem><FormLabel>Education<span className="text-destructive"> *</span></FormLabel>
-                            <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_education`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Education Level" /></SelectTrigger></FormControl>
-                                <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                            <Select
+                                onOpenChange={(isOpen) => {
+                                    if (!isOpen) {
+                                        field.onBlur();
+                                        trigger(`${pathPrefix}.parent_education`);
+                                    }
+                                }}
+                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_education`); }} value={field.value ?? ''}
+                            ><FormControl><SelectTrigger><SelectValue placeholder="Select Education Level" /></SelectTrigger></FormControl>
+                                <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={control} name={`${pathPrefix}.parent_field_of_study`} render={({ field }) => (<FormItem><FormLabel>Field of Study<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="e.g., Computer Science, Arts" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
@@ -412,7 +446,14 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
                     <FormField control={control} name={`${pathPrefix}.parent_profession`} render={({ field }) => (
                         <FormItem><FormLabel>Profession<span className="text-destructive"> *</span></FormLabel>
-                            <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_profession`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Profession" /></SelectTrigger></FormControl>
+                            <Select
+                                onOpenChange={(isOpen) => {
+                                    if (!isOpen) {
+                                        field.onBlur();
+                                        trigger(`${pathPrefix}.parent_profession`);
+                                    }
+                                }}
+                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_profession`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Profession" /></SelectTrigger></FormControl>
                                 <SelectContent>{PARENT_PROFESSION_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />

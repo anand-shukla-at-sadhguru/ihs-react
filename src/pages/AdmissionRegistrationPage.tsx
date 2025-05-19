@@ -1,9 +1,9 @@
-import { AdmissionRegistrationForm } from '@/components/forms/admission/AdmissionRegistrationForm'; // Form will be here
+import { AdmissionRegistrationForm } from '@/components/forms/admission/AdmissionRegistrationYup';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AdmissionRegistrationPage() {
   return (
-    <Card className="w-full mx-auto"> {/* Max width for better readability */}
+    <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle>Student Admission Registration</CardTitle>
         <CardDescription>

@@ -17,16 +17,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import type { AdmissionRegistrationFormData, IndividualSiblingData } from './admissionRegistrationSchema'; // Adjust path
+import type {
+    AdmissionRegistrationFormDataYup,
+    IndividualSiblingDataYup
+} from './yupSchema'; // Use Yup types
 
 // Constants for dropdowns
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
 
 interface StudentSiblingsSectionProps {
-    control: Control<AdmissionRegistrationFormData>;
-    fields: FieldArrayWithId<AdmissionRegistrationFormData, "student_siblings", "id">[]; // Pass fields
-    append: UseFieldArrayAppend<AdmissionRegistrationFormData, "student_siblings">;    // Pass append
-    remove: UseFieldArrayRemove;                                                         // Pass remove
+    control: Control<AdmissionRegistrationFormDataYup>;
+    fields: FieldArrayWithId<AdmissionRegistrationFormDataYup, "student_siblings", "id">[];
+    append: UseFieldArrayAppend<AdmissionRegistrationFormDataYup, "student_siblings">;
+    remove: UseFieldArrayRemove;
+    siblingData: IndividualSiblingDataYup[];
 }
 
 export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
@@ -48,9 +52,9 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
                             {index >= 1 && <Button
                                 type="button"
                                 variant="destructive"
+                                className="w-full sm:w-auto"
                                 size="sm"
                                 onClick={() => remove(index)} // Use passed 'remove'
-                                className="w-full sm:w-auto"
                             >
                                 Remove Sibling
                             </Button>}
@@ -95,7 +99,11 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Date of Birth<span className="text-destructive"> *</span></FormLabel>
-                                        <FormControl><Input type="date" placeholder="YYYY-MM-DD" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormControl><Input type="date"
+                                            placeholder="YYYY-MM-DD"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                        /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -125,13 +133,13 @@ export const StudentSiblingsSection: React.FC<StudentSiblingsSectionProps> = ({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ // Use passed 'append'
+                    onClick={() => append({
                         sibling_first_name: '',
                         sibling_last_name: '',
                         sibling_roll_number: '',
                         sibling_date_of_birth: '',
                         sibling_gender: ''
-                    } as unknown as IndividualSiblingData)}
+                    } as unknown as IndividualSiblingDataYup)}
                     className="mt-2"
                 >
                     Add Sibling
