@@ -448,31 +448,34 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     }),
 
     // --- Subjects Tab (Class XI) ---
-    group_a: yup.string().when('applied_for', { is: 'Class XI', then: s => s.oneOf(PHYSICS_ACCOUNTS_HISTORY_OPTIONS).required("Group A subject is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    group_b: yup.string().when('applied_for', { is: 'Class XI', then: s => s.oneOf(CHEMISTRY_ECONOMICS_OPTIONS).required("Group B subject is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    group_c: yup.string().when('applied_for', { is: 'Class XI', then: s => s.oneOf(BIOLOGY_CS_COMMERCE_POLSCI_OPTIONS).required("Group C subject is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    group_d: yup.string().when('applied_for', { is: 'Class XI', then: s => s.oneOf(MATH_ENV_FINEARTS_OPTIONS).required("Group D subject is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    group_a: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(PHYSICS_ACCOUNTS_HISTORY_OPTIONS).required("Group A subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    group_b: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(CHEMISTRY_ECONOMICS_OPTIONS).required("Group B subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    group_c: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(BIOLOGY_CS_COMMERCE_POLSCI_OPTIONS).required("Group C subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    group_d: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(MATH_ENV_FINEARTS_OPTIONS).required("Group D subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
 
     // Class XI Questions
-    q1_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q2_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q3_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q4_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q5_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q6_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    q1_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q2_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q3_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q4_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q5_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q6_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
     q7_applicant_response: yup.string().optional().nullable().max(200), // This one was marked optional
 
-    q1_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q2_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q3_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q4_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q5_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    q6_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: s => s.required("This response is required.").max(200), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    q1_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q2_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q3_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q4_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q5_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    q6_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
 
     // --- Declaration Tab ---
     declaration: yup.boolean().oneOf([true], 'Please agree to the declaration.').required(),
     date: yup.date()
-        .transform((value, originalValue) => originalValue === "" ? null : (originalValue && typeof originalValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(originalValue) ? new Date(originalValue) : value))
+        .transform((value: unknown, originalValue: unknown) =>
+            originalValue === "" ? null :
+                (originalValue && typeof originalValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(originalValue) ? new Date(originalValue) : value)
+        )
         .nullable()
         .typeError('Invalid date format (YYYY-MM-DD).')
         .required('Date is required.'),

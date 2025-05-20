@@ -1,6 +1,6 @@
 // CountryDropdown.tsx (or wherever this component is defined)
 
-import React, { useCallback, useState, forwardRef, useEffect } from "react";
+import { useCallback, useState, forwardRef, useEffect } from "react";
 import {
   Command,
   CommandEmpty,
