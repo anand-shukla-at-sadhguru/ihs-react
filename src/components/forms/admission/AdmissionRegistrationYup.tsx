@@ -110,37 +110,40 @@ export function AdmissionRegistrationForm() {
         // Updated default values reflecting the flattened schema for parents/siblings
         defaultValues: {
             application_year: getCurrentAcademicYear(),
-            // applied_for: 'Class V', // Default from appliedForOptions
-            // applicant_user: 'applicant@example.com', // Example
-            // applied_to_ihs_before: 'No',
+            applied_for: 'Class V', // Default from appliedForOptions
+            applicant_user: 'IHS-202526-001', // Example
+            applied_to_ihs_before: 'No',
             // previous_application_application_year: previousApplicationYears[0] || '', // Default to most recent or empty
             // previous_application_applied_for: 'Class II', // Default from appliedForOptions
             // previous_application_remarks: '',
-            // first_name: 'ApplicantFirstName',
+            first_name: 'Jhon',
             // middle_name: '',
-            // last_name: 'ApplicantLastName',
-            gender: undefined, // Or '' or one of GENDER_OPTIONS
-            // nationality: 'India',
-            // country_of_residence: 'India',
-            // country: 'India', // Country of Birth
-            // date_of_birth: '2010-01-01', // Example past date
+            last_name: 'Sue',
+            gender: 'Male', // Or '' or one of GENDER_OPTIONS
+            nationality: 'India',
+            country_of_residence: 'India',
+            country: 'India', // Country of Birth
+            // date_of_birth: new Date('2010-01-01'), // Example past date
             // age: 14, // Example, or calculate based on DOB
             // comm_address_country: 'India',
             // comm_address_area_code: '110001',
-            // comm_address_line_1: '123 Applicant Comm St',
+            comm_address_line_1: 'Plot 403/404 Nakawa Industrial Area, P.O. Box 9547',
             // comm_address_line_2: 'Apt 1',
             // comm_address_city: 'New Delhi',
             // comm_address_state: 'Delhi',
-            // religion: 'Hindu', // Default from RELIGION_OPTIONS
-            // community: 'OC',   // Default from COMMUNITY_OPTIONS
-            // identification_mark_2: 'Scar on forehead',
-            // other_religion: '',
+            religion: 'Other', // Default from RELIGION_OPTIONS
+            community: 'OC',   // Default from COMMUNITY_OPTIONS
+            identification_mark_1: 'Scar on KNee',
+            identification_mark_2: 'Scar on forehead',
+            other_religion: 'Akhand bharat',
             // other_community: '',
-            // mother_tongue: 'English', // Example
+            mother_tongue: 'Other', // Example
+            other_mother_tongue: 'Njerep',
             languages_known: [
-                { language: undefined, proficiency: undefined },
+                { language: 'Hindi', proficiency: 'Advanced' },
+                { language: 'Other', proficiency: 'Advanced', other_language_name: 'Njerep' },
             ],
-            // has_sibling_in_ihs: 'Yes',
+            has_sibling_in_ihs: 'No',
             student_siblings: [], // Will be auto-populated by useEffect if has_sibling_in_ihs is 'Yes' initially
             // recent_photograph: undefined,
             // birth_certificate: undefined,
@@ -151,66 +154,66 @@ export function AdmissionRegistrationForm() {
             // place_of_issue: '',
             // date_of_issue: '',
             // date_of_expiry: '',
-            // is_home_schooled: 'No',
-            // current_school_name: 'Current Public School',
-            // current_school_board_affiliation: 'CBSE', // Default from BOARD_AFFILIATION_OPTIONS
-            // current_school_phone_number: '+919988776655', // E.164 format
-            // current_school_country: 'India',
-            // current_school_area_code: '110002',
-            // current_school_city: 'New Delhi',
-            // current_school_state: 'Delhi',
-            // current_school_email_address: 'currentschool@example.com',
-            // current_school_a_line1: '456 School Rd',
-            // current_school_a_line2: '',
+            is_home_schooled: 'No',
+            current_school_name: 'Delhi Public School',
+            current_school_board_affiliation: 'State Board', // Default from BOARD_AFFILIATION_OPTIONS
+            current_school_phone_number: '+919988776655', // E.164 format
+            current_school_country: 'India',
+            current_school_area_code: '110002',
+            current_school_city: 'New Delhi',
+            current_school_state: 'Delhi',
+            current_school_email_address: 'currentschool@example.com',
+            current_school_a_line1: '456 School Rd',
+            current_school_a_line2: '',
             // was_the_applicant_ever_home_schooled: 'No',
             // been_to_school_previously: 'No', // Set to No so previous_schools_table is initially empty
             previous_schools: [],
             emis_id: '',
-            // academic_strengths_and_weaknesses: 'Strong in sciences.',
-            // hobbies_interests_and_extra_curricular_activities: 'Reading, Chess.',
-            // other_details_of_importance: '',
-            // temperament_and_personality: 'Inquisitive and calm.',
-            // special_learning_needs_or_learning_disability: 'None reported.',
-            // done_smallpox_vaccine: 'Yes',
-            // done_hepatitis_a_vaccine: 'Yes',
-            // done_hepatitis_b_vaccine: 'Yes',
-            // done_tdap_vaccine: 'Yes',
-            // done_typhoid_vaccine: 'Yes',
-            // done_measles_vaccine: 'Yes',
-            // done_polio_vaccine: 'Yes',
-            // done_mumps_vaccine: 'Yes',
-            // done_rubella_vaccine: 'Yes',
-            // done_varicella_vaccine: 'Yes',
+            academic_strengths_and_weaknesses: 'Strong in sciences.',
+            hobbies_interests_and_extra_curricular_activities: 'Reading, Chess.',
+            other_details_of_importance: '',
+            temperament_and_personality: 'Inquisitive and calm.',
+            special_learning_needs_or_learning_disability: 'None reported.',
+            done_smallpox_vaccine: 'Yes',
+            done_hepatitis_a_vaccine: 'Yes',
+            done_hepatitis_b_vaccine: 'Yes',
+            done_tdap_vaccine: 'Yes',
+            done_typhoid_vaccine: 'Yes',
+            done_measles_vaccine: 'Yes',
+            done_polio_vaccine: 'Yes',
+            done_mumps_vaccine: 'Yes',
+            done_rubella_vaccine: 'Yes',
+            done_varicella_vaccine: 'Yes',
             // other_vaccines: '',
             // vaccine_certificates: undefined,
-            // blood_group: 'Blood Group A+', // Default from BLOOD_GROUP_OPTIONS
-            // wears_glasses_or_lens: 'No',
+            blood_group: 'Blood Group A+', // Default from BLOOD_GROUP_OPTIONS
+            wears_glasses_or_lens: 'No',
             // right_eye_power: '',
             // left_eye_power: '',
-            // is_toilet_trained: 'Yes', // Relevant if applied_for is Class II
+            is_toilet_trained: 'Yes', // Relevant if applied_for is Class II
             // wets_bed: 'No',           // Relevant if applied_for is Class II
             // bed_wet_frequency: '',    // Relevant if wets_bed is Yes
-            // has_hearing_challenges: 'No',
+            has_hearing_challenges: 'No',
             // hearing_challenges: '',
-            // has_behavioural_challenges: 'No',
-            // behavioural_challenges: '',
-            // has_physical_challenges: 'No',
-            // physical_challenges: '',
-            // has_speech_challenges: 'No',
-            // speech_challenges: '',
-            // has_injury: 'No',
-            // injury_details: '',
-            // on_medication: 'No',
-            // medication_details: '',
-            // medical_prescription: undefined,
-            // has_health_issue: 'No',
-            // health_issue_details: '',
-            // was_hospitalized: 'No',
-            // hospitalization_details: '',
-            // needs_special_attention: 'No',
-            // attention_details: '',
-            // has_allergies: 'No',
-            // allergy_details: '',
+            has_behavioural_challenges: 'No',
+            behavioural_challenges: '',
+            has_physical_challenges: 'No',
+            physical_challenges: '',
+            has_speech_challenges: 'No',
+            speech_challenges: '',
+            has_injury: 'No',
+            injury_details: '',
+            on_medication: 'No',
+            medication_details: '',
+            medical_prescription: undefined,
+            has_health_issue: 'No',
+            health_issue_details: '',
+            was_hospitalized: 'No',
+            hospitalization_details: '',
+            needs_special_attention: 'No',
+            attention_details: '',
+            has_allergies: 'No',
+            allergy_details: '',
             students_parents: [
                 {
                     // parent_first_name: 'Parent1 First',
@@ -244,14 +247,14 @@ export function AdmissionRegistrationForm() {
                 //   ... (similarly fill all fields)
                 // }
             ],
-            // parent_marital_status: 'Married', // Default from PARENT_MARITAL_STATUS_OPTIONS
+            parent_marital_status: 'Divorced', // Default from PARENT_MARITAL_STATUS_OPTIONS
             // who_is_responsible_for_paying_applicants_tuition_fee: 'Both', // Default from options
             // court_order_document: undefined,
             // who_is_allowed_to_receive_school_communication: 'Both',
             // legal_rights_document: undefined,
             // who_is_allowed_to_receive_report_cards: 'Both',
             // visit_rights: 'Both',
-            // parents_are_local_guardians: 'Yes', // Default to Yes, so guardian section is initially hidden
+            parents_are_local_guardians: 'Yes', // Default to Yes, so guardian section is initially hidden
             student_guardians: [],            // Will be auto-populated by useEffect if parents_are_local_guardians is 'No'
             // group_a: undefined, // For Class XI
             // group_b: undefined,
@@ -264,15 +267,15 @@ export function AdmissionRegistrationForm() {
             // declaration: false, // Should typically default to false
             // date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD
             // place: 'Default City',
-            // billing_name: 'Billing Name',
-            // billing_phone: '+919000000000', // E.164
-            // billing_email: 'billing@example.com',
-            // billing_country: 'India',
-            // billing_area_code: '110001',
-            // billing_city: 'New Delhi',
-            // billing_state: 'Delhi',
-            // billing_address_l1: '789 Billing St',
-            // billing_address_l2: '',
+            billing_name: 'Jhon joe JIJOE', // Updated billing name
+            billing_phone: '+919000000000', // E.164
+            billing_email: 'billing@example.com',
+            billing_country: 'India',
+            billing_area_code: '110001',
+            billing_city: 'New Delhi',
+            billing_state: 'Delhi',
+            billing_address_l1: '789 Billing St',
+            billing_address_l2: '',
             // application_fee_status: 'Pending', // Default from options
             // program: 'General', // Example
             // payment_program_links: [],
@@ -1602,12 +1605,12 @@ export function AdmissionRegistrationForm() {
                                 <div className="pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                     {renderField("parent_marital_status", { label: "Parent Marital Status", fieldtype: "Select", options: "\nMarried\nSeparated\nDivorced\nSingle Parent", reqd: 1 })}
                                     {/* Conditional Divorce Fields */}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_paying_applicants_tuition_fee", { label: "Who pays tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced" })} {/* Fixed typo */}
-                                    {watchMaritalStatus === 'Divorced' && renderField("court_order_document", { label: "Court Order Document", fieldtype: "Attach", mandatory_depends_on: "Divorced" })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_school_communication", { label: "Who receives communication?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced" })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_report_cards", { label: "Who receives report cards?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced" })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("visit_rights", { label: "Who can visit child?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced" })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("legal_rights_document", { label: "Legal Rights Document", fieldtype: "Attach", mandatory_depends_on: "Divorced" })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_paying_applicants_tuition_fee", { label: "Who pays tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
+                                    {watchMaritalStatus === 'Divorced' && renderField("court_order_document", { label: "Court Order Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_school_communication", { label: "Who receives communication?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_report_cards", { label: "Who receives report cards?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("visit_rights", { label: "Who can visit child?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("legal_rights_document", { label: "Legal Rights Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
                                 </div>
 
                                 {/* --- Guardian Info --- */}
