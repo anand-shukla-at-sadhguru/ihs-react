@@ -11,10 +11,9 @@ export default function Guidelines() {
 
         <h2 className="text-center text-3xl font-semibold my-3">A Brief Outline of the Isha Home School Admission Process</h2>
 
-        <p>
-          Thank you for your interest in Isha Home School. As you consider applying to Isha Home School for your child, please go through the various sections of our
-          <a href="https://isha.sadhguru.org/isha-home-school">website</a> for important information about the school. Usually, prospective parents may visit the school with prior appointment.
-          <strong>Please use a desktop / laptop to fill up the form (please do not use tablets / phones for that)</strong>
+        <p>Thank you for your interest in Isha Home School. As you consider applying to Isha Home School for your child, please go through the various sections of our &nbsp;
+          <a className="text-blue-600 underline" href="https://isha.sadhguru.org/isha-home-school">website</a> for important information about the school. Usually, prospective parents may visit the school with prior appointment.
+          <strong> Please use a desktop / laptop to fill up the form (please do not use tablets / phones for that).</strong>
         </p>
 
         <h3 className="text-2xl font-semibold mt-6 mb-2">New Admissions</h3>
