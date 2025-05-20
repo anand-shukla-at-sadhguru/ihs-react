@@ -237,11 +237,6 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     middle_name: yup.string().optional().nullable(),
     last_name: yup.string().required('Last Name is required.'),
     gender: yup.string().oneOf(GENDER_OPTIONS_YUP, 'Invalid selection.').required("Gender is required."),
-    other_gender: yup.string().when('gender', ([genderVal], schema) => {
-        return genderVal === 'Other'
-            ? schema.required('Please specify your gender.').min(1)
-            : schema.optional().nullable().transform(() => undefined);
-    }),
     nationality: yup.string().required('Nationality is required.'),
     country_of_residence: yup.string().required('Country of Residence is required.'),
     country: yup.string().required('Country of Birth is required.'), // Country of Birth

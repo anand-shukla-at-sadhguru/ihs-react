@@ -94,6 +94,10 @@ export function AdmissionRegistrationForm() {
     const [commCityOptions, setCommCityOptions] = useState<string[]>([]);
     const [isCommAddressLoading, setIsCommAddressLoading] = useState(false);
     const [commAddressError, setCommAddressError] = useState<string | null>(null);
+    const [billStateOptions, setBillStateOptions] = useState<string[]>([]);
+    const [billCityOptions, setBillCityOptions] = useState<string[]>([]); // <-- Updated variable name
+    const [isBillAddressLoading, setIsBillAddressLoading] = useState(false);
+    const [billAddressError, setBillAddressError] = useState<string | null>(null); // <-- Updated variable name
     // --- NEW: For Current School Address ---
     const [currentSchoolStateOptions, setCurrentSchoolStateOptions] = useState<string[]>([]);
     const [currentSchoolCityOptions, setCurrentSchoolCityOptions] = useState<string[]>([]);
@@ -116,7 +120,6 @@ export function AdmissionRegistrationForm() {
             // middle_name: '',
             // last_name: 'ApplicantLastName',
             gender: undefined, // Or '' or one of GENDER_OPTIONS
-            other_gender: '',    // Recommended: Initialize as an empty string
             // nationality: 'India',
             // country_of_residence: 'India',
             // country: 'India', // Country of Birth
@@ -289,7 +292,6 @@ export function AdmissionRegistrationForm() {
     });
     // 2. Watch fields (Keep existing watches, they are still relevant for conditional logic)
     const watchAppliedBefore = form.watch("applied_to_ihs_before");
-    const watchGender = form.watch("gender");
     const watchMotherTongue = form.watch("mother_tongue");
     const watchReligion = form.watch("religion");
     const watchCommunity = form.watch("community");
@@ -303,6 +305,9 @@ export function AdmissionRegistrationForm() {
     //To auto Fill the State and City based on the country selected
     const watchCommCountry = form.watch("comm_address_country");
     const watchCommZipcode = form.watch("comm_address_area_code");
+
+    const watchBillingCountry = form.watch("billing_country");
+    const watchBillingZipcode = form.watch("billing_area_code");
 
     // Watch fields for Current School Address
     const watchCurrentSchoolCountry = form.watch("current_school_country"); // Make sure this field exists in schema/form
@@ -514,6 +519,42 @@ export function AdmissionRegistrationForm() {
         }
     }, [watchCommCountry, watchCommZipcode, setValue]);
 
+    useEffect(() => {
+        if (watchBillingCountry && watchBillingZipcode && watchBillingZipcode.length >= 3) {
+            const countryObj = countries.all.find(c => c.name === watchBillingCountry);
+            if (countryObj && countryObj.alpha2) {
+                const countryISO2 = countryObj.alpha2;
+                const timerId = setTimeout(() => {
+                    fetchAddressDetails(
+                        countryISO2, // Pass ISO2 code
+                        watchBillingZipcode,
+                        setBillStateOptions,
+                        setBillCityOptions,
+                        setIsBillAddressLoading,
+                        setBillAddressError,
+                        "billing_state",
+                        "billing_city",
+                        setValue,
+                    );
+                }, 800);
+                return () => clearTimeout(timerId);
+            } else {
+                setBillStateOptions([]);
+                setBillCityOptions([]);
+                setBillAddressError("Invalid country selected or country code not found.");
+                setValue("billing_state", "", { shouldValidate: false });
+                setValue("billing_city", "", { shouldValidate: false });
+            }
+        } else {
+            setBillStateOptions([]);
+            setBillCityOptions([]);
+            if (!watchBillingZipcode) {
+                setValue("billing_state", "", { shouldValidate: false });
+                setValue("billing_city", "", { shouldValidate: false });
+            }
+            setBillAddressError(null);
+        }
+    }, [watchBillingCountry, watchBillingZipcode, setValue]);
     // --- NEW: useEffect for Current School Address ---
     useEffect(() => {
         if (watchIsHomeSchooled === 'No' && watchCurrentSchoolCountry && watchCurrentSchoolZipcode && watchCurrentSchoolZipcode.length >= 3) {
@@ -969,7 +1010,6 @@ export function AdmissionRegistrationForm() {
                                         {renderField("middle_name", { label: "Middle Name", fieldtype: "Data" })}
                                         {renderField("last_name", { label: "Last Name", fieldtype: "Data", reqd: 1 })}
                                         {renderField("gender", { label: "Gender", fieldtype: "Select", options: "\nMale\nFemale\nOther", reqd: 1 })}
-                                        {watchGender === 'Other' && renderField("other_gender", { label: "Other Gender", fieldtype: "Data", mandatory_depends_on: "Other", reqd: 1 })}
                                         {/* --- Country Dropdowns --- */}
                                         {renderField("nationality", {
                                             label: "Nationality",
@@ -1769,12 +1809,127 @@ export function AdmissionRegistrationForm() {
                                     {renderField("billing_name", { label: "Billing Full Name", fieldtype: "Data", reqd: 1 })}
                                     {renderField("billing_phone", { label: "Billing Phone", fieldtype: "PhoneInput", reqd: 1, placeholder: "Enter billing phone" })}
                                     {renderField("billing_email", { label: "Billing Email", fieldtype: "Data", options: "Email", reqd: 1 })}
+                                    <FormField
+                                        //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
+                                        control={form.control}
+                                        name="billing_country"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col space-y-1.5">
+                                                <FormLabel>Country<span className="text-destructive"> *</span></FormLabel>
+                                                <FormControl>
+                                                    <CountryDropdown
+                                                        value={field.value}
+                                                        onBlur={field.onBlur} // Add onBlur here too!
+                                                        onChange={(country: Country | undefined) => {
+                                                            field.onChange(country?.name || "");
+                                                            // When country changes, clear zipcode, state, city and their options
+                                                            setValue("billing_area_code", "");
+                                                            setValue("billing_state", "");
+                                                            setValue("billing_city", "");
+                                                            setBillStateOptions([]);
+                                                            setBillCityOptions([]);
+                                                            setBillAddressError(null);
+                                                        }}
+                                                        placeholder="Select country"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {/* Zipcode Text Box */}
+                                    <FormField
+                                        //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormData exactly
+                                        control={form.control}
+                                        name="billing_area_code"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col space-y-1.5">
+                                                <FormLabel>Area Code/ Pincode<span className="text-destructive"> *</span></FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Enter zipcode"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                        type="text" // Use text for alphanumeric zipcodes
+                                                        disabled={!watchBillingCountry} // Disable if no country is selected
+                                                    />
+                                                </FormControl>
+                                                {isBillAddressLoading && <FormDescription>Loading address details...</FormDescription>}
+                                                {billAddressError && <FormMessage>{billAddressError}</FormMessage>}
+                                                {!billAddressError && <FormMessage />} {/* Placeholder for Zod error */}
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {/* State Dropdown */}
+                                    <FormField
+                                        //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
+                                        control={form.control}
+                                        name="billing_state"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col space-y-1.5">
+                                                <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value ?? ''}
+                                                    disabled={isBillAddressLoading || billStateOptions.length === 0 || !watchBillingZipcode}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder={isBillAddressLoading ? "Loading..." : "Select state"} />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {billStateOptions.length > 0 ? (
+                                                            billStateOptions.map(stateName => (
+                                                                <SelectItem key={stateName} value={stateName}>{stateName}</SelectItem>
+                                                            ))
+                                                        ) : (
+                                                            <SelectItem value="no-options" disabled>
+                                                                {watchBillingZipcode ? "No states found or enter valid zipcode" : "Enter zipcode first"}
+                                                            </SelectItem>
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {/* City Dropdown */}
+                                    <FormField
+                                        //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
+                                        control={form.control}
+                                        name="billing_city"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col space-y-1.5">
+                                                <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value ?? ''}
+                                                    disabled={isBillAddressLoading || billCityOptions.length === 0 || !watchBillingZipcode}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder={isBillAddressLoading ? "Loading..." : "Select city/town"} />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {billCityOptions.length > 0 ? (
+                                                            billCityOptions.map(cityName => (
+                                                                <SelectItem key={cityName} value={cityName}>{cityName}</SelectItem>
+                                                            ))
+                                                        ) : (
+                                                            <SelectItem value="no-options" disabled>
+                                                                {watchBillingZipcode ? "No cities found or enter valid zipcode" : "Enter zipcode first"}
+                                                            </SelectItem>
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                     {renderField("billing_address_l1", { label: "Billing Address Line 1", fieldtype: "Data", reqd: 1 })}
                                     {renderField("billing_address_l2", { label: "Billing Address Line 2", fieldtype: "Data" })}
-                                    {renderField("billing_city", { label: "Billing City/ Town", fieldtype: "Data", reqd: 1 })}
-                                    {renderField("billing_state", { label: "Billing State", fieldtype: "Data" })}
-                                    {renderField("billing_area_code", { label: "Billing Area Code/ Pincode", fieldtype: "Data", reqd: 1 })}
-                                    {renderField("billing_country", { label: "Billing Country", fieldtype: "CountrySelect", options: "Country", reqd: 1 })}
                                 </div>
 
                                 {/* Payment Status (Read-only section) */}
