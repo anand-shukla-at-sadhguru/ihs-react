@@ -1,5 +1,5 @@
 // src/App.tsx
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
 // import HomePage from '@/pages/HomePage';
 import Guidelines from '@/pages/Guidelines';
 import AdmissionRegistrationPage from '@/pages/AdmissionRegistrationPage';
@@ -103,6 +103,7 @@ function App() {
           <main className="flex-grow container mx-auto py-8 px-6">
             <Routes>
               {/* <Route path="/" element={<HomePage />} /> */}
+              <Route path="/" element={<Navigate to="/guidelines" replace />} />
               <Route path="/guidelines" element={<Guidelines />} />
               <Route path="/admission" element={<AdmissionRegistrationPage />} />
               <Route path="/all-applications" element={<AllApplicationsPage />} />
