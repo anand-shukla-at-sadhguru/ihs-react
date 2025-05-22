@@ -223,8 +223,8 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                     name={`${basePath}.prev_school_zip_code`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Zipcode<span className="text-destructive"> *</span></FormLabel>
-                                            <FormControl><Input placeholder="Enter Zipcode" {...field} value={field.value || ''} /></FormControl>
+                                            <FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
+                                            <FormControl><Input placeholder="Enter PIN / ZIP Code" {...field} value={field.value || ''} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}

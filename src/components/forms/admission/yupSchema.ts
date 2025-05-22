@@ -66,7 +66,7 @@ export const yupFileSchema = (required = false, requiredMsg = "File is required.
 export const individualLanguageSchemaYup = yup.object().shape({
     language: yup.string().oneOf(LANGUAGE_OPTIONS_YUP, 'Invalid language.').required("Please select a language."),
     proficiency: yup.string().oneOf(LANGUAGE_PROFICIENCY_YUP, 'Invalid proficiency.').required("Please select proficiency."),
-    other_language_name: yup.string().when('language', { // THIS IS THE FIELD TO USE
+    other_language: yup.string().when('language', { // THIS IS THE FIELD TO USE
         is: 'Other',
         then: schema => schema.required('Please specify the language name.').min(1),
         otherwise: schema => schema.optional().nullable().transform(() => undefined),
@@ -118,7 +118,7 @@ const individualPreviousSchoolSchemaYup = yup.object().shape({
             return true;
         }),
     prev_school_country: yup.string().required("Country is required."),
-    prev_school_zip_code: yup.string().required("Zipcode is required.").matches(/^[a-zA-Z0-9\s-]{3,20}$/, "Invalid zipcode format."),
+    prev_school_zip_code: yup.string().required("PIN / ZIP Code is required.").matches(/^[a-zA-Z0-9\s-]{3,20}$/, "Invalid zipcode format."),
     prev_school_report_card: yupFileSchema(true, "Report card is required."),
 });
 export type IndividualPreviousSchoolDataYup = yup.InferType<typeof individualPreviousSchoolSchemaYup>;
@@ -156,7 +156,7 @@ export const individualParentDetailSchemaYup = yup.object().shape({
     parent_contact_email: yup.string().email("Invalid email format.").required("Parent's Contact Email is required."),
     parent_contact_phone: yupE164Phone(true),
     parent_is_whatsapp_same: yup.boolean().default(true),
-    parent_whatsapp_number: yupE164Phone().when('parent_is_whatsapp_same', {
+    parent_whatsapp_phone: yupE164Phone().when('parent_is_whatsapp_same', {
         is: false, then: schema => schema.required('WhatsApp Number is required if different.'),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
@@ -173,7 +173,7 @@ export type IndividualParentDetailDataYup = yup.InferType<typeof individualParen
 
 
 export const individualGuardianDetailSchemaYup = yup.object().shape({
-    guardian_relation_with_applicant: yup.string()
+    guardian_relation: yup.string()
         .transform(value => value === "" ? undefined : value) // <--- ADD OR ENSURE THIS TRANSFORM IS PRESENT
         .oneOf(GUARDIAN_RELATION_OPTIONS_YUP, "Please select a valid relation.") // Custom .oneOf message
         .required("Guardian's Relation with Applicant is required."),
@@ -185,7 +185,7 @@ export const individualGuardianDetailSchemaYup = yup.object().shape({
     guardian_contact_email: yup.string().email().required("Guardian's Email is required."),
     guardian_contact_phone: yupE164Phone(true),
     guardian_is_whatsapp_same: yup.boolean().default(true),
-    guardian_whatsapp_number: yupE164Phone().when('guardian_is_whatsapp_same', {
+    guardian_whatsapp_phone: yupE164Phone().when('guardian_is_whatsapp_same', {
         is: false, then: schema => schema.required("WhatsApp number is required if different."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
@@ -210,23 +210,23 @@ export type IndividualGuardianDetailDataYup = yup.InferType<typeof individualGua
 // --- Main Yup Admission Schema ---
 export const admissionRegistrationSchemaYup = yup.object().shape({
     // --- Application Details ---
-    application_year: yup.string().required('Application Academic Year is required.'),
-    applied_for: yup.string().oneOf(APPLIED_FOR_OPTIONS_YUP, 'Invalid selection.').required('Applied For is required.'),
-    applicant_user: yup.string().optional().nullable(),
+    application_academic_year: yup.string().required('Application Academic Year is required.'),
+    application_for: yup.string().oneOf(APPLIED_FOR_OPTIONS_YUP, 'Invalid selection.').required('Applied For is required.'),
+    application_number: yup.string().optional().nullable(),
 
     // --- Previous Application ---
     applied_to_ihs_before: yup.string().oneOf(YES_NO_OPTIONS_YUP, 'Invalid selection.').required('Please select if you applied before.'),
-    previous_application_application_year: yup.string().when('applied_to_ihs_before', ([appliedBefore], schema) => {
+    previous_applied_year: yup.string().when('applied_to_ihs_before', ([appliedBefore], schema) => {
         return appliedBefore === 'Yes'
             ? schema.oneOf(PREVIOUS_APP_YEAR_OPTIONS_YUP, 'Invalid year.').required('Previous Application Year is required.')
             : schema.optional().nullable().transform(() => undefined);
     }),
-    previous_application_applied_for: yup.string().when('applied_to_ihs_before', ([appliedBefore], schema) => {
+    previous_applied_for: yup.string().when('applied_to_ihs_before', ([appliedBefore], schema) => {
         return appliedBefore === 'Yes'
             ? schema.oneOf(APPLIED_FOR_OPTIONS_YUP, 'Invalid grade.').required('Previously Applied For grade is required.')
             : schema.optional().nullable().transform(() => undefined);
     }),
-    previous_application_remarks: yup.string().when('applied_to_ihs_before', ([appliedBefore], schema) => {
+    previous_applied_comments: yup.string().when('applied_to_ihs_before', ([appliedBefore], schema) => {
         return appliedBefore === 'Yes'
             ? schema.required('Previous Application Remarks are required.').min(1)
             : schema.optional().nullable().transform(() => undefined);
@@ -239,7 +239,7 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     gender: yup.string().oneOf(GENDER_OPTIONS_YUP, 'Invalid selection.').required("Gender is required."),
     nationality: yup.string().required('Nationality is required.'),
     country_of_residence: yup.string().required('Country of Residence is required.'),
-    country: yup.string().required('Country of Birth is required.'), // Country of Birth
+    country_of_birth: yup.string().required('Country of Birth is required.'), // Country of Birth
     date_of_birth: yup.date()
         .transform((value, originalValue) => originalValue === "" ? null : (originalValue && typeof originalValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(originalValue) ? new Date(originalValue) : value))
         .nullable()
@@ -254,7 +254,7 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
 
     // Communication Address
     comm_address_country: yup.string().required('Country is required.'),
-    comm_address_area_code: yup.string().required("Area Code/ Pincode is required.")
+    comm_address_zip_code: yup.string().required("Area Code/ Pincode is required.")
         .matches(/^\d{4,9}$/, 'Area Code/ Pincode must be between 4 and 9 digits.'),
     comm_address_line_1: yup.string().required('Address Line 1 is required.'),
     comm_address_line_2: yup.string().optional().nullable(),
@@ -298,44 +298,44 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     // Supporting Documents
     recent_photograph: yupFileSchema(true, "Recent Photograph is required."),
     birth_certificate: yupFileSchema(true, "Birth Certificate is required."),
-    id_proof: yup.string().oneOf(ID_PROOF_OPTIONS_YUP, 'Invalid selection.').required('ID Proof type is required.'),
+    id_proof_type: yup.string().oneOf(ID_PROOF_OPTIONS_YUP, 'Invalid selection.').required('ID Proof type is required.'),
     id_proof_document: yupFileSchema(true, "ID Proof Document is required."),
-    aadhaar_number: yup.string().when('id_proof', ([idProofVal], schema) => {
+    aadhaar_number: yup.string().when('id_proof_type', ([idProofVal], schema) => {
         return idProofVal === 'Aadhaar Card'
             ? schema.required('Aadhaar Number is required.').matches(/^\d{12}$/, "Aadhaar Number must be exactly 12 digits.")
             : schema.optional().nullable().transform(() => undefined);
     }),
-    passport_number: yup.string().when('id_proof', ([idProofVal], schema) => {
+    passport_number: yup.string().when('id_proof_type', ([idProofVal], schema) => {
         return idProofVal === 'Passport'
             ? schema.required('Passport Number is required.').min(1)
             : schema.optional().nullable().transform(() => undefined);
     }),
-    place_of_issue: yup.string().when('id_proof', ([idProofVal], schema) => {
+    passport_place_of_issue: yup.string().when('id_proof_type', ([idProofVal], schema) => {
         return idProofVal === 'Passport'
             ? schema.required('Place of Issue is required.').min(1)
             : schema.optional().nullable().transform(() => undefined);
     }),
-    date_of_issue: yup.date()
+    passport_date_of_issue: yup.date()
         .transform((value, originalValue) => originalValue === "" ? null : (originalValue && typeof originalValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(originalValue) ? new Date(originalValue) : value))
         .nullable()
         .typeError('Invalid date format for issue date (YYYY-MM-DD).')
-        .when('id_proof', ([idProofVal], schema) => {
+        .when('id_proof_type', ([idProofVal], schema) => {
             return idProofVal === 'Passport'
                 ? schema.required('Date of Issue is required.').max(new Date(), "Passport issue date cannot be in the future.")
                 : schema.optional().nullable().transform(() => undefined) as yup.DateSchema; // Cast needed due to .when complexity
         }),
-    date_of_expiry: yup.date()
+    passport_date_of_expiry: yup.date()
         .transform((value, originalValue) => originalValue === "" ? null : (originalValue && typeof originalValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(originalValue) ? new Date(originalValue) : value))
         .nullable()
         .typeError('Invalid date format for expiry date (YYYY-MM-DD).')
-        .when('id_proof', ([idProofVal], schema) => {
+        .when('id_proof_type', ([idProofVal], schema) => {
             return idProofVal === 'Passport'
                 ? schema.required('Date of Expiry is required.')
                     .test(
                         'is-after-issue-date-yup',
                         'Passport expiry date must be after the issue date.',
                         function (value) { // Expiry date
-                            const issueDate = this.parent.date_of_issue;
+                            const issueDate = this.parent.passport_date_of_issue;
                             if (value instanceof Date && issueDate instanceof Date) {
                                 return value > issueDate;
                             }
@@ -351,24 +351,23 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     current_school_board_affiliation: yup.string().when('is_home_schooled', { is: 'No', then: s => s.oneOf(BOARD_OPTIONS_YUP).required("Board Affiliation is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_phone_number: yupE164Phone().when('is_home_schooled', { is: 'No', then: () => yupE164Phone(true, "School Phone is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_country: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Country is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    current_school_area_code: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Area Code is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    current_school_zip_code: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Area Code is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_city: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School City is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_state: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School State is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_email_address: yup.string().email("Invalid email.").when('is_home_schooled', { is: 'No', then: s => s.required("School Email is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    current_school_a_line1: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Address Line 1 is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    current_school_a_line2: yup.string().optional().nullable(),
+    current_school_address_line1: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Address Line 1 is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    current_school_address_line2: yup.string().optional().nullable(),
 
     been_to_school_previously: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Please specify if applicant studied previously.'),
     previous_schools: yup.array().of(individualPreviousSchoolSchemaYup).when('been_to_school_previously', {
         is: 'Yes', then: schema => schema.min(1, "Please provide details for at least one previous school."),
         otherwise: schema => schema.optional().transform(() => [])
     }),
-    emis_id: yup.string().optional().nullable(),
     academic_strengths_and_weaknesses: yup.string().required().max(200), // Assuming textareaSchema implies required
-    hobbies_interests_and_extra_curricular_activities: yup.string().required().max(200),
+    hobbies_interests_and_extra_curricular: yup.string().required().max(200),
     other_details_of_importance: yup.string().optional().nullable().max(200),
     temperament_and_personality: yup.string().required().max(200),
-    special_learning_needs_or_learning_disability: yup.string().required().max(200),
+    learning_disability: yup.string().required().max(200),
 
     // --- Health Tab ---
     // Vaccines
@@ -391,12 +390,9 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     right_eye_power: yup.string().when('wears_glasses_or_lens', { is: 'Yes', then: s => s.required("Right Eye Power is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     left_eye_power: yup.string().when('wears_glasses_or_lens', { is: 'Yes', then: s => s.required("Left Eye Power is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
 
-    // Hygiene for Class II (applied_for is the discriminator)
-    is_toilet_trained: yup.string().when('applied_for', { is: 'Class II', then: s => s.oneOf(YES_NO_OPTIONS_YUP).required('Toilet trained status is required for Class II.'), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    wets_bed: yup.string().when('applied_for', { is: 'Class II', then: s => s.oneOf(YES_NO_OPTIONS_YUP).required('Bed wetting status is required for Class II.'), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    bed_wet_frequency: yup.string().when(['applied_for', 'wets_bed'], ([appliedFor, wetsBed], schema) => {
-        return appliedFor === 'Class II' && wetsBed === 'Yes' ? schema.required("Bed wet frequency is required.") : schema.optional().nullable().transform(() => undefined);
-    }),
+    // Hygiene for Class II (application_for is the discriminator)
+    toilet_trained: yup.string().when('application_for', { is: 'Class II', then: s => s.oneOf(YES_NO_OPTIONS_YUP).required('Toilet trained status is required for Class II.'), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    bed_wet: yup.string().when('application_for', { is: 'Class II', then: s => s.oneOf(YES_NO_OPTIONS_YUP).required('Bed wetting status is required for Class II.'), otherwise: s => s.optional().nullable().transform(() => undefined) }),
 
     // Challenges
     has_hearing_challenges: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Hearing challenges status required.'),
@@ -409,22 +405,22 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     speech_challenges: yup.string().when('has_speech_challenges', { is: 'Yes', then: s => s.required("Speech Challenges Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
 
     // Medical History
-    has_injury: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Injury history status required.'),
-    injury_details: yup.string().when('has_injury', { is: 'Yes', then: s => s.required("Injury Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    on_medication: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Medication status required.'),
-    medication_details: yup.string().when('on_medication', { is: 'Yes', then: s => s.required("Medication Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    medical_prescription: yupFileSchema().when('on_medication', { is: 'Yes', then: () => yupFileSchema(true, "Medical Prescription is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    history_of_accident_injury: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Injury history status required.'),
+    history_of_accident_injury_details: yup.string().when('history_of_accident_injury', { is: 'Yes', then: s => s.required("Injury Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    regular_medication: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Medication status required.'),
+    regular_medication_details: yup.string().when('regular_medication', { is: 'Yes', then: s => s.required("Medication Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    medical_prescription: yupFileSchema().when('regular_medication', { is: 'Yes', then: () => yupFileSchema(true, "Medical Prescription is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     has_health_issue: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Health issue history status required.'),
-    health_issue_details: yup.string().when('has_health_issue', { is: 'Yes', then: s => s.required("Health Issue Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    was_hospitalized: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Hospitalization history status required.'),
-    hospitalization_details: yup.string().when('was_hospitalized', { is: 'Yes', then: s => s.required("Hospitalization Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    history_of_health_issues: yup.string().when('has_health_issue', { is: 'Yes', then: s => s.required("Health Issue Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    surgery_hospitalization: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Hospitalization history status required.'),
+    surgery_hospitalization_details: yup.string().when('surgery_hospitalization', { is: 'Yes', then: s => s.required("Hospitalization Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     needs_special_attention: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Special attention status required.'), // Assuming this is from createEnumSchema
-    attention_details: yup.string().when('needs_special_attention', { is: 'Yes', then: s => s.required("Attention Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    special_attention_details: yup.string().when('needs_special_attention', { is: 'Yes', then: s => s.required("Attention Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     has_allergies: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Allergies status required.'),
-    allergy_details: yup.string().when('has_allergies', { is: 'Yes', then: s => s.required("Allergy Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    allergies_details: yup.string().when('has_allergies', { is: 'Yes', then: s => s.required("Allergy Details are required.").min(1), otherwise: s => s.optional().nullable().transform(() => undefined) }),
 
     // --- Parents Tab ---
-    students_parents: yup.array().of(individualParentDetailSchemaYup)
+    student_parent: yup.array().of(individualParentDetailSchemaYup)
         .min(1, "At least one parent's details are required.")
         .max(2, "A maximum of two parent entries are allowed.")
         .test('unique-parent-relations', 'Parent relations must be unique (e.g., one Father, one Mother).', function (value) {
@@ -448,30 +444,30 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     }),
 
     // --- Subjects Tab (Class XI) ---
-    group_a: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(PHYSICS_ACCOUNTS_HISTORY_OPTIONS).required("Group A subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    group_b: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(CHEMISTRY_ECONOMICS_OPTIONS).required("Group B subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    group_c: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(BIOLOGY_CS_COMMERCE_POLSCI_OPTIONS).required("Group C subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    group_d: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(MATH_ENV_FINEARTS_OPTIONS).required("Group D subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    group_a: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(PHYSICS_ACCOUNTS_HISTORY_OPTIONS).required("Group A subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    group_b: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(CHEMISTRY_ECONOMICS_OPTIONS).required("Group B subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    group_c: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(BIOLOGY_CS_COMMERCE_POLSCI_OPTIONS).required("Group C subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    group_d: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.oneOf(MATH_ENV_FINEARTS_OPTIONS).required("Group D subject is required."), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
 
     // Class XI Questions
-    q1_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q2_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q3_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q4_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q5_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q6_applicant_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q7_applicant_response: yup.string().optional().nullable().max(200), // This one was marked optional
+    response_why_ihs_post_10th: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    response_subject_combination: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    response_activity_love_to_do_most: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    response_change_one_thing_about_world: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    response_change_one_thing_about_yourself: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    response_dream_vacation: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    response_additional_comments_optional: yup.string().optional().nullable().max(200), // This one was marked optional
 
-    q1_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q2_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q3_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q4_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q5_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
-    q6_parent_response: yup.string().when('applied_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    parents_response_why_ihs_post_10th: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    parents_response_childs_self_confidence: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    parents_response_strengths_weaknesses: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    parents_response_child_future_education_plan: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    parents_response_on_childs_concerns: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
+    parents_response_additional_comments: yup.string().when('application_for', { is: 'Class XI', then: (s: yup.StringSchema) => s.required("This response is required.").max(200), otherwise: (s: yup.StringSchema) => s.optional().nullable().transform(() => undefined) }),
 
     // --- Declaration Tab ---
-    declaration: yup.boolean().oneOf([true], 'Please agree to the declaration.').required(),
-    date: yup.date()
+    agree_declaration: yup.boolean().oneOf([true], 'Please agree to the declaration.').required(),
+    declaration_date: yup.date()
         .transform((value: unknown, originalValue: unknown) =>
             originalValue === "" ? null :
                 (originalValue && typeof originalValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(originalValue) ? new Date(originalValue) : value)
@@ -479,18 +475,19 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
         .nullable()
         .typeError('Invalid date format (YYYY-MM-DD).')
         .required('Date is required.'),
-    place: yup.string().required('Place is required.'),
+    declaration_place: yup.string().required('Place is required.'),
 
     // --- Billing Tab ---
-    billing_name: yup.string().required('Billing Full Name is required.'),
-    billing_phone: yupE164Phone(true),
+    billing_first_name: yup.string().required('Billing First Name is required.'),
+    billing_last_name: yup.string().required('Billing Last Name is required.'),
+    billing_mobile: yupE164Phone(true),
     billing_email: yup.string().email('Invalid Billing Email format.').required("Billing Email is required."),
     billing_country: yup.string().required('Billing Country is required.'),
-    billing_area_code: yup.string().required('Billing Area Code/ Pincode is required.'),
+    billing_zip_code: yup.string().required('Billing Area Code/ Pincode is required.'),
     billing_city: yup.string().required('Billing City/ Town is required.'),
     billing_state: yup.string().required('Billing State is required.'), // Assuming state is required for billing
-    billing_address_l1: yup.string().required('Billing Address Line 1 is required.'),
-    billing_address_l2: yup.string().optional().nullable(),
+    billing_address_line1: yup.string().required('Billing Address Line 1 is required.'),
+    billing_address_line2: yup.string().optional().nullable(),
 
     application_fee_status: yup.string().oneOf(['Pending', 'In Progress', 'Completed', 'Expired'] as const).optional().nullable(),
     amended_from: yup.string().optional().nullable(),

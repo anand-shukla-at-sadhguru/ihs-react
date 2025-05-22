@@ -187,7 +187,7 @@ const CountryDropdownComponent = forwardRef<HTMLButtonElement, CountryDropdownPr
             </CommandList>
           </Command>
         </PopoverContent>
-      </Popover>
+      </Popover >
     );
   }
 );

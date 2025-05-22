@@ -41,7 +41,7 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                 {languageFields.map((item: FieldArrayWithId<AdmissionRegistrationFormDataYup, "languages_known", "id">, index: number) => {
                     const languageFieldName = `languages_known.${index}.language` as const;
                     const proficiencyFieldName = `languages_known.${index}.proficiency` as const;
-                    const otherLanguageFieldName = `languages_known.${index}.other_language_name` as const; // Correct field name
+                    const otherLanguageFieldName = `languages_known.${index}.other_language` as const; // Correct field name
 
                     const currentLanguageValue = watch(languageFieldName); // Watch the current language selection
 
@@ -57,12 +57,12 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                                             <Select
                                                 onValueChange={(value) => {
                                                     field.onChange(value);
-                                                    // If switching away from 'Other', clear the other_language_name field
+                                                    // If switching away from 'Other', clear the other_language field
                                                     if (value !== 'Other') {
                                                         setValue(otherLanguageFieldName, undefined, { shouldValidate: true });
                                                     }
                                                     trigger(languageFieldName); // Trigger validation for the language field itself
-                                                    if (value === 'Other') { // Optionally trigger other_language_name when 'Other' is selected
+                                                    if (value === 'Other') { // Optionally trigger other_language when 'Other' is selected
                                                         trigger(otherLanguageFieldName);
                                                     }
                                                 }}
@@ -144,7 +144,7 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                                                         }}
                                                     />
                                                 </FormControl>
-                                                <FormMessage /> {/* This will show Yup validation errors for other_language_name */}
+                                                <FormMessage /> {/* This will show Yup validation errors for other_language */}
                                             </FormItem>
                                         )}
                                     />
@@ -173,7 +173,7 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                     onClick={() => appendLanguage({
                         language: undefined,     // Default to undefined for Yup optional/required strings
                         proficiency: undefined,  // Default to undefined
-                        other_language_name: undefined // Default to undefined
+                        other_language: undefined // Default to undefined
                     } as unknown as IndividualLanguageDataYup)} // Ensure type matches Yup
                     className="mt-2"
                 >

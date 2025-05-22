@@ -49,15 +49,13 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
     setValue,
 }) => {
     const { watch, trigger } = useFormContext<AdmissionRegistrationFormDataYup>();
-    const pathPrefix = `students_parents.${index}` as const;
+    const pathPrefix = `student_parent.${index}` as const;
 
     const watchIsWhatsappSame = watch(`${pathPrefix}.parent_is_whatsapp_same`);
     const watchIsAddressSame = watch(`${pathPrefix}.parent_is_address_same_as_applicant`);
     const parentAddressCountryName = watch(`${pathPrefix}.parent_address_country`);
     const parentAddressZipcode = watch(`${pathPrefix}.parent_address_zipcode`);
 
-    const [parentAddrStateOptions, setParentAddrStateOptions] = useState<string[]>([]);
-    const [parentAddrCityOptions, setParentAddrCityOptions] = useState<string[]>([]);
     const [isParentAddrLoading, setIsParentAddrLoading] = useState(false);
     const [parentAddrError, setParentAddrError] = useState<string | null>(null);
 
@@ -65,173 +63,172 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
     // Ref to track if a fetch is currently active for the *specific inputs*
     const activeFetchIdentifier = useRef<string | null>(null);
 
-    const fetchParentAddressDetails = useCallback(async (countryISO2: string, zipcode: string) => {
-        const currentFetchId = `${countryISO2}-${zipcode}`;
-        activeFetchIdentifier.current = currentFetchId; // Mark this fetch as active
-        setIsParentAddrLoading(true);
-        setParentAddrError(null);
+    // --- Parent Address Auto-Fetch Logic (not Guardian) ---
 
-        const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
-        const rhfStateField = `${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup;
-        const rhfCityField = `${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup;
+    // Fetch address details (state/city) for parent address based on country and zipcode
+    const fetchParentAddressDetails = useCallback(
+        async (countryISO2: string, zipcode: string) => {
+            const currentFetchId = `${countryISO2}-${zipcode}`;
+            activeFetchIdentifier.current = currentFetchId;
+            setIsParentAddrLoading(true);
+            setParentAddrError(null);
 
-        try {
-            const response = await fetch(apiUrl);
-            // Only process if this is still the active fetch request
-            if (activeFetchIdentifier.current !== currentFetchId) {
-                return; // A newer fetch has been initiated, ignore this response
-            }
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Pincode ${zipcode} not found or API error: ${response.status}`);
-            }
-            const data = await response.json();
+            const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
+            const rhfStateField = `${pathPrefix}.parent_address_state`;
+            const rhfCityField = `${pathPrefix}.parent_address_city`;
 
-            if (data && data.state && data.acceptedCities && Array.isArray(data.acceptedCities)) {
-                const stateArray = [data.state];
-                const citiesArray = data.acceptedCities;
-                setParentAddrStateOptions(stateArray);
-                setParentAddrCityOptions(citiesArray);
-                setValue(rhfStateField, stateArray[0] || "", { shouldValidate: true });
-                const cityToSet = data.defaultcity && citiesArray.includes(data.defaultcity) ? data.defaultcity : (citiesArray[0] || "");
-                setValue(rhfCityField, cityToSet, { shouldValidate: true });
-                trigger([rhfStateField, rhfCityField]);
-            } else {
-                setParentAddrStateOptions([]); setParentAddrCityOptions([]);
-                setValue(rhfStateField, "", { shouldValidate: true }); setValue(rhfCityField, "", { shouldValidate: true });
-                setParentAddrError("Invalid data structure from address API.");
-                trigger([rhfStateField, rhfCityField]);
-            }
-        } catch (error: any) {
-            if (activeFetchIdentifier.current === currentFetchId) { // Only set error if this is still the relevant fetch
-                setParentAddrStateOptions([]); setParentAddrCityOptions([]);
-                setValue(rhfStateField, "", { shouldValidate: true }); setValue(rhfCityField, "", { shouldValidate: true });
-                setParentAddrError(error.message || "Failed to fetch address details.");
-                trigger([rhfStateField, rhfCityField]);
-            }
-        } finally {
-            if (activeFetchIdentifier.current === currentFetchId) { // Only clear loading if this is the active fetch
-                setIsParentAddrLoading(false);
-                activeFetchIdentifier.current = null; // Clear active fetch
-            }
-        }
-    }, [setValue, pathPrefix, trigger]); // `setIsParentAddrLoading`, `setParentAddrError`, `setParentAddrStateOptions`, `setParentAddrCityOptions` are stable setters
+            try {
+                const response = await fetch(apiUrl);
+                if (activeFetchIdentifier.current !== currentFetchId) return;
 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Pincode ${zipcode} not found or API error: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data && data.state) {
+                    const stateValue = data.state;
+                    setValue(rhfStateField as any, stateValue, { shouldValidate: true });
+
+                    let cityToSet = "";
+                    if (data.acceptedCities && Array.isArray(data.acceptedCities) && data.acceptedCities.length > 0) {
+                        cityToSet = data.defaultcity && data.acceptedCities.includes(data.defaultcity)
+                            ? data.defaultcity
+                            : data.acceptedCities[0];
+                    }
+                    setValue(rhfCityField as any, cityToSet, { shouldValidate: true });
+                    trigger([rhfStateField as any, rhfCityField as any]);
+                } else {
+                    setValue(rhfStateField as any, "", { shouldValidate: true });
+                    setValue(rhfCityField as any, "", { shouldValidate: true });
+                    setParentAddrError("State not found or invalid data structure from address API.");
+                    trigger([rhfStateField as any, rhfCityField as any]);
+                }
+            } catch (error: any) {
+                if (activeFetchIdentifier.current === currentFetchId) {
+                    setValue(rhfStateField as any, "", { shouldValidate: true });
+                    setValue(rhfCityField as any, "", { shouldValidate: true });
+                    setParentAddrError(error.message || "Failed to fetch address details.");
+                    trigger([rhfStateField as any, rhfCityField as any]);
+                }
+            } finally {
+                if (activeFetchIdentifier.current === currentFetchId) {
+                    setIsParentAddrLoading(false);
+                    activeFetchIdentifier.current = null;
+                }
+            }
+        },
+        [setValue, pathPrefix, trigger]
+    );
+
+    // Effect: When address same as applicant toggles, copy or clear fields
     useEffect(() => {
         const fieldsToTrigger: Path<AdmissionRegistrationFormDataYup>[] = [
-            `${pathPrefix}.parent_address_country`,
-            `${pathPrefix}.parent_address_zipcode`,
-            `${pathPrefix}.parent_address_state`,
-            `${pathPrefix}.parent_address_city`,
-            `${pathPrefix}.parent_address_line1`,
-            `${pathPrefix}.parent_address_line2`
+            `${pathPrefix}.parent_address_country` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.parent_address_zipcode` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.parent_address_state` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.parent_address_city` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.parent_address_line1` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.parent_address_line2` as Path<AdmissionRegistrationFormDataYup>,
         ];
 
         if (watchIsAddressSame === 'Yes') {
-            setValue(`${pathPrefix}.parent_address_country` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_country"), { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_area_code"), { shouldValidate: true });
-            const appState = getValues("comm_address_state");
-            const appCity = getValues("comm_address_city");
-            setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, appState, { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, appCity, { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_1"), { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_2") || "", { shouldValidate: true });
+            // Copy applicant's communication address fields
+            setValue(`${pathPrefix}.parent_address_country`, getValues("comm_address_country"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.parent_address_zipcode`, getValues("comm_address_zip_code"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.parent_address_state`, getValues("comm_address_state"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.parent_address_city`, getValues("comm_address_city"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.parent_address_line1`, getValues("comm_address_line_1"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.parent_address_line2`, getValues("comm_address_line_2") || "", { shouldValidate: true, shouldDirty: true, shouldTouch: true });
 
-            setParentAddrStateOptions(appState ? [appState] : []);
-            setParentAddrCityOptions(appCity ? [appCity] : []);
             setParentAddrError(null);
             setIsParentAddrLoading(false);
-            activeFetchIdentifier.current = null; // Clear any pending fetch idea
-            if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current); // Clear debounce
+            activeFetchIdentifier.current = null;
+            if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+            trigger(fieldsToTrigger);
         } else if (watchIsAddressSame === 'No') {
-            setValue(`${pathPrefix}.parent_address_country` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_country`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_zipcode`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_line1`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.parent_address_line2`) || "", { shouldValidate: false });
-
-            setParentAddrStateOptions([]);
-            setParentAddrCityOptions([]);
+            // Optionally clear state/city if switching to 'No'
+            setValue(`${pathPrefix}.parent_address_state`, "", { shouldValidate: true });
+            setValue(`${pathPrefix}.parent_address_city`, "", { shouldValidate: true });
             setParentAddrError(null);
-            // setIsParentAddrLoading(false); // Fetch effect will manage this
             trigger(fieldsToTrigger);
         }
     }, [watchIsAddressSame, getValues, setValue, pathPrefix, trigger]);
 
+    // Effect: Fetch state/city when country or zipcode changes (only if address is NOT same as applicant)
     useEffect(() => {
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
+        if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+
+        if (watchIsAddressSame !== 'No') {
+            setValue(`${pathPrefix}.parent_address_state`, getValues("comm_address_state") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
+            setValue(`${pathPrefix}.parent_address_city`, getValues("comm_address_city") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
+            setParentAddrError(null);
+            setIsParentAddrLoading(false);
+            activeFetchIdentifier.current = null;
+            return;
         }
-        // activeFetchIdentifier.current = null; // Reset when inputs change, before deciding to fetch
 
-        if (watchIsAddressSame === 'No') {
-            if (parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length >= 3) {
-                const currentFetchId = `${parentAddressCountryName}-${parentAddressZipcode}`;
-                if (activeFetchIdentifier.current === currentFetchId && isParentAddrLoading) {
-                    // A fetch for these exact inputs is already loading, or was the last one.
-                    return;
-                }
-                // If not loading, but activeFetchIdentifier is for something else, clear it.
-                if (activeFetchIdentifier.current && activeFetchIdentifier.current !== currentFetchId) {
-                    activeFetchIdentifier.current = null;
-                }
+        // Only fetch if both country and zipcode are present and zipcode is at least 3 chars
+        if (parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length >= 3) {
+            const currentFetchId = `${parentAddressCountryName}-${parentAddressZipcode}`;
+            if (activeFetchIdentifier.current === currentFetchId && isParentAddrLoading) return;
+            if (activeFetchIdentifier.current && activeFetchIdentifier.current !== currentFetchId) activeFetchIdentifier.current = null;
 
+            const countryObj = countries.all.find(c => c.name === parentAddressCountryName);
+            if (countryObj && countryObj.alpha2) {
+                const countryISO2 = countryObj.alpha2;
+                setParentAddrError(null);
 
-                const countryObj = countries.all.find(c => c.name === parentAddressCountryName);
-                if (countryObj && countryObj.alpha2) {
-                    const countryISO2 = countryObj.alpha2;
-                    // Set a new active fetch identifier BEFORE starting the timer
-                    // activeFetchIdentifier.current = currentFetchId; // Moved into fetch function
-                    debounceTimeoutRef.current = setTimeout(() => {
-                        // Double check before fetching, ensure component still wants this fetch
-                        if (watchIsAddressSame === 'No' &&
-                            getValues(`${pathPrefix}.parent_address_country`) === parentAddressCountryName &&
-                            getValues(`${pathPrefix}.parent_address_zipcode`) === parentAddressZipcode) {
-
-                            if (!isParentAddrLoading) { // Final check before calling fetch
-                                fetchParentAddressDetails(countryISO2, parentAddressZipcode);
-                            }
-                        }
-                    }, 800);
-                } else { // Invalid country name
-                    setParentAddrStateOptions([]); setParentAddrCityOptions([]);
-                    setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                    setParentAddrError(parentAddressCountryName ? `Invalid country or ISO code not found.` : "Select country.");
-                    setIsParentAddrLoading(false); activeFetchIdentifier.current = null;
+                debounceTimeoutRef.current = setTimeout(() => {
+                    if (
+                        watchIsAddressSame === 'No' &&
+                        getValues(`${pathPrefix}.parent_address_country`) === parentAddressCountryName &&
+                        getValues(`${pathPrefix}.parent_address_zipcode`) === parentAddressZipcode
+                    ) {
+                        fetchParentAddressDetails(countryISO2, parentAddressZipcode);
+                    }
+                }, 800);
+            } else {
+                setValue(`${pathPrefix}.parent_address_state`, "" as any, { shouldValidate: false });
+                setValue(`${pathPrefix}.parent_address_city`, "" as any, { shouldValidate: false });
+                if (parentAddressCountryName) {
+                    setParentAddrError(`Invalid country ('${parentAddressCountryName}') or ISO code not found.`);
+                } else {
+                    setParentAddrError("Please select a country first.");
                 }
-            } else { // Conditions for fetch not met
-                setParentAddrStateOptions([]); setParentAddrCityOptions([]);
-                if (!parentAddressCountryName || !parentAddressZipcode || (parentAddressZipcode && parentAddressZipcode.length < 3 && parentAddressZipcode.length > 0)) {
-                    setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                }
-                if (parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length > 0 && parentAddressZipcode.length < 3) {
-                    setParentAddrError("Zipcode is too short.");
-                } else { setParentAddrError(null); }
-                setIsParentAddrLoading(false); activeFetchIdentifier.current = null;
+                setIsParentAddrLoading(false);
+                activeFetchIdentifier.current = null;
             }
-        } else { // Address is 'Yes'
-            setIsParentAddrLoading(false); setParentAddrError(null); activeFetchIdentifier.current = null;
-            if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+        } else {
+            setValue(`${pathPrefix}.parent_address_state`, "" as any, { shouldValidate: false });
+            setValue(`${pathPrefix}.parent_address_city`, "" as any, { shouldValidate: false });
+
+            if (parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length > 0 && parentAddressZipcode.length < 3) {
+                setParentAddrError("PIN / ZIP Code is too short (minimum 3 characters).");
+            } else if (!parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length >= 3) {
+                setParentAddrError("Please select a country.");
+            } else {
+                setParentAddrError(null);
+            }
+            setIsParentAddrLoading(false);
+            activeFetchIdentifier.current = null;
         }
+
         return () => { if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current); };
     }, [
         watchIsAddressSame,
         parentAddressCountryName,
         parentAddressZipcode,
-        // isParentAddrLoading, // REMOVE isParentAddrLoading from here if fetch itself manages it.
-        // Keeping it can be tricky. Let's try without.
         fetchParentAddressDetails,
         setValue,
         pathPrefix,
-        getValues // Added getValues as it's used in the effect
+        getValues,
     ]);
 
     return (
         // JSX remains the same as your last provided version
-        // Ensure FormDescription for loading and FormMessage for error are correctly placed under Zipcode field
+        // Ensure FormDescription for loading and FormMessage for error are correctly placed under PIN / ZIP Code field
         <div className="p-4 border rounded-md space-y-6 bg-slate-50 dark:bg-slate-800/30 shadow-sm">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">
@@ -309,18 +306,18 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                             <FormControl><Checkbox checked={field.value ?? true} onCheckedChange={(checkedBool) => {
                                 field.onChange(checkedBool);
                                 trigger(`${pathPrefix}.parent_is_whatsapp_same`);
-                                if (checkedBool) setValue(`${pathPrefix}.parent_whatsapp_number`, "");
-                                else setValue(`${pathPrefix}.parent_whatsapp_number`, getValues(`${pathPrefix}.parent_contact_phone`) || "");
-                                if (!checkedBool) trigger(`${pathPrefix}.parent_whatsapp_number`);
+                                if (checkedBool) setValue(`${pathPrefix}.parent_whatsapp_phone`, "");
+                                else setValue(`${pathPrefix}.parent_whatsapp_phone`, getValues(`${pathPrefix}.parent_contact_phone`) || "");
+                                if (!checkedBool) trigger(`${pathPrefix}.parent_whatsapp_phone`);
                             }} /></FormControl>
                             <FormLabel className="font-normal text-sm">WhatsApp same as Phone?</FormLabel>
                         </FormItem>
                     )} />
                     {watchIsWhatsappSame === false && (
-                        <FormField control={control} name={`${pathPrefix}.parent_whatsapp_number`} render={({ field }) => (
+                        <FormField control={control} name={`${pathPrefix}.parent_whatsapp_phone`} render={({ field }) => (
                             <FormItem className="lg:col-start-2"><FormLabel>WhatsApp Number<span className="text-destructive"> *</span></FormLabel><FormControl>
                                 <PhoneInput
-                                    placeholder="Enter WhatsApp number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_whatsapp_number`); }} value={field.value ?? ''} />
+                                    placeholder="Enter WhatsApp number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_whatsapp_phone`); }} value={field.value ?? ''} />
                             </FormControl><FormMessage /></FormItem>
                         )} />
                     )}
@@ -383,35 +380,54 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                             </FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={control} name={`${pathPrefix}.parent_address_zipcode`} render={({ field }) => (
-                            <FormItem><FormLabel>Zipcode<span className="text-destructive"> *</span></FormLabel>
-                                <FormControl><Input placeholder="Zipcode" {...field} value={field.value ?? ''} disabled={!parentAddressCountryName} /></FormControl>
+                            <FormItem><FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
+                                <FormControl><Input placeholder="PIN / ZIP Code" {...field} value={field.value ?? ''} disabled={!parentAddressCountryName} /></FormControl>
                                 {isParentAddrLoading && <FormDescription>Loading address...</FormDescription>}
                                 {parentAddrError && <FormMessage>{parentAddrError}</FormMessage>}
                                 {!parentAddrError && !isParentAddrLoading && <FormMessage />} {/* RHF error */}
                             </FormItem>
                         )} />
-                        <FormField control={control} name={`${pathPrefix}.parent_address_state`} render={({ field }) => (
-                            <FormItem><FormLabel>State<span className="text-destructive"> *</span></FormLabel>
-                                <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_address_state`); }} value={field.value ?? ''} disabled={isParentAddrLoading || parentAddrStateOptions.length === 0 || !parentAddressZipcode || !parentAddressCountryName}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder={isParentAddrLoading ? "Loading..." : (parentAddrStateOptions.length > 0 ? "Select state" : "Enter country & zipcode")} /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {parentAddrStateOptions.length > 0 ? parentAddrStateOptions.map(s => <SelectItem key={`${pathPrefix}-state-${s}`} value={s}>{s}</SelectItem>)
-                                            : <SelectItem
-                                                value="no-opts"
-                                                disabled>{!parentAddressCountryName ? "Select country" : (parentAddressZipcode && parentAddressZipcode.length >= 3 ? "No states found" : "Enter zipcode")}</SelectItem>}
-                                    </SelectContent>
-                                </Select><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={control} name={`${pathPrefix}.parent_address_city`} render={({ field }) => (
-                            <FormItem><FormLabel>City<span className="text-destructive"> *</span></FormLabel>
-                                <Select onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_address_city`); }} value={field.value ?? ''} disabled={isParentAddrLoading || parentAddrCityOptions.length === 0 || !parentAddressZipcode || !parentAddressCountryName}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder={isParentAddrLoading ? "Loading..." : (parentAddrCityOptions.length > 0 ? "Select city" : "Enter country & zipcode")} /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {parentAddrCityOptions.length > 0 ? parentAddrCityOptions.map(c => <SelectItem key={`${pathPrefix}-city-${c}`} value={c}>{c}</SelectItem>)
-                                            : <SelectItem value="no-opts" disabled>{!parentAddressCountryName ? "Select country" : (parentAddressZipcode && parentAddressZipcode.length >= 3 ? "No cities found" : "Enter zipcode")}</SelectItem>}
-                                    </SelectContent>
-                                </Select><FormMessage /></FormItem>
-                        )} />
+                        <FormField
+                            control={control}
+                            name={`${pathPrefix}.parent_address_state`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="State (auto-filled)"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                            disabled // Make the input disabled
+                                            className="bg-muted cursor-not-allowed"
+                                        />
+                                    </FormControl>
+                                    {isParentAddrLoading && !field.value && <FormDescription>Loading state...</FormDescription>}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Parent City (Enabled Text Input) */}
+                        <FormField
+                            control={control}
+                            name={`${pathPrefix}.parent_address_city`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="Enter city/town"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                            disabled={isParentAddrLoading && !field.value} // Optionally disable while loading if empty
+                                        />
+                                    </FormControl>
+                                    {isParentAddrLoading && !field.value && <FormDescription>Loading city...</FormDescription>}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField control={control} name={`${pathPrefix}.parent_address_line1`} render={({ field }) => (<FormItem><FormLabel>Address Line 1<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Address Line 1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={control} name={`${pathPrefix}.parent_address_line2`} render={({ field }) => (<FormItem><FormLabel>Address Line 2<span className="text-destructive"></span></FormLabel><FormControl><Input placeholder="Address Line 2" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     </div>

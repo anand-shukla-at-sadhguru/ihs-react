@@ -13,7 +13,7 @@ import {
     // type IndividualLanguageDataYup (if you have one)
 } from './yupSchema'; // Adjust the path as necessary
 
-import { BOARD_OPTIONS_YUP, calculateAge, fetchAddressDetails, getCurrentAcademicYear, getLastNAcademicYears, LANGUAGE_OPTIONS, PARENT_RELATION_OPTIONS_YUP } from './admissionFormTabUtils';
+import { BOARD_OPTIONS_YUP, calculateAge, fetchAddressDetails, getCurrentAcademicYear, getLastNAcademicYears, LANGUAGE_OPTIONS, PARENT_RELATION_OPTIONS_YUP, TAB_FIELD_GROUPS, TAB_ORDER } from './admissionFormTabUtils';
 import { LanguagesKnownSection } from './LanguagesKnownSection'; // Adjust path if needed
 import { StudentSiblingsSection } from './StudentSiblingsSection'; // <-- NEW IMPORT
 import { PreviousSchoolsSection } from './PreviousSchoolsSection';
@@ -79,28 +79,21 @@ const parseSelectOptions = (optionsString: string | null | undefined): string[] 
     return optionsString.split('\n').map(o => o.trim()).filter(o => o.length > 0);
 };
 
-// Helper to get current academic year string (e.g., "2024-25")
-
-
-// Helper to get last N academic years as strings (e.g., "2023-24")
-
-
-
 const appliedForOptions = ['Class II', 'Class V', 'Class VIII', 'Class XI'];
 
 
 export function AdmissionRegistrationForm() {
-    const [commStateOptions, setCommStateOptions] = useState<string[]>([]);
-    const [commCityOptions, setCommCityOptions] = useState<string[]>([]);
+    const [currentTab, setCurrentTab] = useState(TAB_ORDER[0]); // Existing tab state
+    const currentTabIndex = TAB_ORDER.indexOf(currentTab);
+    const fieldsToValidate = TAB_FIELD_GROUPS[currentTab];
+    const [enabledTabs, setEnabledTabs] = useState<Set<string>>(
+        new Set([TAB_ORDER[0], TAB_ORDER[1]]) // "instruction" and "personal" initially enabled
+    );
     const [isCommAddressLoading, setIsCommAddressLoading] = useState(false);
     const [commAddressError, setCommAddressError] = useState<string | null>(null);
-    const [billStateOptions, setBillStateOptions] = useState<string[]>([]);
-    const [billCityOptions, setBillCityOptions] = useState<string[]>([]); // <-- Updated variable name
     const [isBillAddressLoading, setIsBillAddressLoading] = useState(false);
     const [billAddressError, setBillAddressError] = useState<string | null>(null); // <-- Updated variable name
     // --- NEW: For Current School Address ---
-    const [currentSchoolStateOptions, setCurrentSchoolStateOptions] = useState<string[]>([]);
-    const [currentSchoolCityOptions, setCurrentSchoolCityOptions] = useState<string[]>([]);
     const [isCurrentSchoolAddressLoading, setIsCurrentSchoolAddressLoading] = useState(false);
     const [currentSchoolAddressError, setCurrentSchoolAddressError] = useState<string | null>(null);
     // 1. Define form with updated default values
@@ -109,24 +102,24 @@ export function AdmissionRegistrationForm() {
         resolver: yupResolver(admissionRegistrationSchemaYup),
         // Updated default values reflecting the flattened schema for parents/siblings
         defaultValues: {
-            application_year: getCurrentAcademicYear(),
-            applied_for: 'Class V', // Default from appliedForOptions
-            applicant_user: 'IHS-202526-001', // Example
+            application_academic_year: getCurrentAcademicYear(),
+            application_for: 'Class V', // Default from appliedForOptions
+            application_number: 'IHS-202526-001', // Example
             applied_to_ihs_before: 'No',
-            // previous_application_application_year: previousApplicationYears[0] || '', // Default to most recent or empty
-            // previous_application_applied_for: 'Class II', // Default from appliedForOptions
-            // previous_application_remarks: '',
+            // previous_applied_year: previousApplicationYears[0] || '', // Default to most recent or empty
+            // previous_applied_for: 'Class II', // Default from appliedForOptions
+            // previous_applied_comments: '',
             first_name: 'Jhon',
-            // middle_name: '',
+            middle_name: '',
             last_name: 'Sue',
             gender: 'Male', // Or '' or one of GENDER_OPTIONS
             nationality: 'India',
             country_of_residence: 'India',
-            country: 'India', // Country of Birth
+            country_of_birth: 'India', // Country of Birth
             // date_of_birth: new Date('2010-01-01'), // Example past date
             // age: 14, // Example, or calculate based on DOB
             // comm_address_country: 'India',
-            // comm_address_area_code: '110001',
+            // comm_address_zip_code: '110001',
             comm_address_line_1: 'Plot 403/404 Nakawa Industrial Area, P.O. Box 9547',
             // comm_address_line_2: 'Apt 1',
             // comm_address_city: 'New Delhi',
@@ -141,39 +134,38 @@ export function AdmissionRegistrationForm() {
             other_mother_tongue: 'Njerep',
             languages_known: [
                 { language: 'Hindi', proficiency: 'Advanced' },
-                { language: 'Other', proficiency: 'Advanced', other_language_name: 'Njerep' },
+                { language: 'Other', proficiency: 'Advanced', other_language: 'Njerep' },
             ],
             has_sibling_in_ihs: 'No',
             student_siblings: [], // Will be auto-populated by useEffect if has_sibling_in_ihs is 'Yes' initially
             // recent_photograph: undefined,
             // birth_certificate: undefined,
-            // id_proof: 'Aadhaar Card', // Default from ID_PROOF_OPTIONS
+            // id_proof_type: 'Aadhaar Card', // Default from ID_PROOF_OPTIONS
             // id_proof_document: undefined,
             // aadhaar_number: '', // Example: '123456789012' - conditionally required
             // passport_number: '',
-            // place_of_issue: '',
-            // date_of_issue: '',
-            // date_of_expiry: '',
+            // passport_place_of_issue: '',
+            // passport_date_of_issue: '',
+            // passport_date_of_expiry: '',
             is_home_schooled: 'No',
             current_school_name: 'Delhi Public School',
             current_school_board_affiliation: 'State Board', // Default from BOARD_AFFILIATION_OPTIONS
             current_school_phone_number: '+919988776655', // E.164 format
             current_school_country: 'India',
-            current_school_area_code: '110002',
+            current_school_zip_code: '110002',
             current_school_city: 'New Delhi',
             current_school_state: 'Delhi',
             current_school_email_address: 'currentschool@example.com',
-            current_school_a_line1: '456 School Rd',
-            current_school_a_line2: '',
+            current_school_address_line1: '456 School Rd',
+            current_school_address_line2: '',
             // was_the_applicant_ever_home_schooled: 'No',
             // been_to_school_previously: 'No', // Set to No so previous_schools_table is initially empty
             previous_schools: [],
-            emis_id: '',
             academic_strengths_and_weaknesses: 'Strong in sciences.',
-            hobbies_interests_and_extra_curricular_activities: 'Reading, Chess.',
+            hobbies_interests_and_extra_curricular: 'Reading, Chess.',
             other_details_of_importance: '',
             temperament_and_personality: 'Inquisitive and calm.',
-            special_learning_needs_or_learning_disability: 'None reported.',
+            learning_disability: 'None reported.',
             done_smallpox_vaccine: 'Yes',
             done_hepatitis_a_vaccine: 'Yes',
             done_hepatitis_b_vaccine: 'Yes',
@@ -190,9 +182,8 @@ export function AdmissionRegistrationForm() {
             wears_glasses_or_lens: 'No',
             // right_eye_power: '',
             // left_eye_power: '',
-            is_toilet_trained: 'Yes', // Relevant if applied_for is Class II
-            // wets_bed: 'No',           // Relevant if applied_for is Class II
-            // bed_wet_frequency: '',    // Relevant if wets_bed is Yes
+            toilet_trained: 'Yes', // Relevant if application_for is Class II
+            // bed_wet: 'No',           // Relevant if application_for is Class II
             has_hearing_challenges: 'No',
             // hearing_challenges: '',
             has_behavioural_challenges: 'No',
@@ -201,20 +192,20 @@ export function AdmissionRegistrationForm() {
             physical_challenges: '',
             has_speech_challenges: 'No',
             speech_challenges: '',
-            has_injury: 'No',
-            injury_details: '',
-            on_medication: 'No',
-            medication_details: '',
+            history_of_accident_injury: 'No',
+            history_of_accident_injury_details: '',
+            regular_medication: 'No',
+            regular_medication_details: '',
             medical_prescription: undefined,
             has_health_issue: 'No',
-            health_issue_details: '',
-            was_hospitalized: 'No',
-            hospitalization_details: '',
+            history_of_health_issues: '',
+            surgery_hospitalization: 'No',
+            surgery_hospitalization_details: '',
             needs_special_attention: 'No',
-            attention_details: '',
+            special_attention_details: '',
             has_allergies: 'No',
-            allergy_details: '',
-            students_parents: [
+            allergies_details: '',
+            student_parent: [
                 {
                     // parent_first_name: 'Parent1 First',
                     // parent_last_name: 'Parent1 Last',
@@ -224,7 +215,7 @@ export function AdmissionRegistrationForm() {
                     // parent_contact_email: 'parent1@example.com',
                     // parent_contact_phone: '+919123456780', // E.164
                     // parent_is_whatsapp_same: true as boolean,
-                    // parent_whatsapp_number: '',
+                    // parent_whatsapp_phone: '',
                     // parent_is_address_same_as_applicant: 'Yes',
                     // parent_address_country: '', // Copied if 'Yes'
                     // parent_address_zipcode: '',
@@ -260,22 +251,23 @@ export function AdmissionRegistrationForm() {
             // group_b: undefined,
             // group_c: undefined,
             // group_d: undefined,
-            // q1_applicant_response: '', q2_applicant_response: '', q3_applicant_response: '', q4_applicant_response: '',
-            // q5_applicant_response: '', q6_applicant_response: '', q7_applicant_response: '',
-            // q1_parent_response: '', q2_parent_response: '', q3_parent_response: '', q4_parent_response: '',
-            // q5_parent_response: '', q6_parent_response: '',
-            // declaration: false, // Should typically default to false
+            // response_why_ihs_post_10th: '', response_subject_combination: '', response_activity_love_to_do_most: '', response_change_one_thing_about_world: '',
+            // response_change_one_thing_about_yourself: '', response_dream_vacation: '', response_additional_comments_optional: '',
+            // parents_response_why_ihs_post_10th: '', parents_response_childs_self_confidence: '', parents_response_strengths_weaknesses: '', parents_response_child_future_education_plan: '',
+            // parents_response_on_childs_concerns: '', parents_response_additional_comments: '',
+            // agree_declaration: false, // Should typically default to false
             // date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD
             // place: 'Default City',
-            billing_name: 'Jhon joe JIJOE', // Updated billing name
-            billing_phone: '+919000000000', // E.164
+            billing_first_name: 'Jhon', // Updated billing name
+            billing_last_name: 'Doe JIJOE', // Updated billing last name
+            billing_mobile: '+919000000000', // E.164
             billing_email: 'billing@example.com',
             billing_country: 'India',
-            billing_area_code: '110001',
+            billing_zip_code: '110001',
             billing_city: 'New Delhi',
             billing_state: 'Delhi',
-            billing_address_l1: '789 Billing St',
-            billing_address_l2: '',
+            billing_address_line1: '789 Billing St',
+            billing_address_lin2: '',
             // application_fee_status: 'Pending', // Default from options
             // program: 'General', // Example
             // payment_program_links: [],
@@ -298,35 +290,35 @@ export function AdmissionRegistrationForm() {
     const watchMotherTongue = form.watch("mother_tongue");
     const watchReligion = form.watch("religion");
     const watchCommunity = form.watch("community");
-    const watchAppliedFor = form.watch("applied_for");
+    const watchAppliedFor = form.watch("application_for");
     const watchHasSibling = form.watch("has_sibling_in_ihs"); // Used for sibling section visibility
-    const watchIdProof = form.watch("id_proof");
+    const watchIdProof = form.watch("id_proof_type");
     const watchIsHomeSchooled = form.watch("is_home_schooled");
     const watchStudiedPreviously = form.watch("been_to_school_previously");
     const watchedDateOfBirth = form.watch("date_of_birth");
 
     //To auto Fill the State and City based on the country selected
     const watchCommCountry = form.watch("comm_address_country");
-    const watchCommZipcode = form.watch("comm_address_area_code");
+    const watchCommZipcode = form.watch("comm_address_zip_code");
 
     const watchBillingCountry = form.watch("billing_country");
-    const watchBillingZipcode = form.watch("billing_area_code");
+    const watchBillingZipcode = form.watch("billing_zip_code");
 
     // Watch fields for Current School Address
     const watchCurrentSchoolCountry = form.watch("current_school_country"); // Make sure this field exists in schema/form
-    const watchCurrentSchoolZipcode = form.watch("current_school_area_code");
+    const watchCurrentSchoolZipcode = form.watch("current_school_zip_code");
 
     // const watchCurrentSchoolState = form.watch("current_school_state");
     const watchWearsGlasses = form.watch("wears_glasses_or_lens");
     const watchHearing = form.watch("has_hearing_challenges");
-    const watchWetsBed = form.watch("wets_bed");
+
     const watchBehavioural = form.watch("has_behavioural_challenges");
     const watchPhysical = form.watch("has_physical_challenges");
     const watchSpeech = form.watch("has_speech_challenges");
-    const watchInjury = form.watch("has_injury");
-    const watchMedication = form.watch("on_medication");
+    const watchInjury = form.watch("history_of_accident_injury");
+    const watchMedication = form.watch("regular_medication");
     const watchHealthIssue = form.watch("has_health_issue");
-    const watchHospitalized = form.watch("was_hospitalized");
+    const watchHospitalized = form.watch("surgery_hospitalization");
     const watchSpecialAttention = form.watch("needs_special_attention");
     const watchAllergies = form.watch("has_allergies"); // Fixed typo
     const watchMaritalStatus = form.watch("parent_marital_status");
@@ -335,7 +327,8 @@ export function AdmissionRegistrationForm() {
     // const watchParentsAreGuardians = form.watch("parents_are_local_guardians"); // Used for guardian section
     // const watchWhoPaysTuition = form.watch("who_is_responsible_for_paying_applicants_tuition_fee"); // Fixed typo
 
-    const { control, getValues, setValue, watch, trigger, getFieldState } = form;
+    const { control, getValues, setValue, watch, trigger, getFieldState, formState } = form;
+    const { errors, isValid: isOverallFormValid, isSubmitting } = formState;
 
     const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
         control: form.control,
@@ -352,13 +345,85 @@ export function AdmissionRegistrationForm() {
 
     const { fields: parentFields, append: appendParent, remove: removeParent } = useFieldArray({
         control, // same as form.control
-        name: "students_parents"
+        name: "student_parent"
     });
 
     const { fields: guardianDetailFields, append: appendGuardianDetail, remove: removeGuardianDetail } = useFieldArray({
         control,
         name: "student_guardians"
     });
+
+    const handleNextTab = async () => {
+
+        let currentTabIsValid = true;
+        if (fieldsToValidate && fieldsToValidate.length > 0) {
+            // Trigger validation for only the fields in the current tab
+            // For array fields, RHF will validate the array and its items based on the schema
+            await trigger(fieldsToValidate);
+
+            // Check if any of the validated fields now have errors
+            currentTabIsValid = !fieldsToValidate.some(field => get(errors, field));
+            // A more robust check:
+            // const validationResults = await Promise.all(fieldsToValidate.map(field => trigger(field)));
+            // currentTabIsValid = validationResults.every(isValid => isValid);
+            // console.log(`Validation for tab ${currentTab}:`, currentTabIsValid, errors);
+        }
+
+
+        if (currentTabIsValid) {
+            let nextTabIndex = currentTabIndex + 1;
+            // Skip "subjects" tab if not Class XI
+            if (TAB_ORDER[currentTabIndex] === "parents" && watchAppliedFor !== 'Class XI') {
+                nextTabIndex++; // Skip "subjects" and go to "declaration"
+            }
+
+            if (nextTabIndex < TAB_ORDER.length) {
+                const nextTabKey = TAB_ORDER[nextTabIndex];
+                setEnabledTabs(prev => new Set(prev).add(nextTabKey));
+                setCurrentTab(nextTabKey);
+                window.scrollTo(0, 0);
+            }
+        } else {
+            // Errors will be displayed by FormMessage components.
+            // You could optionally show a toast or alert.
+            console.log(`Validation failed for tab: ${currentTab}`, errors);
+            // Focus the first field with an error on the current tab
+            const firstErrorField = fieldsToValidate.find(field => get(errors, field));
+            if (firstErrorField) {
+                const fieldElement = document.getElementsByName(firstErrorField as string)[0];
+                fieldElement?.focus();
+            }
+        }
+    };
+
+    // Helper function from lodash or implement your own
+    const get = (obj: any, path: Path<AdmissionRegistrationFormDataYup> | string, defaultValue?: any) => {
+        const keys = (path as string).replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '').split('.');
+        let result = obj;
+        for (const key of keys) {
+            if (result === null || typeof result !== 'object' || !(key in result)) {
+                return defaultValue;
+            }
+            result = result[key];
+        }
+        return result;
+    };
+
+
+    const handleBackTab = () => {
+        const currentTabIndex = TAB_ORDER.indexOf(currentTab);
+        let prevTabIndex = currentTabIndex - 1;
+        // Skip "subjects" tab if not Class XI when going back from "declaration"
+        if (TAB_ORDER[currentTabIndex] === "declaration" && watchAppliedFor !== 'Class XI') {
+            prevTabIndex--; // Skip "subjects" and go to "parents"
+        }
+
+        if (prevTabIndex >= 0) {
+            setCurrentTab(TAB_ORDER[prevTabIndex]);
+            window.scrollTo(0, 0);
+        }
+    };
+
     // --- Modal State and Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [previewFile, setPreviewFile] = useState<{ url: string; type: string; name: string } | null>(null);
@@ -459,7 +524,7 @@ export function AdmissionRegistrationForm() {
     useEffect(() => {
         if (watchParentsAreLocalGuardians === 'No' && guardianDetailFields.length === 0) {
             appendGuardianDetail({
-                guardian_relation_with_applicant: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
+                guardian_relation: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
                 guardian_first_name: '',
                 guardian_last_name: '',
                 guardian_nationality: '',
@@ -467,7 +532,7 @@ export function AdmissionRegistrationForm() {
                 guardian_contact_email: '',
                 guardian_contact_phone: '',
                 guardian_is_whatsapp_same: true,
-                guardian_whatsapp_number: '',
+                guardian_whatsapp_phone: '',
                 guardian_is_address_same_as_applicant: '',
                 guardian_address_country: '',
                 guardian_address_zipcode: '',
@@ -492,122 +557,163 @@ export function AdmissionRegistrationForm() {
                 const countryISO2 = countryObj.alpha2;
                 const timerId = setTimeout(() => {
                     fetchAddressDetails(
-                        countryISO2, // Pass ISO2 code
+                        countryISO2,
                         watchCommZipcode,
-                        setCommStateOptions,
-                        setCommCityOptions,
+                        // setCommStateOptions, // REMOVED
+                        // setCommCityOptions, // REMOVED
                         setIsCommAddressLoading,
                         setCommAddressError,
                         "comm_address_state",
                         "comm_address_city",
-                        setValue,
+                        setValue
                     );
                 }, 800);
                 return () => clearTimeout(timerId);
             } else {
-                setCommStateOptions([]);
-                setCommCityOptions([]);
+                // setCommStateOptions([]); // No longer needed
+                // setCommCityOptions([]); // No longer needed
                 setCommAddressError("Invalid country selected or country code not found.");
-                setValue("comm_address_state", "", { shouldValidate: false });
-                setValue("comm_address_city", "", { shouldValidate: false });
+                setValue("comm_address_state", "" as any, { shouldValidate: false });
+                setValue("comm_address_city", "" as any, { shouldValidate: false });
             }
         } else {
-            setCommStateOptions([]);
-            setCommCityOptions([]);
-            if (!watchCommZipcode) {
-                setValue("comm_address_state", "", { shouldValidate: false });
-                setValue("comm_address_city", "", { shouldValidate: false });
+            // setCommStateOptions([]); // No longer needed
+            // setCommCityOptions([]); // No longer needed
+            if (!watchCommZipcode && watchCommCountry) { // Only clear if zipcode is cleared but country remains
+                setValue("comm_address_state", "" as any, { shouldValidate: false });
+                setValue("comm_address_city", "" as any, { shouldValidate: false });
             }
-            setCommAddressError(null);
+            setCommAddressError(null); // Clear error if conditions not met
         }
-    }, [watchCommCountry, watchCommZipcode, setValue]);
+    }, [watchCommCountry, watchCommZipcode, setValue, setIsCommAddressLoading, setCommAddressError]);
 
     useEffect(() => {
+        // If billing country and zipcode are present and zipcode is of sufficient length
         if (watchBillingCountry && watchBillingZipcode && watchBillingZipcode.length >= 3) {
             const countryObj = countries.all.find(c => c.name === watchBillingCountry);
             if (countryObj && countryObj.alpha2) {
                 const countryISO2 = countryObj.alpha2;
                 const timerId = setTimeout(() => {
                     fetchAddressDetails(
-                        countryISO2, // Pass ISO2 code
+                        countryISO2,
                         watchBillingZipcode,
-                        setBillStateOptions,
-                        setBillCityOptions,
+                        // No state/city option setters needed
                         setIsBillAddressLoading,
                         setBillAddressError,
-                        "billing_state",
-                        "billing_city",
-                        setValue,
+                        "billing_state",      // RHF field name for billing state
+                        "billing_city",       // RHF field name for billing city
+                        setValue              // RHF's setValue function
                     );
                 }, 800);
                 return () => clearTimeout(timerId);
             } else {
-                setBillStateOptions([]);
-                setBillCityOptions([]);
-                setBillAddressError("Invalid country selected or country code not found.");
-                setValue("billing_state", "", { shouldValidate: false });
-                setValue("billing_city", "", { shouldValidate: false });
+                setBillAddressError("Invalid billing country or country code not found.");
+                setValue("billing_state", "" as any, { shouldValidate: false });
+                setValue("billing_city", "" as any, { shouldValidate: false });
+                setIsBillAddressLoading(false);
             }
         } else {
-            setBillStateOptions([]);
-            setBillCityOptions([]);
-            if (!watchBillingZipcode) {
-                setValue("billing_state", "", { shouldValidate: false });
-                setValue("billing_city", "", { shouldValidate: false });
+            // Clear form values if inputs are insufficient for a fetch
+            if (!watchBillingZipcode && watchBillingCountry) {
+                setValue("billing_state", "" as any, { shouldValidate: false });
+                setValue("billing_city", "" as any, { shouldValidate: false });
             }
             setBillAddressError(null);
+            setIsBillAddressLoading(false);
         }
-    }, [watchBillingCountry, watchBillingZipcode, setValue]);
+    }, [
+        watchBillingCountry,
+        watchBillingZipcode,
+        setValue,
+        // setIsBillingAddressLoading, // Stable setters
+        // setBillingAddressError      // Stable setters
+    ]);
     // --- NEW: useEffect for Current School Address ---
     useEffect(() => {
-        if (watchIsHomeSchooled === 'No' && watchCurrentSchoolCountry && watchCurrentSchoolZipcode && watchCurrentSchoolZipcode.length >= 3) {
+        // If home-schooled, no need to fetch school address, clear any previous error/loading
+        if (watchIsHomeSchooled === 'Yes') {
+            // setCurrentSchoolStateOptions([]); // No longer needed
+            // setCurrentSchoolCityOptions([]); // No longer needed
+            setValue("current_school_state", "" as any, { shouldValidate: false }); // Clear form value
+            setValue("current_school_city", "" as any, { shouldValidate: false });  // Clear form value
+            setIsCurrentSchoolAddressLoading(false);
+            setCurrentSchoolAddressError(null);
+            return; // Exit early
+        }
+
+        // Proceed if not home-schooled
+        if (watchCurrentSchoolCountry && watchCurrentSchoolZipcode && watchCurrentSchoolZipcode.length >= 3) {
             const countryObj = countries.all.find(c => c.name === watchCurrentSchoolCountry);
             if (countryObj && countryObj.alpha2) {
                 const countryISO2 = countryObj.alpha2;
                 const timerId = setTimeout(() => {
+                    // Call the modified fetchAddressDetails
                     fetchAddressDetails(
                         countryISO2,
                         watchCurrentSchoolZipcode,
-                        setCurrentSchoolStateOptions,
-                        setCurrentSchoolCityOptions,
+                        // setCurrentSchoolStateOptions, // REMOVED
+                        // setCurrentSchoolCityOptions, // REMOVED
                         setIsCurrentSchoolAddressLoading,
                         setCurrentSchoolAddressError,
-                        "current_school_state",
-                        "current_school_city",
-                        setValue,
+                        "current_school_state",     // RHF field name for state
+                        "current_school_city",      // RHF field name for city
+                        setValue                    // RHF's setValue function
                     );
                 }, 800);
                 return () => clearTimeout(timerId);
             } else {
-                setCurrentSchoolStateOptions([]);
-                setCurrentSchoolCityOptions([]);
+                // setCurrentSchoolStateOptions([]); // No longer needed
+                // setCurrentSchoolCityOptions([]); // No longer needed
                 setCurrentSchoolAddressError("Invalid school country or country code not found.");
-                form.setValue("current_school_state", "", { shouldValidate: false });
-                form.setValue("current_school_city", "", { shouldValidate: false });
+                setValue("current_school_state", "" as any, { shouldValidate: false });
+                setValue("current_school_city", "" as any, { shouldValidate: false });
+                setIsCurrentSchoolAddressLoading(false); // Ensure loading is reset
             }
         } else {
-            setCurrentSchoolStateOptions([]);
-            setCurrentSchoolCityOptions([]);
-            if (!watchCurrentSchoolZipcode) {
-                form.setValue("current_school_state", "", { shouldValidate: false });
-                form.setValue("current_school_city", "", { shouldValidate: false });
+            // setCurrentSchoolStateOptions([]); // No longer needed
+            // setCurrentSchoolCityOptions([]); // No longer needed
+            // Clear form values if inputs are insufficient for a fetch, e.g., zipcode cleared
+            if (!watchCurrentSchoolZipcode && watchCurrentSchoolCountry) {
+                setValue("current_school_state", "" as any, { shouldValidate: false });
+                setValue("current_school_city", "" as any, { shouldValidate: false });
             }
-            setCurrentSchoolAddressError(null);
+            setCurrentSchoolAddressError(null); // Clear error if conditions for fetch aren't met
+            setIsCurrentSchoolAddressLoading(false); // Ensure loading is reset
         }
-    }, [watchIsHomeSchooled, watchCurrentSchoolCountry, watchCurrentSchoolZipcode, form]);
+    }, [
+        watchIsHomeSchooled,
+        watchCurrentSchoolCountry,
+        watchCurrentSchoolZipcode,
+        setValue,
+        // setIsCurrentSchoolAddressLoading, // Stable setters don't strictly need to be deps
+        // setCurrentSchoolAddressError      // but good for explicitness if ESLint complains
+    ]);
     // 3. Define submit handler (remains the same conceptually)
     const onSubmit: SubmitHandler<AdmissionRegistrationFormDataYup> = async (values) => {
         // Check for errors (keep this part)
-        if (!form.formState.isValid) {
-            const errorMessages = Object.entries(form.formState.errors)
-                .map(([field, error]: [string, any]) => `${field}: ${error?.message || 'Invalid value'}`)
-                .join('\n');
-            alert("Please fix the following errors before submitting:\n\n" + errorMessages);
-            console.error("Form validation errors:", form.formState.errors);
+        console.log("Form validation errors at submit:", errors); // Log errors if any
+        // The check below is still very important as a final safeguard
+        if (!isOverallFormValid) { // Use isOverallFormValid from formState
+            alert("Please ensure all sections of the form are correctly filled out.");
+            // Optionally, find the first tab with errors and switch to it
+            for (const tabKey of TAB_ORDER) {
+                if (tabKey === "instruction") continue;
+                const fieldsInTab = TAB_FIELD_GROUPS[tabKey];
+                if (fieldsInTab && fieldsInTab.some(field => get(errors, field))) {
+                    setCurrentTab(tabKey);
+                    // Attempt to focus the first error in that tab
+                    const firstErrorField = fieldsInTab.find(field => get(errors, field));
+                    if (firstErrorField) {
+                        const fieldElement = document.getElementsByName(firstErrorField as string)[0];
+                        fieldElement?.focus();
+                    }
+                    break;
+                }
+            }
             return;
         }
 
-        console.log("Original Form Values:", values);
+        console.log("Yup Validated Form Values for Submission:", values);
 
         // --- Prepare a plain JavaScript object for JSON ---
         const payload: { [key: string]: any } = {};
@@ -722,21 +828,21 @@ export function AdmissionRegistrationForm() {
                         <FormLabel>{labelContent}</FormLabel>
                         <FormControl>
                             <div>
-                                {fieldName === "application_year" || fieldName === "applicant_user" ? (
+                                {fieldName === "application_academic_year" || fieldName === "application_number" ? (
                                     <Input
                                         value={field.value ?? ''}
                                         disabled
                                         className="bg-muted cursor-not-allowed"
                                     />
-                                ) : fieldName === "applied_for" ? (
+                                ) : fieldName === "application_for" ? (
                                     <Select
                                         onValueChange={field.onChange}
                                         value={field.value ?? ''}
                                         onOpenChange={(isOpen) => {
                                             if (!isOpen) {
                                                 field.onBlur(); // Crucial for isTouched
-                                                if (form.getFieldState("applied_for").isTouched) {
-                                                    form.trigger("applied_for");
+                                                if (form.getFieldState("application_for").isTouched) {
+                                                    form.trigger("application_for");
                                                 }
                                             }
                                         }}
@@ -875,20 +981,10 @@ export function AdmissionRegistrationForm() {
     };
 
     // Tab state for navigation
-    const TAB_KEYS = [
-        "instruction", // Added instruction tab as the first tab
-        "personal",
-        "academic",
-        "health",
-        "parents",
-        "subjects", // <-- Add new tab key here
-        "declaration",
-        "billing"
-    ];
-    const [tab, setTab] = useState(TAB_KEYS[0]);
-    const tabIndex = TAB_KEYS.indexOf(tab);
+    const [tab, setTab] = useState(TAB_ORDER[0]);
+    const tabIndex = TAB_ORDER.indexOf(tab);
     const isFirstTab = tabIndex === 0;
-    const isLastTab = tabIndex === TAB_KEYS.length - 1;
+    const isLastTab = tabIndex === TAB_ORDER.length - 1;
 
     useEffect(() => {
         window.scrollTo({
@@ -900,22 +996,24 @@ export function AdmissionRegistrationForm() {
 
     return (
         <Form {...form}>
-            <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
                 <TabsList className="w-full flex flex-wrap justify-between mb-4 overflow-x-auto">
                     <TabsTrigger value="instruction" className="flex-1 min-w-[120px]">Instructions</TabsTrigger>
-                    <TabsTrigger value="personal" className="flex-1 min-w-[120px]">Personal</TabsTrigger>
-                    <TabsTrigger value="academic" className="flex-1 min-w-[120px]">Academic</TabsTrigger>
-                    <TabsTrigger value="health" className="flex-1 min-w-[120px]">Health</TabsTrigger>
-                    <TabsTrigger value="parents" className="flex-1 min-w-[120px]">Parents</TabsTrigger>
-                    {watchAppliedFor === 'Class XI' && <TabsTrigger value="subjects" className="flex-1 min-w-[120px]">Preferences</TabsTrigger>}
-                    <TabsTrigger value="declaration" className="flex-1 min-w-[120px]">Declaration</TabsTrigger>
-                    <TabsTrigger value="billing" className="flex-1 min-w-[120px]">Payment</TabsTrigger>
+                    <TabsTrigger value="personal" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("personal")}>Personal</TabsTrigger>
+                    <TabsTrigger value="academic" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("academic")}>Academic</TabsTrigger>
+                    <TabsTrigger value="health" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("health")}>Health</TabsTrigger>
+                    <TabsTrigger value="parents" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("parents")}>Parents</TabsTrigger>
+                    {watchAppliedFor === 'Class XI' &&
+                        <TabsTrigger value="subjects" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("subjects")}>Preferences</TabsTrigger>
+                    }
+                    <TabsTrigger value="declaration" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("declaration")}>Declaration</TabsTrigger>
+                    <TabsTrigger value="billing" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("billing")}>Payment</TabsTrigger>
                 </TabsList>
                 {/* @ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly */}
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <TabsContent value="instruction">
                         <section className="space-y-6">
-                            <AdmissionProcedure onAgree={() => setTab(TAB_KEYS[1])} />
+                            <AdmissionProcedure onAgree={() => setTab(TAB_ORDER[1])} />
                         </section>
                     </TabsContent>
                     <TabsContent value="personal">
@@ -924,9 +1022,9 @@ export function AdmissionRegistrationForm() {
                             <h2 className="text-xl font-semibold border-b pb-2">Application & Personal Information</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4"> {/* Reduced gap-y */}
                                 {/* Application Details */}
-                                {renderField("application_year", { label: "Application Academic Year", fieldtype: "Link", options: "IHS Academic Year", reqd: 1 })}
-                                {renderField("applied_for", { label: "Application For", fieldtype: "Select", options: "Class II\nClass V\nClass VIII\nClass XI", reqd: 1 })}
-                                {renderField("applicant_user", { label: "Admission Number", fieldtype: "Link", options: "User", read_only: 1 })}
+                                {renderField("application_academic_year", { label: "Application Academic Year", fieldtype: "Link", options: "IHS Academic Year", reqd: 1 })}
+                                {renderField("application_for", { label: "Application For", fieldtype: "Select", options: "Class II\nClass V\nClass VIII\nClass XI", reqd: 1 })}
+                                {renderField("application_number", { label: "Application Number", fieldtype: "Link", options: "User", read_only: 1 })}
 
                                 {/* Previous Application */}
                                 <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
@@ -937,7 +1035,7 @@ export function AdmissionRegistrationForm() {
                                             <FormField
                                                 //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                                 control={form.control}
-                                                name="previous_application_application_year"
+                                                name="previous_applied_year"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col space-y-1.5">
                                                         <FormLabel>Previous Application Year<span className="text-destructive"> *</span></FormLabel>
@@ -946,8 +1044,8 @@ export function AdmissionRegistrationForm() {
                                                                 onOpenChange={(isOpen) => {
                                                                     if (!isOpen) {
                                                                         field.onBlur();
-                                                                        if (getFieldState('previous_application_application_year').isTouched) {
-                                                                            trigger('previous_application_application_year');
+                                                                        if (getFieldState('previous_applied_year').isTouched) {
+                                                                            trigger('previous_applied_year');
                                                                         }
                                                                     }
                                                                 }}
@@ -971,7 +1069,7 @@ export function AdmissionRegistrationForm() {
                                             <FormField
                                                 //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                                 control={form.control}
-                                                name="previous_application_applied_for"
+                                                name="previous_applied_for"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col space-y-1.5">
                                                         <FormLabel>Previously Applied For Grade<span className="text-destructive"> *</span></FormLabel>
@@ -980,8 +1078,8 @@ export function AdmissionRegistrationForm() {
                                                                 onOpenChange={(isOpen) => {
                                                                     if (!isOpen) {
                                                                         field.onBlur();
-                                                                        if (getFieldState('previous_application_applied_for').isTouched) {
-                                                                            trigger('previous_application_applied_for');
+                                                                        if (getFieldState('previous_applied_for').isTouched) {
+                                                                            trigger('previous_applied_for');
                                                                         }
                                                                     }
                                                                 }}
@@ -1001,7 +1099,7 @@ export function AdmissionRegistrationForm() {
                                                 )}
                                             />
                                         )}
-                                        {watchAppliedBefore === 'Yes' && renderField("previous_application_remarks", { label: "Previous Application Remarks", fieldtype: "Data", reqd: 1 })}
+                                        {watchAppliedBefore === 'Yes' && renderField("previous_applied_comments", { label: "Previous Application Comments", fieldtype: "Data", reqd: 1 })}
                                     </div>
                                 </div>
 
@@ -1026,7 +1124,7 @@ export function AdmissionRegistrationForm() {
                                             reqd: 1,
                                             placeholder: "Select country"
                                         })}
-                                        {renderField("country", {
+                                        {renderField("country_of_birth", {
                                             label: "Country of Birth",
                                             fieldtype: "CountrySelect",
                                             reqd: 1,
@@ -1059,11 +1157,9 @@ export function AdmissionRegistrationForm() {
                                                             onChange={(country: Country | undefined) => {
                                                                 field.onChange(country?.name || "");
                                                                 // When country changes, clear zipcode, state, city and their options
-                                                                setValue("comm_address_area_code", "");
+                                                                setValue("comm_address_zip_code", "");
                                                                 setValue("comm_address_state", "");
                                                                 setValue("comm_address_city", "");
-                                                                setCommStateOptions([]);
-                                                                setCommCityOptions([]);
                                                                 setCommAddressError(null);
                                                             }}
                                                             placeholder="Select country"
@@ -1077,10 +1173,10 @@ export function AdmissionRegistrationForm() {
                                         <FormField
                                             //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormData exactly
                                             control={form.control}
-                                            name="comm_address_area_code" // Assuming this is your zipcode field
+                                            name="comm_address_zip_code" // Assuming this is your zipcode field
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
-                                                    <FormLabel>Area Code/ Pincode<span className="text-destructive"> *</span></FormLabel>
+                                                    <FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             placeholder="Enter zipcode"
@@ -1098,68 +1194,42 @@ export function AdmissionRegistrationForm() {
                                         />
                                         {/* State Dropdown */}
                                         <FormField
-                                            //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
-                                            control={form.control}
+                                            control={form.control} // Assuming 'form' is your useForm() result
                                             name="comm_address_state"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        value={field.value ?? ''}
-                                                        disabled={isCommAddressLoading || commStateOptions.length === 0 || !watchCommZipcode}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder={isCommAddressLoading ? "Loading..." : "Select state"} />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {commStateOptions.length > 0 ? (
-                                                                commStateOptions.map(stateName => (
-                                                                    <SelectItem key={stateName} value={stateName}>{stateName}</SelectItem>
-                                                                ))
-                                                            ) : (
-                                                                <SelectItem value="no-options" disabled>
-                                                                    {watchCommZipcode ? "No states found or enter valid zipcode" : "Enter zipcode first"}
-                                                                </SelectItem>
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="State (auto-filled)"
+                                                            {...field}
+                                                            value={field.value ?? ''} // Ensure value is controlled
+                                                            disabled // Make the input disabled
+                                                            className="bg-muted cursor-not-allowed" // Optional: Style for disabled state
+                                                        />
+                                                    </FormControl>
+                                                    {isCommAddressLoading && !field.value && <FormDescription>Loading state...</FormDescription>}
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
-                                        {/* City Dropdown */}
+
+                                        {/* City Text Input (Enabled) */}
                                         <FormField
-                                            //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                             control={form.control}
                                             name="comm_address_city"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        value={field.value ?? ''}
-                                                        disabled={isCommAddressLoading || commCityOptions.length === 0 || !watchCommZipcode}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder={isCommAddressLoading ? "Loading..." : "Select city/town"} />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {commCityOptions.length > 0 ? (
-                                                                commCityOptions.map(cityName => (
-                                                                    <SelectItem key={cityName} value={cityName}>{cityName}</SelectItem>
-                                                                ))
-                                                            ) : (
-                                                                <SelectItem value="no-options" disabled>
-                                                                    {watchCommZipcode ? "No cities found or enter valid zipcode" : "Enter zipcode first"}
-                                                                </SelectItem>
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Enter city/town"
+                                                            {...field}
+                                                            value={field.value ?? ''} // Ensure value is controlled
+                                                            disabled={isCommAddressLoading && !field.value} // Optionally disable while loading if it's empty
+                                                        />
+                                                    </FormControl>
+                                                    {isCommAddressLoading && !field.value && <FormDescription>Loading city...</FormDescription>}
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -1230,14 +1300,14 @@ export function AdmissionRegistrationForm() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                         {renderField("recent_photograph", { label: "Recent Photograph", fieldtype: "Attach", reqd: 1 })}
                                         {renderField("birth_certificate", { label: "Birth Certificate", fieldtype: "Attach", reqd: 1 })}
-                                        {renderField("id_proof", { label: "ID Proof Type", fieldtype: "Select", options: "\nAadhaar Card\nPassport", reqd: 1 })}
+                                        {renderField("id_proof_type", { label: "ID Proof Type", fieldtype: "Select", options: "\nAadhaar Card\nPassport", reqd: 1 })}
                                         {renderField("id_proof_document", { label: "ID Proof Document", fieldtype: "Attach", reqd: 1 })}
                                         {/* Conditional ID Fields */}
-                                        {watchIdProof === 'Aadhaar Card' && renderField("aadhaar_number", { label: "Aadhaar Number", fieldtype: "Data", mandatory_depends_on: "Aadhaar Card" })}
-                                        {watchIdProof === 'Passport' && renderField("passport_number", { label: "Passport Number", fieldtype: "Data", mandatory_depends_on: "Passport" })}
-                                        {watchIdProof === 'Passport' && renderField("place_of_issue", { label: "Passport Place of Issue", fieldtype: "Data", mandatory_depends_on: "Passport" })}
-                                        {watchIdProof === 'Passport' && renderField("date_of_issue", { label: "Passport Date of Issue", fieldtype: "Date", mandatory_depends_on: "Passport" })}
-                                        {watchIdProof === 'Passport' && renderField("date_of_expiry", { label: "Passport Date of Expiry", fieldtype: "Date", mandatory_depends_on: "Passport" })}
+                                        {watchIdProof === 'Aadhaar Card' && renderField("aadhaar_number", { label: "Aadhaar Number", fieldtype: "Data", mandatory_depends_on: "Aadhaar Card", reqd: 1 })}
+                                        {watchIdProof === 'Passport' && renderField("passport_number", { label: "Passport Number", fieldtype: "Data", mandatory_depends_on: "Passport", reqd: 1 })}
+                                        {watchIdProof === 'Passport' && renderField("passport_place_of_issue", { label: "Passport Place of Issue", fieldtype: "Data", mandatory_depends_on: "Passport", reqd: 1 })}
+                                        {watchIdProof === 'Passport' && renderField("passport_date_of_issue", { label: "Passport Date of Issue", fieldtype: "Date", mandatory_depends_on: "Passport", reqd: 1 })}
+                                        {watchIdProof === 'Passport' && renderField("passport_date_of_expiry", { label: "Passport Date of Expiry", fieldtype: "Date", mandatory_depends_on: "Passport", reqd: 1 })}
                                     </div>
                                 </div>
                             </div>
@@ -1285,7 +1355,7 @@ export function AdmissionRegistrationForm() {
                                             {renderField("current_school_phone_number", { label: "School Phone Number", fieldtype: "PhoneInput", reqd: watchIsHomeSchooled === 'No' ? 1 : 0, placeholder: "Enter school phone" })}
                                             {renderField("current_school_email_address", { label: "School Email Address", fieldtype: "Data", options: "Email", mandatory_depends_on: "No", reqd: 1 })}
                                             {/* {renderField("current_school_country", { label: "School Country", fieldtype: "Link", options: "Country", mandatory_depends_on: "No" })} */}
-                                            {/* {renderField("current_school_area_code", { label: "School Area Code/ Pincode", fieldtype: "Data" })} */}
+                                            {/* {renderField("current_school_zip_code", { label: "School PIN / ZIP Code", fieldtype: "Data" })} */}
                                             {/* {renderField("current_school_city", { label: "School City/ Town", fieldtype: "Data", mandatory_depends_on: "No" })} */}
                                             {/* {renderField("current_school_state", { label: "School State", fieldtype: "Data" })} */}
                                             {/* --- NEW: Current School Country Dropdown --- */}
@@ -1303,7 +1373,7 @@ export function AdmissionRegistrationForm() {
                                                                 onChange={(country: Country | undefined) => {
                                                                     field.onChange(country?.name || "");
                                                                     // When country changes, clear school zipcode, state, city and their options
-                                                                    form.setValue("current_school_area_code", "");
+                                                                    form.setValue("current_school_zip_code", "");
                                                                     form.setValue("current_school_state", "");
                                                                     form.setValue("current_school_city", "");
                                                                     setCurrentSchoolStateOptions([]);
@@ -1323,10 +1393,10 @@ export function AdmissionRegistrationForm() {
                                             <FormField
                                                 //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                                 control={form.control}
-                                                name="current_school_area_code"
+                                                name="current_school_zip_code"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col space-y-1.5">
-                                                        <FormLabel>School Area Code/ Pincode<span className="text-destructive"> *</span></FormLabel>
+                                                        <FormLabel>School PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
                                                         <FormControl>
                                                             <Input
                                                                 placeholder="Enter school zipcode"
@@ -1345,74 +1415,55 @@ export function AdmissionRegistrationForm() {
 
                                             {/* --- NEW: Current School State Dropdown --- */}
                                             <FormField
-                                                //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                                 control={form.control}
                                                 name="current_school_state"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col space-y-1.5">
                                                         <FormLabel>School State<span className="text-destructive"> *</span></FormLabel>
-                                                        <Select
-                                                            onValueChange={field.onChange}
-                                                            value={field.value ?? ''}
-                                                            disabled={isCurrentSchoolAddressLoading || currentSchoolStateOptions.length === 0 || !watchCurrentSchoolZipcode || watchIsHomeSchooled === 'Yes'}
-                                                        >
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder={isCurrentSchoolAddressLoading ? "Loading..." : "Select school state"} />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                {currentSchoolStateOptions.length > 0 ? (
-                                                                    currentSchoolStateOptions.map(stateName => (
-                                                                        <SelectItem key={stateName} value={stateName}>{stateName}</SelectItem>
-                                                                    ))
-                                                                ) : (
-                                                                    <SelectItem value="no-options-current-school-state" disabled>
-                                                                        {watchCurrentSchoolZipcode ? "No states or enter valid zipcode" : "Enter school zipcode"}
-                                                                    </SelectItem>
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="State (auto-filled)"
+                                                                {...field}
+                                                                value={field.value ?? ''} // Ensure value is controlled
+                                                                disabled // Make the input disabled
+                                                                className="bg-muted cursor-not-allowed" // Optional: Style for disabled state
+                                                            />
+                                                        </FormControl>
+                                                        {isCurrentSchoolAddressLoading && !field.value && <FormDescription>Loading state...</FormDescription>}
+                                                        {/* Display API error if present and no RHF error, otherwise RHF's FormMessage */}
+                                                        {currentSchoolAddressError && !form.formState.errors.current_school_state && (
+                                                            <p className="text-sm font-medium text-destructive">{currentSchoolAddressError}</p>
+                                                        )}
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
                                             />
 
-                                            {/* --- NEW: Current School City Dropdown --- */}
+                                            {/* Current School City (Enabled Text Input) */}
                                             <FormField
                                                 control={form.control}
                                                 name="current_school_city"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col space-y-1.5">
                                                         <FormLabel>School City/ Town<span className="text-destructive"> *</span></FormLabel>
-                                                        <Select
-                                                            onValueChange={field.onChange}
-                                                            value={field.value ?? ''}
-                                                            disabled={isCurrentSchoolAddressLoading || currentSchoolCityOptions.length === 0 || !watchCurrentSchoolZipcode || watchIsHomeSchooled === 'Yes'}
-                                                        >
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder={isCurrentSchoolAddressLoading ? "Loading..." : "Select school city/town"} />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                {currentSchoolCityOptions.length > 0 ? (
-                                                                    currentSchoolCityOptions.map(cityName => (
-                                                                        <SelectItem key={cityName} value={cityName}>{cityName}</SelectItem>
-                                                                    ))
-                                                                ) : (
-                                                                    <SelectItem value="no-options-current-school-city" disabled>
-                                                                        {watchCurrentSchoolZipcode ? "No cities or enter valid zipcode" : "Enter school zipcode"}
-                                                                    </SelectItem>
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="Enter city/town"
+                                                                {...field}
+                                                                value={field.value ?? ''} // Ensure value is controlled
+                                                                disabled={isCurrentSchoolAddressLoading && !field.value} // Optionally disable while loading if it's empty
+                                                            />
+                                                        </FormControl>
+                                                        {isCurrentSchoolAddressLoading && !field.value && <FormDescription>Loading city...</FormDescription>}
+                                                        {currentSchoolAddressError && !form.formState.errors.current_school_city && (
+                                                            <p className="text-sm font-medium text-destructive">{currentSchoolAddressError}</p>
+                                                        )}
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
                                             />
-                                            {renderField("current_school_a_line1", { label: "School Address Line 1", fieldtype: "Data", mandatory_depends_on: "No", reqd: 1 })}
-                                            {renderField("current_school_a_line2", { label: "School Address Line 2", fieldtype: "Data" })}
+                                            {renderField("current_school_address_line1", { label: "School Address Line 1", fieldtype: "Data", mandatory_depends_on: "No", reqd: 1 })}
+                                            {renderField("current_school_address_line2", { label: "School Address Line 2", fieldtype: "Data" })}
                                         </div>
                                     </div>
                                 )}
@@ -1458,8 +1509,8 @@ export function AdmissionRegistrationForm() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                                         {renderField("academic_strengths_and_weaknesses", { label: "Academic Strengths and Weaknesses", fieldtype: "Small Text", reqd: 1 })}
                                         {renderField("temperament_and_personality", { label: "Temperament and Personality", fieldtype: "Small Text", reqd: 1 })}
-                                        {renderField("hobbies_interests_and_extra_curricular_activities", { label: "Hobbies, Interests & Extra-Curricular Activities", fieldtype: "Small Text", reqd: 1 })}
-                                        {renderField("special_learning_needs_or_learning_disability", { label: "Special Learning Needs or Disability", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("hobbies_interests_and_extra_curricular", { label: "Hobbies, Interests & Extra-Curricular Activities", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("learning_disability", { label: "Special Learning Needs or Disability", fieldtype: "Small Text", reqd: 1 })}
                                         {renderField("other_details_of_importance", { label: "Other Details of Importance", fieldtype: "Small Text" })}
                                     </div>
                                 </div>
@@ -1496,16 +1547,15 @@ export function AdmissionRegistrationForm() {
                                     {watchWearsGlasses === 'Yes' && renderField("right_eye_power", { label: "Right Eye Power", fieldtype: "Data", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {watchWearsGlasses === 'Yes' && renderField("left_eye_power", { label: "Left Eye Power", fieldtype: "Data", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {/* Hygiene for Class II */}
-                                    {/* {watchAppliedFor === 'Class II' && renderField("is_toilet_trained", { label: "Is Applicant toilet-trained?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class II" })} */}
-                                    {/* {watchAppliedFor === 'Class II' && renderField("wets_bed", { label: "Does Applicant bed-wet?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class II" })} */}
+                                    {/* {watchAppliedFor === 'Class II' && renderField("toilet_trained", { label: "Is Applicant toilet-trained?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class II" })} */}
+                                    {/* {watchAppliedFor === 'Class II' && renderField("bed_wet", { label: "Does Applicant bed-wet?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class II" })} */}
                                 </div>
 
                                 {/* Hygiene & Sleep Habits */}
                                 {watchAppliedFor === 'Class II' && <><h3 className="font-medium text-md pt-4 border-t mt-4">Hygiene & Sleep Habits</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-                                        {renderField("is_toilet_trained", { label: "Is the Applicant Toilet trained?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                        {renderField("wets_bed", { label: "Does the Applicant wet Bed?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                        {watchWetsBed === 'Yes' && renderField("bed_wet_frequency", { label: "Bed Wet Frequency", fieldtype: "Data", reqd: 1 })} {/* reqd: 1 for asterisk, Zod handles actual requirement */}
+                                        {renderField("toilet_trained", { label: "Is the Applicant Toilet trained?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
+                                        {renderField("bed_wet", { label: "Does the Applicant wet Bed?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
                                     </div></>}
 
                                 {/* Challenges */}
@@ -1524,19 +1574,19 @@ export function AdmissionRegistrationForm() {
                                 {/* Medical History */}
                                 <h3 className="font-medium text-md pt-4 border-t mt-4">Medical History</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                    {renderField("has_injury", { label: "Does the applicant have history of any accident/ injury?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                    {watchInjury === 'Yes' && renderField("injury_details", { label: "Accident/ Injury Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
-                                    {renderField("on_medication", { label: "Is the Applicant on regular medication? (Including Ayurvedic, Siddha, Homeopathic and Alternative Medicines)", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                    {watchMedication === 'Yes' && renderField("medication_details", { label: "Regular Medication Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
+                                    {renderField("history_of_accident_injury", { label: "Does the applicant have history of any accident/ injury?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
+                                    {watchInjury === 'Yes' && renderField("history_of_accident_injury_details", { label: "Accident/ Injury Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
+                                    {renderField("regular_medication", { label: "Is the Applicant on regular medication? (Including Ayurvedic, Siddha, Homeopathic and Alternative Medicines)", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
+                                    {watchMedication === 'Yes' && renderField("regular_medication_details", { label: "Regular Medication Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {watchMedication === 'Yes' && renderField("medical_prescription", { label: "Medical Prescription", fieldtype: "Attach", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {renderField("has_health_issue", { label: "Does the applicant have History of any health Issue?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                    {watchHealthIssue === 'Yes' && renderField("health_issue_details", { label: "Health Issue Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
-                                    {renderField("was_hospitalized", { label: "Does the applicant have history of any hospitalization and/ or surgery?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                    {watchHospitalized === 'Yes' && renderField("hospitalization_details", { label: "Hospitalization/ Surgery Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
+                                    {watchHealthIssue === 'Yes' && renderField("history_of_health_issues", { label: "Health Issue Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
+                                    {renderField("surgery_hospitalization", { label: "Does the applicant have history of any hospitalization and/ or surgery?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
+                                    {watchHospitalized === 'Yes' && renderField("surgery_hospitalization_details", { label: "Hospitalization/ Surgery Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {renderField("needs_special_attention", { label: "Does the applicant have any other health issue that needs special attention?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                    {watchSpecialAttention === 'Yes' && renderField("attention_details", { label: "Special Attention Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
+                                    {watchSpecialAttention === 'Yes' && renderField("special_attention_details", { label: "Special Attention Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {renderField("has_allergies", { label: "Does the applicant have any food/ drug allergies?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                    {watchAllergies === 'Yes' && renderField("allergy_details", { label: "Allergy Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
+                                    {watchAllergies === 'Yes' && renderField("allergies_details", { label: "Allergy Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
                                 </div>
                             </div>
                         </section>
@@ -1576,7 +1626,7 @@ export function AdmissionRegistrationForm() {
                                                 parent_contact_email: '',
                                                 parent_contact_phone: '', // PhoneInput usually handles empty string well
                                                 parent_is_whatsapp_same: true, // Default boolean
-                                                parent_whatsapp_number: '',    // Will be shown/required based on parent_is_whatsapp_same
+                                                parent_whatsapp_phone: '',    // Will be shown/required based on parent_is_whatsapp_same
                                                 parent_is_address_same_as_applicant: undefined, // For Select to show placeholder
                                                 // Address fields are optional in Yup schema if parent_is_address_same_as_applicant is 'Yes'
                                                 // They will become required via .when() if it's 'No'.
@@ -1605,11 +1655,11 @@ export function AdmissionRegistrationForm() {
                                 <div className="pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                     {renderField("parent_marital_status", { label: "Parent Marital Status", fieldtype: "Select", options: "\nMarried\nSeparated\nDivorced\nSingle Parent", reqd: 1 })}
                                     {/* Conditional Divorce Fields */}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_paying_applicants_tuition_fee", { label: "Who pays tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_paying_applicants_tuition_fee", { label: "Who is resposible for paying applicant's tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
                                     {watchMaritalStatus === 'Divorced' && renderField("court_order_document", { label: "Court Order Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_school_communication", { label: "Who receives communication?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_report_cards", { label: "Who receives report cards?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("visit_rights", { label: "Who can visit child?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_school_communication", { label: "Who is allowed to receive school communication?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_report_cards", { label: "Who is allowed to receive report cards?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("visit_rights", { label: "Who is allowed to visit child?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
                                     {watchMaritalStatus === 'Divorced' && renderField("legal_rights_document", { label: "Legal Rights Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
                                 </div>
 
@@ -1639,7 +1689,7 @@ export function AdmissionRegistrationForm() {
                                                 type="button"
                                                 variant="outline"
                                                 onClick={() => appendGuardianDetail({
-                                                    guardian_relation_with_applicant: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
+                                                    guardian_relation: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
                                                     guardian_first_name: '',
                                                     guardian_last_name: '',
                                                     guardian_nationality: '',
@@ -1647,7 +1697,7 @@ export function AdmissionRegistrationForm() {
                                                     guardian_contact_email: '',
                                                     guardian_contact_phone: '',
                                                     guardian_is_whatsapp_same: true,
-                                                    guardian_whatsapp_number: '',
+                                                    guardian_whatsapp_phone: '',
                                                     guardian_is_address_same_as_applicant: '',
                                                     guardian_address_country: '',
                                                     guardian_address_zipcode: '',
@@ -1712,25 +1762,25 @@ export function AdmissionRegistrationForm() {
                                     </div>
                                     <div className="space-y-4">
                                         <h4 className="font-semibold">Question 1</h4>
-                                        {renderField("q1_applicant_response", { placeholder: "", label: "Why are you opting to enroll in the IHS Post-10 Program? What do you hope to gain in a 3 year program here, as opposed to regular 2 year program elsewhere?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("response_why_ihs_post_10th", { placeholder: "", label: "Why are you opting to enroll in the IHS Post-10 Program? What do you hope to gain in a 3 year program here, as opposed to regular 2 year program elsewhere?", fieldtype: "Small Text", reqd: 1 })}
 
                                         <h4 className="font-semibold">Question 2</h4>
-                                        {renderField("q2_applicant_response", { placeholder: "", label: "Can you talk us through the reasons behind the subject combination you have chosen? What do you see yourself doing in the future?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("response_subject_combination", { placeholder: "", label: "Can you talk us through the reasons behind the subject combination you have chosen? What do you see yourself doing in the future?", fieldtype: "Small Text", reqd: 1 })}
 
                                         <h4 className="font-semibold">Question 3</h4>
-                                        {renderField("q3_applicant_response", { placeholder: "", label: "What activity do you love doing the most? Why? It could be singing in the shower, talking on the telephone, exploring the further reaches of YouTube, anything (We are more interested in the why).", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("response_activity_love_to_do_most", { placeholder: "", label: "What activity do you love doing the most? Why? It could be singing in the shower, talking on the telephone, exploring the further reaches of YouTube, anything (We are more interested in the why).", fieldtype: "Small Text", reqd: 1 })}
 
                                         <h4 className="font-semibold">Question 4</h4>
-                                        {renderField("q4_applicant_response", { placeholder: "", label: "If you could change one thing about the world, what would it be, and why?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("response_change_one_thing_about_world", { placeholder: "", label: "If you could change one thing about the world, what would it be, and why?", fieldtype: "Small Text", reqd: 1 })}
 
                                         <h4 className="font-semibold">Question 5</h4>
-                                        {renderField("q5_applicant_response", { placeholder: "", label: "If you could change one thing about yourself, what would it be, and why?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("response_change_one_thing_about_yourself", { placeholder: "", label: "If you could change one thing about yourself, what would it be, and why?", fieldtype: "Small Text", reqd: 1 })}
 
                                         <h4 className="font-semibold">Question 6</h4>
-                                        {renderField("q6_applicant_response", { placeholder: "", label: "Describe your dream vacation.", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("response_dream_vacation", { placeholder: "", label: "Describe your dream vacation.", fieldtype: "Small Text", reqd: 1 })}
 
                                         <h4 className="font-semibold">Question 7</h4>
-                                        {renderField("q7_applicant_response", { placeholder: "", label: "Is there anything else want to share with us but couldn’t write anywhere else? This is the place, but please don’t feel like you have to write something here. This question is optional.", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("response_additional_comments_optional", { placeholder: "", label: "Is there anything else want to share with us but couldn’t write anywhere else? This is the place, but please don’t feel like you have to write something here. This question is optional.", fieldtype: "Small Text", reqd: 1 })}
                                     </div>
                                     {/* Parent Questions */}
                                     <h3 className="font-medium text-md pt-4 border-t mt-4">Note to Parent</h3>
@@ -1743,17 +1793,17 @@ export function AdmissionRegistrationForm() {
                                     </div>
                                     <div className="space-y-4">
                                         <h4 className="font-semibold">Question 1</h4>
-                                        {renderField("q1_parent_response", { placeholder: "", label: "Please discuss your primary reason for considering the Isha Home School’s Post-10 Program for your child. What do you hope your child will gain in a 3 year program here, as opposed to regular 2 year program elsewhere? What are your expectations for your child's schooling experience (please also mention a few areas outside of academics)?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("parents_response_why_ihs_post_10th", { placeholder: "", label: "Please discuss your primary reason for considering the Isha Home School’s Post-10 Program for your child. What do you hope your child will gain in a 3 year program here, as opposed to regular 2 year program elsewhere? What are your expectations for your child's schooling experience (please also mention a few areas outside of academics)?", fieldtype: "Small Text", reqd: 1 })}
                                         <h4 className="font-semibold">Question 2</h4>
-                                        {renderField("q2_parent_response", { placeholder: "", label: "From what activities does your child derive self-confidence?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("parents_response_childs_self_confidence", { placeholder: "", label: "From what activities does your child derive self-confidence?", fieldtype: "Small Text", reqd: 1 })}
                                         <h4 className="font-semibold">Question 3</h4>
-                                        {renderField("q3_parent_response", { placeholder: "", label: "What are your child’s strengths and weaknesses? (Please comment on social characteristics: e.g., self-reliance, sense of humour, ability to mix, shyness, assertiveness, etc.)", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("parents_response_strengths_weaknesses", { placeholder: "", label: "What are your child’s strengths and weaknesses? (Please comment on social characteristics: e.g., self-reliance, sense of humour, ability to mix, shyness, assertiveness, etc.)", fieldtype: "Small Text", reqd: 1 })}
                                         <h4 className="font-semibold">Question 4</h4>
-                                        {renderField("q4_parent_response", { placeholder: "", label: "What are your thoughts about your child’s future educational and/or professional aspirations? Have you and your child charted out a particular trajectory or course? Is there a particular course that you would like your child to pursue? If so, why?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("parents_response_child_future_education_plan", { placeholder: "", label: "What are your thoughts about your child’s future educational and/or professional aspirations? Have you and your child charted out a particular trajectory or course? Is there a particular course that you would like your child to pursue? If so, why?", fieldtype: "Small Text", reqd: 1 })}
                                         <h4 className="font-semibold">Question 5</h4>
-                                        {renderField("q5_parent_response", { placeholder: "", label: "Discuss any particular concerns of which the school should be aware: e.g., Has your child experienced any difficult challenges or personal setbacks in recent years? Are there any medical conditions of which we should be aware? Does your child's health limit or interfere with the normal performance of everyday activities, including class work, athletics, or other duties?", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("parents_response_on_childs_concerns", { placeholder: "", label: "Discuss any particular concerns of which the school should be aware: e.g., Has your child experienced any difficult challenges or personal setbacks in recent years? Are there any medical conditions of which we should be aware? Does your child's health limit or interfere with the normal performance of everyday activities, including class work, athletics, or other duties?", fieldtype: "Small Text", reqd: 1 })}
                                         <h4 className="font-semibold">Question 6</h4>
-                                        {renderField("q6_parent_response", { placeholder: "", label: "Please make any additional comments about your child which you feel may be helpful to us.", fieldtype: "Small Text", reqd: 1 })}
+                                        {renderField("parents_response_additional_comments", { placeholder: "", label: "Please make any additional comments about your child which you feel may be helpful to us.", fieldtype: "Small Text", reqd: 1 })}
                                     </div>
                                 </div>
                             </section>
@@ -1797,8 +1847,8 @@ export function AdmissionRegistrationForm() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4 items-center"> {/* Center items vertically */}
                                 {/* Checkbox needs custom label handling within renderField */}
-                                {renderField("date", { label: "Date", fieldtype: "Date", reqd: 1 })}
-                                {renderField("place", { label: "Place", fieldtype: "Data", reqd: 1 })}
+                                {renderField("declaration_date", { label: "Date", fieldtype: "Date", reqd: 1 })}
+                                {renderField("declaration_place", { label: "Place", fieldtype: "Data", reqd: 1 })}
                             </div>
                         </section>
                     </TabsContent>
@@ -1809,9 +1859,10 @@ export function AdmissionRegistrationForm() {
                             <div className="space-y-6">
                                 <h3 className="font-medium text-md">Billing Details</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-                                    {renderField("billing_name", { label: "Billing Full Name", fieldtype: "Data", reqd: 1 })}
-                                    {renderField("billing_phone", { label: "Billing Phone", fieldtype: "PhoneInput", reqd: 1, placeholder: "Enter billing phone" })}
-                                    {renderField("billing_email", { label: "Billing Email", fieldtype: "Data", options: "Email", reqd: 1 })}
+                                    {renderField("billing_first_name", { label: "First Name", fieldtype: "Data", reqd: 1 })}
+                                    {renderField("billing_last_name", { label: "Last Name", fieldtype: "Data", reqd: 1 })}
+                                    {renderField("billing_mobile", { label: "Mobile", fieldtype: "PhoneInput", reqd: 1, placeholder: "Enter billing phone" })}
+                                    {renderField("billing_email", { label: "Email", fieldtype: "Data", options: "Email", reqd: 1 })}
                                     <FormField
                                         //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                         control={form.control}
@@ -1826,11 +1877,9 @@ export function AdmissionRegistrationForm() {
                                                         onChange={(country: Country | undefined) => {
                                                             field.onChange(country?.name || "");
                                                             // When country changes, clear zipcode, state, city and their options
-                                                            setValue("billing_area_code", "");
+                                                            setValue("billing_zip_code", "");
                                                             setValue("billing_state", "");
                                                             setValue("billing_city", "");
-                                                            setBillStateOptions([]);
-                                                            setBillCityOptions([]);
                                                             setBillAddressError(null);
                                                         }}
                                                         placeholder="Select country"
@@ -1844,10 +1893,10 @@ export function AdmissionRegistrationForm() {
                                     <FormField
                                         //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormData exactly
                                         control={form.control}
-                                        name="billing_area_code"
+                                        name="billing_zip_code"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col space-y-1.5">
-                                                <FormLabel>Area Code/ Pincode<span className="text-destructive"> *</span></FormLabel>
+                                                <FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         placeholder="Enter zipcode"
@@ -1865,74 +1914,49 @@ export function AdmissionRegistrationForm() {
                                     />
                                     {/* State Dropdown */}
                                     <FormField
-                                        //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
-                                        control={form.control}
+                                        control={control}
                                         name="billing_state"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col space-y-1.5">
                                                 <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    value={field.value ?? ''}
-                                                    disabled={isBillAddressLoading || billStateOptions.length === 0 || !watchBillingZipcode}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder={isBillAddressLoading ? "Loading..." : "Select state"} />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {billStateOptions.length > 0 ? (
-                                                            billStateOptions.map(stateName => (
-                                                                <SelectItem key={stateName} value={stateName}>{stateName}</SelectItem>
-                                                            ))
-                                                        ) : (
-                                                            <SelectItem value="no-options" disabled>
-                                                                {watchBillingZipcode ? "No states found or enter valid zipcode" : "Enter zipcode first"}
-                                                            </SelectItem>
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="State (auto-filled)"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                        disabled
+                                                        className="bg-muted cursor-not-allowed"
+                                                    />
+                                                </FormControl>
+                                                {isBillAddressLoading && !field.value && <FormDescription>Loading state...</FormDescription>}
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                     {/* City Dropdown */}
                                     <FormField
-                                        //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
-                                        control={form.control}
+                                        control={control}
                                         name="billing_city"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col space-y-1.5">
                                                 <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    value={field.value ?? ''}
-                                                    disabled={isBillAddressLoading || billCityOptions.length === 0 || !watchBillingZipcode}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder={isBillAddressLoading ? "Loading..." : "Select city/town"} />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {billCityOptions.length > 0 ? (
-                                                            billCityOptions.map(cityName => (
-                                                                <SelectItem key={cityName} value={cityName}>{cityName}</SelectItem>
-                                                            ))
-                                                        ) : (
-                                                            <SelectItem value="no-options" disabled>
-                                                                {watchBillingZipcode ? "No cities found or enter valid zipcode" : "Enter zipcode first"}
-                                                            </SelectItem>
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Enter city/town"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                        disabled={isBillAddressLoading && !field.value}
+                                                    />
+                                                </FormControl>
+                                                {isBillAddressLoading && !field.value && <FormDescription>Loading city...</FormDescription>}
+                                                {/* Display API error if present, otherwise RHF's FormMessage */}
+                                                {billAddressError && <FormMessage className="text-destructive">{billAddressError}</FormMessage>}
+                                                {!billAddressError && <FormMessage />}
                                             </FormItem>
                                         )}
                                     />
-                                    {renderField("billing_address_l1", { label: "Billing Address Line 1", fieldtype: "Data", reqd: 1 })}
-                                    {renderField("billing_address_l2", { label: "Billing Address Line 2", fieldtype: "Data" })}
+                                    {renderField("billing_address_line1", { label: "Address Line 1", fieldtype: "Data", reqd: 1 })}
+                                    {renderField("billing_address_line2", { label: "Address Line 2", fieldtype: "Data" })}
                                 </div>
 
                                 {/* Payment Status (Read-only section) */}
@@ -1948,50 +1972,36 @@ export function AdmissionRegistrationForm() {
                         </section>
                     </TabsContent>
                     {isLastTab && (
-                        <div className="flex justify-end pt-8 mt-8 border-t">
+                        <div className="flex justify-center pt-8 mt-8 border-t">
                             <Button type="submit" size="lg">
-                                {form.formState.isSubmitting ? "Submitting..." : "Pay"}
+                                {form.formState.isSubmitting ? "Submitting..." : "Submit And Pay"}
                             </Button>
                         </div>
                     )}
                 </form>
                 {/* Navigation Buttons OUTSIDE the form to prevent accidental submit */}
-                {tab !== "instruction" && (
+                {currentTab !== "instruction" && (
                     <div className="flex flex-col sm:flex-row justify-between gap-4 pt-8 mt-8 border-t">
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => {
-                                // If current tab is "declaration" and Class XI is NOT selected, skip "subjects" tab when going back
-                                if (
-                                    tab === "declaration" &&
-                                    watchAppliedFor !== "Class XI"
-                                ) {
-                                    setTab("parents");
-                                } else {
-                                    setTab(TAB_KEYS[tabIndex - 1]);
-                                }
-                            }}
-                            disabled={isFirstTab}
+                            onClick={handleBackTab}
+                            disabled={currentTabIndex === 0 || currentTabIndex === 1 && TAB_ORDER[0] === "instruction"} // Disable back on first user-editable tab
                         >
                             Back
                         </Button>
-                        {!isLastTab && (
-                            <Button
-                                type="button"
-                                onClick={async () => {
-                                    // If current tab is "parents" and Class XI is NOT selected, skip "subjects" tab
-                                    if (
-                                        tab === "parents" &&
-                                        watchAppliedFor !== "Class XI"
-                                    ) {
-                                        setTab("declaration");
-                                    } else {
-                                        setTab(TAB_KEYS[tabIndex + 1]);
-                                    }
-                                }}
-                            >
+
+                        {/* Show "Next" button if not on the last logical tab */}
+                        {!(currentTab === "billing" || (currentTab === "declaration" && watchAppliedFor !== 'Class XI')) && (
+                            <Button type="button" onClick={handleNextTab}>
                                 Next
+                            </Button>
+                        )}
+
+                        {/* Show "Submit" button only on the last logical tab */}
+                        {(currentTab === "billing" || (currentTab === "declaration" && watchAppliedFor !== 'Class XI')) && (
+                            <Button type="submit" size="lg" disabled={isSubmitting || !isOverallFormValid}>
+                                {isSubmitting ? "Submitting..." : "Submit And Pay"}
                             </Button>
                         )}
                     </div>

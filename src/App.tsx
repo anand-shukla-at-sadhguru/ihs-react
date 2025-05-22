@@ -102,8 +102,8 @@ function App() {
           </header>
           <main className="flex-grow container mx-auto py-8 px-6">
             <Routes>
-              {/* <Route path="/" element={<HomePage />} /> */}
               <Route path="/" element={<Navigate to="/guidelines" replace />} />
+              {/* <Route path="/" element={<HomePage />} /> */}
               <Route path="/guidelines" element={<Guidelines />} />
               <Route path="/admission" element={<AdmissionRegistrationPage />} />
               <Route path="/all-applications" element={<AllApplicationsPage />} />

@@ -2,6 +2,7 @@ import { UseFormSetValue } from "react-hook-form";
 import { AdmissionRegistrationFormDataYup } from "./yupSchema";
 import { isValidPhoneNumber } from 'react-phone-number-input';
 import * as yup from 'yup';
+import type { Path } from 'react-hook-form';
 
 export const yupE164Phone = (required = false, requiredMsg = "Phone number is required.") => {
     let schema = yup.string().test(
@@ -98,20 +99,17 @@ export const CLASS_LEVEL_OPTIONS_YUP = ['LKG', 'UKG', 'Class I', 'Class II', 'Cl
 
 // Generic function to fetch address detailsconst
 export const fetchAddressDetails = async (
-    countryISO2: string, // <-- Changed from countryName
+    countryISO2: string,
     zipcode: string,
-    setStates: (states: string[]) => void,
-    setCities: (cities: string[]) => void,
     setLoading: (loading: boolean) => void,
     setError: (error: string | null) => void,
-    formFieldNameForState: keyof AdmissionRegistrationFormDataYup | string, // Allow string for dynamic paths like 'students_parents.0.parent_address_state'
-    formFieldNameForCity: keyof AdmissionRegistrationFormDataYup | string,
-    setValueRHF: UseFormSetValue<AdmissionRegistrationFormDataYup>  // <-- Add form parameter
+    formFieldNameForState: string,
+    formFieldNameForCity: string,
+    setValueRHF: UseFormSetValue<AdmissionRegistrationFormDataYup>
 ) => {
     setLoading(true);
     setError(null);
-    setStates([]); // Clear previous states
-    setCities([]); // Clear previous cities
+    // No need to call setStates([]) or setCities([]) anymore
 
     const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
 
@@ -122,10 +120,8 @@ export const fetchAddressDetails = async (
             let errorMsg = `Pincode ${zipcode} not found for ${countryISO2} or API error: ${response.status}`;
             try {
                 const errorData = await response.json();
-                // Use a more specific error message if the API provides one
                 errorMsg = errorData.message || errorData.error || `API Error ${response.status}: ${response.statusText}`;
             } catch {
-                // If error response is not JSON, use the status text
                 errorMsg = `API Error ${response.status}: ${response.statusText}`;
             }
             throw new Error(errorMsg);
@@ -133,34 +129,23 @@ export const fetchAddressDetails = async (
 
         const data = await response.json();
 
-        if (data && data.state && data.acceptedCities && Array.isArray(data.acceptedCities)) {
-            const stateArray = [data.state]; // API gives a single state
-            const citiesArray = data.acceptedCities;
+        // API gives a single state as data.state
+        // API gives acceptedCities as an array
+        if (data && data.state) { // Check for state at least
+            const stateValue = data.state;
+            setValueRHF(formFieldNameForState as any, stateValue, { shouldValidate: true });
 
-            setStates(stateArray);
-            setCities(citiesArray);
-
-            if (stateArray.length > 0) {
-                setValueRHF(formFieldNameForState as any, stateArray[0], { shouldValidate: true });
-            } else {
-                setValueRHF(formFieldNameForState as any, "", { shouldValidate: true });
+            let cityToSet = ""; // Default to empty if no cities or default city
+            if (data.acceptedCities && Array.isArray(data.acceptedCities)) {
+                if (data.defaultcity && data.acceptedCities.includes(data.defaultcity)) {
+                    cityToSet = data.defaultcity;
+                }
             }
+            setValueRHF(formFieldNameForCity as any, cityToSet, { shouldValidate: true });
 
-            if (citiesArray.length > 0) {
-                const cityToSet = data.defaultcity && citiesArray.includes(data.defaultcity)
-                    ? data.defaultcity
-                    : citiesArray[0];
-                setValueRHF(formFieldNameForCity as any, cityToSet, { shouldValidate: true });
-            } else {
-                setValueRHF(formFieldNameForCity as keyof AdmissionRegistrationFormDataYup | string, "", { shouldValidate: true });
-            }
-
-            // This specific error might be redundant if API returns 404 for no data.
-            // if (stateArray.length === 0 && citiesArray.length === 0) {
-            //     setError("State and City not found for this pincode and country.");
-            // }
         } else {
-            setError("Invalid data structure received from address API.");
+            // If data.state is not present, or structure is unexpected for state
+            setError("State not found or invalid data structure from address API.");
             setValueRHF(formFieldNameForState as any, "", { shouldValidate: true });
             setValueRHF(formFieldNameForCity as any, "", { shouldValidate: true });
         }
@@ -237,3 +222,66 @@ export const MATH_ENV_FINEARTS_OPTIONS = ['Mathematics', 'Environmental Studies'
 export const PARENT_RELATION_OPTIONS = ['Father', 'Mother'] as const;
 export const PARENT_EDUCATION_LEVEL_OPTIONS_STRING = "Class VIII or below\nSSLC/ PUC\nHigher Secondary\nGraduate\nPost-Graduate\nM. Phil\nPhD\nPost-Doctoral";
 export const PARENT_PROFESSION_OPTIONS_STRING = "Academia-Professors, Research Scholars, Scientists\nArts, Music, Entertainment\nArchitecture and Construction\nAgriculture\nArmed Forces\nBanking and Finance and Financial Services\nBusinessman/ Entrepreneur\nEducation and Training\nInformation Technology\nHealthcare\nOthers";
+
+export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormDataYup>[]> = {
+    personal: [
+        "application_academic_year", "application_for", /* "application_number", // Usually not validated by user */
+        "applied_to_ihs_before", "previous_applied_year", "previous_applied_for", "previous_applied_comments",
+        "first_name", "last_name", "middle_name", "gender",
+        "nationality", "country_of_residence", "country_of_birth", "date_of_birth", "age",
+        "comm_address_country", "comm_address_zip_code", "comm_address_state", "comm_address_city", "comm_address_line_1", "comm_address_line_2",
+        "identification_mark_1", "identification_mark_2", "religion", "other_religion", "community", "other_community",
+        "mother_tongue", "other_mother_tongue", "languages_known", // Note: array validation might need specific handling or be part of a sub-schema validation
+        "has_sibling_in_ihs", "student_siblings",
+        "recent_photograph", "birth_certificate", "id_proof_type", "id_proof_document",
+        "aadhaar_number", "passport_number", "passport_place_of_issue", "passport_date_of_issue", "passport_date_of_expiry"
+    ],
+    academic: [
+        "is_home_schooled", "current_school_name", "current_school_board_affiliation", "current_school_phone_number",
+        "current_school_email_address", "current_school_country", "current_school_zip_code", "current_school_city",
+        "current_school_state", "current_school_address_line1", "current_school_address_line2",
+        "been_to_school_previously", "previous_schools", // was_the_applicant_ever_home_schooled (if it's a distinct field)
+        "academic_strengths_and_weaknesses", "hobbies_interests_and_extra_curricular",
+        "temperament_and_personality", "learning_disability", "other_details_of_importance"
+    ],
+    health: [
+        "done_smallpox_vaccine", "done_hepatitis_a_vaccine", "done_hepatitis_b_vaccine", "done_tdap_vaccine",
+        "done_typhoid_vaccine", "done_measles_vaccine", "done_polio_vaccine", "done_mumps_vaccine",
+        "done_rubella_vaccine", "done_varicella_vaccine", "other_vaccines", "vaccine_certificates",
+        "blood_group", "wears_glasses_or_lens", "right_eye_power", "left_eye_power",
+        "toilet_trained", "bed_wet",
+        "has_hearing_challenges", "hearing_challenges", "has_behavioural_challenges", "behavioural_challenges",
+        "has_physical_challenges", "physical_challenges", "has_speech_challenges", "speech_challenges",
+        "history_of_accident_injury", "history_of_accident_injury_details", "regular_medication", "regular_medication_details", "medical_prescription",
+        "has_health_issue", "history_of_health_issues", "surgery_hospitalization", "surgery_hospitalization_details",
+        "needs_special_attention", "special_attention_details", "has_allergies", "allergies_details"
+    ],
+    parents: [
+        "student_parent", // Validating the array itself (e.g., min length) and its items
+        "parent_marital_status",
+        "who_is_responsible_for_paying_applicants_tuition_fee", "court_order_document",
+        "who_is_allowed_to_receive_school_communication", "legal_rights_document",
+        "who_is_allowed_to_receive_report_cards", "visit_rights",
+        "parents_are_local_guardians", "student_guardians"
+    ],
+    subjects: [ // Only if application_for is Class XI
+        "group_a", "group_b", "group_c", "group_d",
+        "response_why_ihs_post_10th", "response_subject_combination", "response_activity_love_to_do_most", "response_change_one_thing_about_world",
+        "response_change_one_thing_about_yourself", "response_dream_vacation", "response_additional_comments_optional",
+        "parents_response_why_ihs_post_10th", "parents_response_childs_self_confidence", "parents_response_strengths_weaknesses", "parents_response_child_future_education_plan",
+        "parents_response_on_childs_concerns", "parents_response_additional_comments"
+    ],
+    declaration: [
+        "agree_declaration", "declaration_date", "declaration_place"
+    ],
+    billing: [ // Payment tab might not need pre-validation if it's just info + submit
+        "billing_first_name", "billing_last_name", "billing_mobile", "billing_email", "billing_country",
+        "billing_zip_code", "billing_city", "billing_state", "billing_address_line1", "billing_address_line2"
+    ]
+    // "instruction" tab has no fields to validate
+};
+
+// Ensure TAB_KEYS matches the keys in TAB_FIELD_GROUPS (excluding 'instruction')
+export const TAB_ORDER: string[] = [
+    "instruction", "personal", "academic", "health", "parents", "subjects", "declaration", "billing"
+];

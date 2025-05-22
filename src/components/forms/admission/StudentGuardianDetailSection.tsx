@@ -50,8 +50,6 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
     const guardianAddressCountryName = watch(`${pathPrefix}.guardian_address_country`);
     const guardianAddressZipcode = watch(`${pathPrefix}.guardian_address_zipcode`);
 
-    const [guardianAddrStateOptions, setGuardianAddrStateOptions] = useState<string[]>([]);
-    const [guardianAddrCityOptions, setGuardianAddrCityOptions] = useState<string[]>([]);
     const [isGuardianAddrLoading, setIsGuardianAddrLoading] = useState(false);
     const [guardianAddrError, setGuardianAddrError] = useState<string | null>(null);
 
@@ -65,8 +63,8 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
         setGuardianAddrError(null);
 
         const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
-        const rhfStateField = `${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup;
-        const rhfCityField = `${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup;
+        const rhfStateField = `${pathPrefix}.guardian_address_state`; // No longer need 'as keyof...'
+        const rhfCityField = `${pathPrefix}.guardian_address_city`;
 
         try {
             const response = await fetch(apiUrl);
@@ -78,27 +76,30 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
             }
             const data = await response.json();
 
-            if (data && data.state && data.acceptedCities && Array.isArray(data.acceptedCities)) {
-                const stateArray = [data.state];
-                const citiesArray = data.acceptedCities;
-                setGuardianAddrStateOptions(stateArray);
-                setGuardianAddrCityOptions(citiesArray);
-                setValue(rhfStateField, stateArray[0] || "", { shouldValidate: true });
-                const cityToSet = data.defaultcity && citiesArray.includes(data.defaultcity) ? data.defaultcity : (citiesArray[0] || "");
-                setValue(rhfCityField, cityToSet, { shouldValidate: true });
-                trigger([rhfStateField, rhfCityField]);
+            if (data && data.state) {
+                const stateValue = data.state;
+                setValue(rhfStateField as any, stateValue, { shouldValidate: true });
+
+                let cityToSet = "";
+                if (data.acceptedCities && Array.isArray(data.acceptedCities) && data.acceptedCities.length > 0) {
+                    cityToSet = data.defaultcity && data.acceptedCities.includes(data.defaultcity)
+                        ? data.defaultcity
+                        : data.acceptedCities[0];
+                }
+                setValue(rhfCityField as any, cityToSet, { shouldValidate: true });
+                trigger([rhfStateField as any, rhfCityField as any]);
             } else {
-                setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]);
-                setValue(rhfStateField, "", { shouldValidate: true }); setValue(rhfCityField, "", { shouldValidate: true });
-                setGuardianAddrError("Invalid data structure from address API.");
-                trigger([rhfStateField, rhfCityField]);
+                setValue(rhfStateField as any, "", { shouldValidate: true });
+                setValue(rhfCityField as any, "", { shouldValidate: true });
+                setGuardianAddrError("State not found or invalid data structure from address API.");
+                trigger([rhfStateField as any, rhfCityField as any]);
             }
         } catch (error: any) {
             if (activeFetchIdentifier.current === currentFetchId) {
-                setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]);
-                setValue(rhfStateField, "", { shouldValidate: true }); setValue(rhfCityField, "", { shouldValidate: true });
+                setValue(rhfStateField as any, "", { shouldValidate: true });
+                setValue(rhfCityField as any, "", { shouldValidate: true });
                 setGuardianAddrError(error.message || "Failed to fetch address details.");
-                trigger([rhfStateField, rhfCityField]);
+                trigger([rhfStateField as any, rhfCityField as any]);
             }
         } finally {
             if (activeFetchIdentifier.current === currentFetchId) {
@@ -106,99 +107,144 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                 activeFetchIdentifier.current = null;
             }
         }
-    }, [setValue, pathPrefix, trigger]);
+    }, [setValue, pathPrefix, trigger, setIsGuardianAddrLoading, setGuardianAddrError]); // Added setters
 
+    // useEffect for syncing address when 'guardian_is_address_same_as_applicant' changes
     useEffect(() => {
-        const fieldsToTrigger = [
-            `${pathPrefix}.guardian_address_country`, `${pathPrefix}.guardian_address_zipcode`,
-            `${pathPrefix}.guardian_address_state`, `${pathPrefix}.guardian_address_city`,
-            `${pathPrefix}.guardian_address_line1`, `${pathPrefix}.guardian_address_line2`
-        ] as unknown as Parameters<typeof trigger>[0]; // Correct type for trigger
+        const fieldsToTriggerOnNo: Path<AdmissionRegistrationFormDataYup>[] = [
+            `${pathPrefix}.guardian_address_country` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_zipcode` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_state` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_city` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_line1` as Path<AdmissionRegistrationFormDataYup>,
+        ];
+        const fieldsToTriggerOnYes: Path<AdmissionRegistrationFormDataYup>[] = [ // Also trigger validation when copying
+            `${pathPrefix}.guardian_address_country` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_zipcode` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_state` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_city` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_line1` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.guardian_address_line2` as Path<AdmissionRegistrationFormDataYup>,
+        ];
+
 
         if (watchGuardianIsAddressSame === 'Yes') {
-            setValue(`${pathPrefix}.guardian_address_country` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_country"), { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_area_code"), { shouldValidate: true });
-            const appState = getValues("comm_address_state");
-            const appCity = getValues("comm_address_city");
-            setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, appState, { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, appCity, { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_1"), { shouldValidate: true });
-            setValue(`${pathPrefix}.guardian_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues("comm_address_line_2") || "", { shouldValidate: true });
+            const commCountry = getValues("comm_address_country");
+            const commZip = getValues("comm_address_zip_code");
+            const commState = getValues("comm_address_state");
+            const commCity = getValues("comm_address_city");
+            const commL1 = getValues("comm_address_line_1");
+            const commL2 = getValues("comm_address_line_2");
 
-            setGuardianAddrStateOptions(appState ? [appState] : []);
-            setGuardianAddrCityOptions(appCity ? [appCity] : []);
+            setValue(`${pathPrefix}.guardian_address_country`, commCountry, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.guardian_address_zipcode`, commZip, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.guardian_address_state`, commState, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.guardian_address_city`, commCity, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.guardian_address_line1`, commL1, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.guardian_address_line2`, commL2 || "", { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+
+            // No longer need to set local state for dropdown options
+            // setGuardianAddrStateOptions(commState ? [commState] : []);
+            // setGuardianAddrCityOptions(commCity ? [commCity] : []);
             setGuardianAddrError(null);
             setIsGuardianAddrLoading(false);
             activeFetchIdentifier.current = null;
             if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
-        } else if (watchGuardianIsAddressSame === 'No') {
-            setValue(`${pathPrefix}.guardian_address_country` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_country`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_zipcode` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_zipcode`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_line1` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_line1`) || "", { shouldValidate: false });
-            setValue(`${pathPrefix}.guardian_address_line2` as keyof AdmissionRegistrationFormDataYup, getValues(`${pathPrefix}.guardian_address_line2`) || "", { shouldValidate: false });
+            trigger(fieldsToTriggerOnYes); // Validate the fields after setting them
 
-            setGuardianAddrStateOptions([]);
-            setGuardianAddrCityOptions([]);
+        } else if (watchGuardianIsAddressSame === 'No') {
+            // When switching to 'No', decide if you want to clear or retain previous 'No' values.
+            // This example retains existing 'No' values or defaults to empty.
+            setValue(`${pathPrefix}.guardian_address_country`, getValues(`${pathPrefix}.guardian_address_country`) || undefined, { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_zipcode`, getValues(`${pathPrefix}.guardian_address_zipcode`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_state`, "", { shouldValidate: true }); // Clear and validate
+            setValue(`${pathPrefix}.guardian_address_city`, "", { shouldValidate: true });  // Clear and validate
+            setValue(`${pathPrefix}.guardian_address_line1`, getValues(`${pathPrefix}.guardian_address_line1`) || "", { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_line2`, getValues(`${pathPrefix}.guardian_address_line2`) || "", { shouldValidate: false });
+
+            // No longer need to set local state for dropdown options
+            // setGuardianAddrStateOptions([]);
+            // setGuardianAddrCityOptions([]);
             setGuardianAddrError(null);
-            trigger(fieldsToTrigger);
+            // Don't set loading to false here, the other useEffect will manage it if a fetch attempt is made
+            trigger(fieldsToTriggerOnNo); // Validate required fields that are now empty or might become required
         }
     }, [watchGuardianIsAddressSame, getValues, setValue, pathPrefix, trigger]);
 
+    // useEffect for fetching address details based on country and zipcode
     useEffect(() => {
         if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
 
-        if (watchGuardianIsAddressSame === 'No') {
-            if (guardianAddressCountryName && guardianAddressZipcode && guardianAddressZipcode.length >= 3) {
-                const currentFetchId = `${guardianAddressCountryName}-${guardianAddressZipcode}`;
-                if (activeFetchIdentifier.current === currentFetchId && isGuardianAddrLoading) return;
-                if (activeFetchIdentifier.current && activeFetchIdentifier.current !== currentFetchId) activeFetchIdentifier.current = null;
-
-                const countryObj = countries.all.find(c => c.name === guardianAddressCountryName);
-                if (countryObj && countryObj.alpha2) {
-                    const countryISO2 = countryObj.alpha2;
-                    debounceTimeoutRef.current = setTimeout(() => {
-                        if (watchGuardianIsAddressSame === 'No' &&
-                            getValues(`${pathPrefix}.guardian_address_country`) === guardianAddressCountryName &&
-                            getValues(`${pathPrefix}.guardian_address_zipcode`) === guardianAddressZipcode) {
-                            if (!isGuardianAddrLoading) {
-                                fetchGuardianAddressDetails(countryISO2, guardianAddressZipcode);
-                            }
-                        }
-                    }, 800);
-                } else {
-                    setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]);
-                    setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                    setGuardianAddrError(guardianAddressCountryName ? `Invalid country or ISO code not found.` : "Select country.");
-                    setIsGuardianAddrLoading(false); activeFetchIdentifier.current = null;
-                }
-            } else {
-                setGuardianAddrStateOptions([]); setGuardianAddrCityOptions([]);
-                if (!guardianAddressCountryName || !guardianAddressZipcode || (guardianAddressZipcode && guardianAddressZipcode.length < 3 && guardianAddressZipcode.length > 0)) {
-                    setValue(`${pathPrefix}.guardian_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                    setValue(`${pathPrefix}.guardian_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                }
-                if (guardianAddressCountryName && guardianAddressZipcode && guardianAddressZipcode.length > 0 && guardianAddressZipcode.length < 3) {
-                    setGuardianAddrError("Zipcode is too short.");
-                } else { setGuardianAddrError(null); }
-                setIsGuardianAddrLoading(false); activeFetchIdentifier.current = null;
-            }
-        } else {
-            setIsGuardianAddrLoading(false); setGuardianAddrError(null); activeFetchIdentifier.current = null;
-            if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+        if (watchGuardianIsAddressSame !== 'No') {
+            // If address is same as applicant, or not yet decided, don't fetch.
+            // Clear any potential previous fetch artifacts if not 'No'.
+            // This part ensures that if user toggles Yes->No->Yes, state is clean.
+            setValue(`${pathPrefix}.guardian_address_state`, getValues("comm_address_state") || "", { shouldValidate: watchGuardianIsAddressSame === 'Yes' });
+            setValue(`${pathPrefix}.guardian_address_city`, getValues("comm_address_city") || "", { shouldValidate: watchGuardianIsAddressSame === 'Yes' });
+            setGuardianAddrError(null);
+            setIsGuardianAddrLoading(false);
+            activeFetchIdentifier.current = null;
+            return;
         }
+
+        // Proceed only if watchGuardianIsAddressSame === 'No'
+        if (guardianAddressCountryName && guardianAddressZipcode && guardianAddressZipcode.length >= 3) {
+            const currentFetchId = `${guardianAddressCountryName}-${guardianAddressZipcode}`;
+            if (activeFetchIdentifier.current === currentFetchId && isGuardianAddrLoading) return;
+            if (activeFetchIdentifier.current && activeFetchIdentifier.current !== currentFetchId) activeFetchIdentifier.current = null;
+
+            const countryObj = countries.all.find(c => c.name === guardianAddressCountryName);
+            if (countryObj && countryObj.alpha2) {
+                const countryISO2 = countryObj.alpha2;
+                setGuardianAddrError(null);
+
+                debounceTimeoutRef.current = setTimeout(() => {
+                    if (
+                        watchGuardianIsAddressSame === 'No' &&
+                        getValues(`${pathPrefix}.guardian_address_country`) === guardianAddressCountryName &&
+                        getValues(`${pathPrefix}.guardian_address_zipcode`) === guardianAddressZipcode
+                    ) {
+                        // Call the local fetchGuardianAddressDetails (useCallback version)
+                        fetchGuardianAddressDetails(countryISO2, guardianAddressZipcode);
+                    }
+                }, 800);
+            } else {
+                setValue(`${pathPrefix}.guardian_address_state`, "" as any, { shouldValidate: false });
+                setValue(`${pathPrefix}.guardian_address_city`, "" as any, { shouldValidate: false });
+                if (guardianAddressCountryName) {
+                    setGuardianAddrError(`Invalid country ('${guardianAddressCountryName}') or ISO code not found.`);
+                } else {
+                    setGuardianAddrError("Please select a country first.");
+                }
+                setIsGuardianAddrLoading(false);
+                activeFetchIdentifier.current = null;
+            }
+        } else { // Conditions for fetch not met
+            setValue(`${pathPrefix}.guardian_address_state`, "" as any, { shouldValidate: false });
+            setValue(`${pathPrefix}.guardian_address_city`, "" as any, { shouldValidate: false });
+
+            if (guardianAddressCountryName && guardianAddressZipcode && guardianAddressZipcode.length > 0 && guardianAddressZipcode.length < 3) {
+                setGuardianAddrError("PIN / ZIP Code is too short (minimum 3 characters).");
+            } else if (!guardianAddressCountryName && guardianAddressZipcode && guardianAddressZipcode.length >= 3) {
+                setGuardianAddrError("Please select a country.");
+            } else {
+                setGuardianAddrError(null);
+            }
+            setIsGuardianAddrLoading(false);
+            activeFetchIdentifier.current = null;
+        }
+
         return () => { if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current); };
     }, [
         watchGuardianIsAddressSame,
         guardianAddressCountryName,
         guardianAddressZipcode,
-        fetchGuardianAddressDetails, // Now refers to the local, memoized version
+        fetchGuardianAddressDetails, // This is now the useCallback defined in this component
         setValue,
         pathPrefix,
-        getValues
-        // REMOVED isGuardianAddrLoading from this dependency array
+        getValues,
+        // setIsGuardianAddrLoading, // Already deps of fetchGuardianAddressDetails via useCallback
+        // setGuardianAddrError   // Already deps of fetchGuardianAddressDetails via useCallback
     ]);
 
     return (
@@ -219,19 +265,19 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
                     <FormField
                         control={control}
-                        name={`${pathPrefix}.guardian_relation_with_applicant`}
+                        name={`${pathPrefix}.guardian_relation`}
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Relation with Applicant<span className="text-destructive"> *</span></FormLabel>
                                 <Select
                                     onValueChange={(value) => {
                                         field.onChange(value);
-                                        trigger(`${pathPrefix}.guardian_relation_with_applicant`);
+                                        trigger(`${pathPrefix}.guardian_relation`);
                                     }}
                                     onOpenChange={(isOpen) => {
                                         if (!isOpen) {
                                             field.onBlur();
-                                            trigger(`${pathPrefix}.guardian_relation_with_applicant`);
+                                            trigger(`${pathPrefix}.guardian_relation`);
                                         }
                                     }}
                                 >
@@ -284,20 +330,20 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                             <FormControl><Checkbox checked={field.value ?? true} onCheckedChange={(checkedBool) => {
                                 field.onChange(checkedBool);
                                 trigger(`${pathPrefix}.guardian_is_whatsapp_same`);
-                                if (checkedBool) setValue(`${pathPrefix}.guardian_whatsapp_number`, "");
-                                else setValue(`${pathPrefix}.guardian_whatsapp_number`, getValues(`${pathPrefix}.guardian_contact_phone`) || "");
-                                if (!checkedBool) trigger(`${pathPrefix}.guardian_whatsapp_number`);
+                                if (checkedBool) setValue(`${pathPrefix}.guardian_whatsapp_phone`, "");
+                                else setValue(`${pathPrefix}.guardian_whatsapp_phone`, getValues(`${pathPrefix}.guardian_contact_phone`) || "");
+                                if (!checkedBool) trigger(`${pathPrefix}.guardian_whatsapp_phone`);
                             }} /></FormControl>
                             <FormLabel className="font-normal text-sm">WhatsApp same as Phone?</FormLabel>
                         </FormItem>
                     )} />
                     {watchGuardianIsWhatsappSame === false && (
-                        <FormField control={control} name={`${pathPrefix}.guardian_whatsapp_number`} render={({ field }) => (
+                        <FormField control={control} name={`${pathPrefix}.guardian_whatsapp_phone`} render={({ field }) => (
                             <FormItem className="lg:col-start-2"><FormLabel>WhatsApp Number<span className="text-destructive"> *</span></FormLabel><FormControl>
                                 <PhoneInput
                                     placeholder="Enter WhatsApp number"
                                     {...field}
-                                    onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_whatsapp_number`); }} value={field.value ?? ''} />
+                                    onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_whatsapp_phone`); }} value={field.value ?? ''} />
                             </FormControl><FormMessage /></FormItem>
                         )} />
                     )}
@@ -347,42 +393,54 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                             </FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={control} name={`${pathPrefix}.guardian_address_zipcode`} render={({ field, fieldState }) => (
-                            <FormItem><FormLabel>Zipcode<span className="text-destructive"> *</span></FormLabel>
-                                <FormControl><Input placeholder="Zipcode" {...field} value={field.value ?? ''} disabled={!guardianAddressCountryName} /></FormControl>
+                            <FormItem><FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
+                                <FormControl><Input placeholder="PIN / ZIP Code" {...field} value={field.value ?? ''} disabled={!guardianAddressCountryName} /></FormControl>
                                 {isGuardianAddrLoading && <FormDescription>Loading address...</FormDescription>}
                                 {guardianAddrError && !fieldState.error && <FormMessage className="text-destructive">{guardianAddrError}</FormMessage>}
                                 <FormMessage />
                             </FormItem>
                         )} />
-                        <FormField control={control} name={`${pathPrefix}.guardian_address_state`} render={({ field }) => (
-                            <FormItem><FormLabel>State<span className="text-destructive"> *</span></FormLabel>
-                                <Select
-                                    onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_address_state`); }} value={field.value ?? ''} disabled={isGuardianAddrLoading || guardianAddrStateOptions.length === 0 || !guardianAddressZipcode || !guardianAddressCountryName}
-                                    onOpenChange={(isOpen) => {
-                                        if (!isOpen) {
-                                            field.onBlur();
-                                            trigger(`${pathPrefix}.guardian_address_state`);
-                                        }
-                                    }}
-                                >
-                                    <FormControl><SelectTrigger><SelectValue placeholder={isGuardianAddrLoading ? "Loading..." : (guardianAddrStateOptions.length > 0 ? "Select state" : "Enter country & zipcode")} /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {guardianAddrStateOptions.length > 0 ? guardianAddrStateOptions.map(s => <SelectItem key={`${pathPrefix}-state-${s}`} value={s}>{s}</SelectItem>)
-                                            : <SelectItem value="no-opts" disabled>{!guardianAddressCountryName ? "Select country" : (guardianAddressZipcode && guardianAddressZipcode.length >= 3 ? "No states found" : "Enter zipcode")}</SelectItem>}
-                                    </SelectContent>
-                                </Select><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={control} name={`${pathPrefix}.guardian_address_city`} render={({ field }) => (
-                            <FormItem><FormLabel>City<span className="text-destructive"> *</span></FormLabel>
-                                <Select
-                                    onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.guardian_address_city`); }} value={field.value ?? ''} disabled={isGuardianAddrLoading || guardianAddrCityOptions.length === 0 || !guardianAddressZipcode || !guardianAddressCountryName}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder={isGuardianAddrLoading ? "Loading..." : (guardianAddrCityOptions.length > 0 ? "Select city" : "Enter country & zipcode")} /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {guardianAddrCityOptions.length > 0 ? guardianAddrCityOptions.map(c => <SelectItem key={`${pathPrefix}-city-${c}`} value={c}>{c}</SelectItem>)
-                                            : <SelectItem value="no-opts" disabled>{!guardianAddressCountryName ? "Select country" : (guardianAddressZipcode && guardianAddressZipcode.length >= 3 ? "No cities found" : "Enter zipcode")}</SelectItem>}
-                                    </SelectContent>
-                                </Select><FormMessage /></FormItem>
-                        )} />
+                        <FormField
+                            control={control}
+                            name={`${pathPrefix}.guardian_address_state`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="State (auto-filled)"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                            disabled // Make the input disabled
+                                            className="bg-muted cursor-not-allowed"
+                                        />
+                                    </FormControl>
+                                    {isGuardianAddrLoading && !field.value && <FormDescription>Loading state...</FormDescription>}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Guardian City (Enabled Text Input) */}
+                        <FormField
+                            control={control}
+                            name={`${pathPrefix}.guardian_address_city`}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="Enter city/town"
+                                            {...field}
+                                            value={field.value ?? ''}
+                                            disabled={isGuardianAddrLoading && !field.value} // Optionally disable while loading if empty
+                                        />
+                                    </FormControl>
+                                    {isGuardianAddrLoading && !field.value && <FormDescription>Loading city...</FormDescription>}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField control={control} name={`${pathPrefix}.guardian_address_line1`} render={({ field }) => (<FormItem><FormLabel>Address Line 1<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Address Line 1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={control} name={`${pathPrefix}.guardian_address_line2`} render={({ field }) => (<FormItem><FormLabel>Address Line 2<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Address Line 2" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
