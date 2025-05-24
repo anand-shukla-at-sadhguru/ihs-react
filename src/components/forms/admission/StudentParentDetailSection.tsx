@@ -51,10 +51,10 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
     const { watch, trigger } = useFormContext<AdmissionRegistrationFormDataYup>();
     const pathPrefix = `student_parent.${index}` as const;
 
-    const watchIsWhatsappSame = watch(`${pathPrefix}.parent_is_whatsapp_same`);
-    const watchIsAddressSame = watch(`${pathPrefix}.parent_is_address_same_as_applicant`);
-    const parentAddressCountryName = watch(`${pathPrefix}.parent_address_country`);
-    const parentAddressZipcode = watch(`${pathPrefix}.parent_address_zipcode`);
+    const watchIsWhatsappSame = watch(`${pathPrefix}.is_whatsapp_same`);
+    const watchIsAddressSame = watch(`${pathPrefix}.is_address_same_as_applicant`);
+    const parentAddressCountryName = watch(`${pathPrefix}.address_country`);
+    const parentAddressZipcode = watch(`${pathPrefix}.address_zipcode`);
 
     const [isParentAddrLoading, setIsParentAddrLoading] = useState(false);
     const [parentAddrError, setParentAddrError] = useState<string | null>(null);
@@ -74,8 +74,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             setParentAddrError(null);
 
             const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
-            const rhfStateField = `${pathPrefix}.parent_address_state`;
-            const rhfCityField = `${pathPrefix}.parent_address_city`;
+            const rhfStateField = `${pathPrefix}.address_state`;
+            const rhfCityField = `${pathPrefix}.address_city`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -125,22 +125,22 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
     // Effect: When address same as applicant toggles, copy or clear fields
     useEffect(() => {
         const fieldsToTrigger: Path<AdmissionRegistrationFormDataYup>[] = [
-            `${pathPrefix}.parent_address_country` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.parent_address_zipcode` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.parent_address_state` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.parent_address_city` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.parent_address_line1` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.parent_address_line2` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.address_country` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.address_zipcode` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.address_state` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.address_city` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.address_line1` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.address_line2` as Path<AdmissionRegistrationFormDataYup>,
         ];
 
         if (watchIsAddressSame === 'Yes') {
             // Copy applicant's communication address fields
-            setValue(`${pathPrefix}.parent_address_country`, getValues("comm_address_country"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.parent_address_zipcode`, getValues("comm_address_zip_code"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.parent_address_state`, getValues("comm_address_state"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.parent_address_city`, getValues("comm_address_city"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.parent_address_line1`, getValues("comm_address_line_1"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.parent_address_line2`, getValues("comm_address_line_2") || "", { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_country`, getValues("address_country"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_zipcode`, getValues("address_zip_code"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_state`, getValues("address_state"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_city`, getValues("address_city"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_line1`, getValues("address_line_1"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_line2`, getValues("address_line_2") || "", { shouldValidate: true, shouldDirty: true, shouldTouch: true });
 
             setParentAddrError(null);
             setIsParentAddrLoading(false);
@@ -149,8 +149,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             trigger(fieldsToTrigger);
         } else if (watchIsAddressSame === 'No') {
             // Optionally clear state/city if switching to 'No'
-            setValue(`${pathPrefix}.parent_address_state`, "", { shouldValidate: true });
-            setValue(`${pathPrefix}.parent_address_city`, "", { shouldValidate: true });
+            setValue(`${pathPrefix}.address_state`, "", { shouldValidate: true });
+            setValue(`${pathPrefix}.address_city`, "", { shouldValidate: true });
             setParentAddrError(null);
             trigger(fieldsToTrigger);
         }
@@ -161,8 +161,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
         if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
 
         if (watchIsAddressSame !== 'No') {
-            setValue(`${pathPrefix}.parent_address_state`, getValues("comm_address_state") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
-            setValue(`${pathPrefix}.parent_address_city`, getValues("comm_address_city") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
+            setValue(`${pathPrefix}.address_state`, getValues("address_state") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
+            setValue(`${pathPrefix}.address_city`, getValues("address_city") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
             setParentAddrError(null);
             setIsParentAddrLoading(false);
             activeFetchIdentifier.current = null;
@@ -183,15 +183,15 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 debounceTimeoutRef.current = setTimeout(() => {
                     if (
                         watchIsAddressSame === 'No' &&
-                        getValues(`${pathPrefix}.parent_address_country`) === parentAddressCountryName &&
-                        getValues(`${pathPrefix}.parent_address_zipcode`) === parentAddressZipcode
+                        getValues(`${pathPrefix}.address_country`) === parentAddressCountryName &&
+                        getValues(`${pathPrefix}.address_zipcode`) === parentAddressZipcode
                     ) {
                         fetchParentAddressDetails(countryISO2, parentAddressZipcode);
                     }
                 }, 800);
             } else {
-                setValue(`${pathPrefix}.parent_address_state`, "" as any, { shouldValidate: false });
-                setValue(`${pathPrefix}.parent_address_city`, "" as any, { shouldValidate: false });
+                setValue(`${pathPrefix}.address_state`, "" as any, { shouldValidate: false });
+                setValue(`${pathPrefix}.address_city`, "" as any, { shouldValidate: false });
                 if (parentAddressCountryName) {
                     setParentAddrError(`Invalid country ('${parentAddressCountryName}') or ISO code not found.`);
                 } else {
@@ -201,8 +201,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 activeFetchIdentifier.current = null;
             }
         } else {
-            setValue(`${pathPrefix}.parent_address_state`, "" as any, { shouldValidate: false });
-            setValue(`${pathPrefix}.parent_address_city`, "" as any, { shouldValidate: false });
+            setValue(`${pathPrefix}.address_state`, "" as string, { shouldValidate: false });
+            setValue(`${pathPrefix}.address_city`, "" as string, { shouldValidate: false });
 
             if (parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length > 0 && parentAddressZipcode.length < 3) {
                 setParentAddrError("PIN / ZIP Code is too short (minimum 3 characters).");
@@ -250,40 +250,40 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             <div className="pt-3 border-t border-dashed">
                 <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Basic Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-                    <FormField control={control} name={`${pathPrefix}.parent_first_name`} render={({ field }) => (<FormItem><FormLabel>First Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="First Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${pathPrefix}.parent_last_name`} render={({ field }) => (<FormItem><FormLabel>Last Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Last Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${pathPrefix}.parent_relation`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.first_name`} render={({ field }) => (<FormItem><FormLabel>First Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="First Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${pathPrefix}.last_name`} render={({ field }) => (<FormItem><FormLabel>Last Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Last Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${pathPrefix}.relation`} render={({ field }) => (
                         <FormItem><FormLabel>Relation<span className="text-destructive"> *</span></FormLabel>
                             <Select
                                 onValueChange={(value) => {
                                     field.onChange(value);
-                                    trigger(`${pathPrefix}.parent_relation`);
+                                    trigger(`${pathPrefix}.relation`);
                                 }}
                                 onOpenChange={(isOpen) => {
                                     if (!isOpen) {
                                         field.onBlur();
-                                        trigger(`${pathPrefix}.parent_relation`);
+                                        trigger(`${pathPrefix}.relation`);
                                     }
                                 }}
                                 value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Relation" /></SelectTrigger></FormControl>
                                 <SelectContent>{PARENT_RELATION_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
-                    <FormField control={control} name={`${pathPrefix}.parent_nationality`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.nationality`} render={({ field }) => (
                         <FormItem><FormLabel>Nationality<span className="text-destructive"> *</span></FormLabel><FormControl>
                             <CountryDropdown
                                 value={field.value}
                                 onBlur={field.onBlur}
-                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.parent_nationality`); }}
+                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.nationality`); }}
                                 placeholder="Select Nationality" />
                         </FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={control} name={`${pathPrefix}.parent_country_of_residence`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.country_of_residence`} render={({ field }) => (
                         <FormItem><FormLabel>Country of Residence<span className="text-destructive"> *</span></FormLabel><FormControl>
                             <CountryDropdown
                                 value={field.value}
                                 onBlur={field.onBlur}
-                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.parent_country_of_residence`); }}
+                                onChange={(country?: Country) => { field.onChange(country?.name || ""); trigger(`${pathPrefix}.country_of_residence`); }}
                                 placeholder="Select Country of Residence" />
                         </FormControl><FormMessage /></FormItem>
                     )} />
@@ -294,30 +294,30 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             <div className="pt-3 mt-4 border-t border-dashed">
                 <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Contact Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 items-end">
-                    <FormField control={control} name={`${pathPrefix}.parent_contact_email`} render={({ field }) => (<FormItem><FormLabel>Contact Email Address<span className="text-destructive"> *</span></FormLabel><FormControl><Input type="email" placeholder="Email Address" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${pathPrefix}.parent_contact_phone`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.contact_email`} render={({ field }) => (<FormItem><FormLabel>Contact Email Address<span className="text-destructive"> *</span></FormLabel><FormControl><Input type="email" placeholder="Email Address" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${pathPrefix}.contact_phone`} render={({ field }) => (
                         <FormItem><FormLabel>Contact Phone Number<span className="text-destructive"> *</span></FormLabel><FormControl>
                             <PhoneInput
-                                placeholder="Enter phone number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_contact_phone`); }} value={field.value ?? ''} />
+                                placeholder="Enter phone number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.contact_phone`); }} value={field.value ?? ''} />
                         </FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={control} name={`${pathPrefix}.parent_is_whatsapp_same`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.is_whatsapp_same`} render={({ field }) => (
                         <FormItem className="flex flex-row items-center space-x-3 space-y-0 pt-7">
                             <FormControl><Checkbox checked={field.value ?? true} onCheckedChange={(checkedBool) => {
                                 field.onChange(checkedBool);
-                                trigger(`${pathPrefix}.parent_is_whatsapp_same`);
-                                if (checkedBool) setValue(`${pathPrefix}.parent_whatsapp_phone`, "");
-                                else setValue(`${pathPrefix}.parent_whatsapp_phone`, getValues(`${pathPrefix}.parent_contact_phone`) || "");
-                                if (!checkedBool) trigger(`${pathPrefix}.parent_whatsapp_phone`);
+                                trigger(`${pathPrefix}.is_whatsapp_same`);
+                                if (checkedBool) setValue(`${pathPrefix}.whatsapp_phone`, "");
+                                else setValue(`${pathPrefix}.whatsapp_phone`, getValues(`${pathPrefix}.contact_phone`) || "");
+                                if (!checkedBool) trigger(`${pathPrefix}.whatsapp_phone`);
                             }} /></FormControl>
                             <FormLabel className="font-normal text-sm">WhatsApp same as Phone?</FormLabel>
                         </FormItem>
                     )} />
                     {watchIsWhatsappSame === false && (
-                        <FormField control={control} name={`${pathPrefix}.parent_whatsapp_phone`} render={({ field }) => (
+                        <FormField control={control} name={`${pathPrefix}.whatsapp_phone`} render={({ field }) => (
                             <FormItem className="lg:col-start-2"><FormLabel>WhatsApp Number<span className="text-destructive"> *</span></FormLabel><FormControl>
                                 <PhoneInput
-                                    placeholder="Enter WhatsApp number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_whatsapp_phone`); }} value={field.value ?? ''} />
+                                    placeholder="Enter WhatsApp number" {...field} onChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.whatsapp_phone`); }} value={field.value ?? ''} />
                             </FormControl><FormMessage /></FormItem>
                         )} />
                     )}
@@ -328,17 +328,17 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             <div className="pt-3 mt-4 border-t border-dashed">
                 <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Parent Address</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-                    <FormField control={control} name={`${pathPrefix}.parent_is_address_same_as_applicant`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.is_address_same_as_applicant`} render={({ field }) => (
                         <FormItem><FormLabel>Address same as Applicant's Communication Address?<span className="text-destructive"> *</span></FormLabel>
                             <Select
                                 onValueChange={(value) => {
                                     field.onChange(value);
-                                    trigger(`${pathPrefix}.parent_is_address_same_as_applicant`);
+                                    trigger(`${pathPrefix}.is_address_same_as_applicant`);
                                 }}
                                 onOpenChange={(isOpen) => {
                                     if (!isOpen) {
                                         field.onBlur();
-                                        trigger(`${pathPrefix}.parent_is_address_same_as_applicant`);
+                                        trigger(`${pathPrefix}.is_address_same_as_applicant`);
                                     }
                                 }}
                                 value={field.value ?? ''}
@@ -359,7 +359,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 <div className="pt-3 mt-4 border-t border-dashed">
                     <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Parent Address Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 items-end">
-                        <FormField control={control} name={`${pathPrefix}.parent_address_country`} render={({ field }) => (
+                        <FormField control={control} name={`${pathPrefix}.address_country`} render={({ field }) => (
                             <FormItem><FormLabel>Country<span className="text-destructive"> *</span></FormLabel><FormControl>
                                 <CountryDropdown
                                     value={field.value}
@@ -367,10 +367,10 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                     onChange={(country?: Country) => {
                                         const countryName = country?.name || "";
                                         field.onChange(countryName);
-                                        trigger(`${pathPrefix}.parent_address_country`);
-                                        setValue(`${pathPrefix}.parent_address_zipcode` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false }); // Clear zip on country change
-                                        setValue(`${pathPrefix}.parent_address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                                        setValue(`${pathPrefix}.parent_address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                                        trigger(`${pathPrefix}.address_country`);
+                                        setValue(`${pathPrefix}.address_zipcode` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false }); // Clear zip on country change
+                                        setValue(`${pathPrefix}.address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                                         setParentAddrStateOptions([]);
                                         setParentAddrCityOptions([]);
                                         setParentAddrError(null);
@@ -379,7 +379,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                 />
                             </FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField control={control} name={`${pathPrefix}.parent_address_zipcode`} render={({ field }) => (
+                        <FormField control={control} name={`${pathPrefix}.address_zipcode`} render={({ field }) => (
                             <FormItem><FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
                                 <FormControl><Input placeholder="PIN / ZIP Code" {...field} value={field.value ?? ''} disabled={!parentAddressCountryName} /></FormControl>
                                 {isParentAddrLoading && <FormDescription>Loading address...</FormDescription>}
@@ -389,7 +389,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                         )} />
                         <FormField
                             control={control}
-                            name={`${pathPrefix}.parent_address_state`}
+                            name={`${pathPrefix}.address_state`}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
@@ -411,7 +411,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                         {/* Parent City (Enabled Text Input) */}
                         <FormField
                             control={control}
-                            name={`${pathPrefix}.parent_address_city`}
+                            name={`${pathPrefix}.address_city`}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
@@ -428,8 +428,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                 </FormItem>
                             )}
                         />
-                        <FormField control={control} name={`${pathPrefix}.parent_address_line1`} render={({ field }) => (<FormItem><FormLabel>Address Line 1<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Address Line 1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={control} name={`${pathPrefix}.parent_address_line2`} render={({ field }) => (<FormItem><FormLabel>Address Line 2<span className="text-destructive"></span></FormLabel><FormControl><Input placeholder="Address Line 2" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={control} name={`${pathPrefix}.address_line1`} render={({ field }) => (<FormItem><FormLabel>Address Line 1<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Address Line 1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={control} name={`${pathPrefix}.address_line2`} render={({ field }) => (<FormItem><FormLabel>Address Line 2<span className="text-destructive"></span></FormLabel><FormControl><Input placeholder="Address Line 2" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                 </div>
             )}
@@ -438,21 +438,21 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             <div className="pt-3 mt-4 border-t border-dashed">
                 <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Educational Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                    <FormField control={control} name={`${pathPrefix}.parent_education`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.education`} render={({ field }) => (
                         <FormItem><FormLabel>Education<span className="text-destructive"> *</span></FormLabel>
                             <Select
                                 onOpenChange={(isOpen) => {
                                     if (!isOpen) {
                                         field.onBlur();
-                                        trigger(`${pathPrefix}.parent_education`);
+                                        trigger(`${pathPrefix}.education`);
                                     }
                                 }}
-                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_education`); }} value={field.value ?? ''}
+                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.education`); }} value={field.value ?? ''}
                             ><FormControl><SelectTrigger><SelectValue placeholder="Select Education Level" /></SelectTrigger></FormControl>
                                 <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
-                    <FormField control={control} name={`${pathPrefix}.parent_field_of_study`} render={({ field }) => (<FormItem><FormLabel>Field of Study<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="e.g., Computer Science, Arts" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${pathPrefix}.field_of_study`} render={({ field }) => (<FormItem><FormLabel>Field of Study<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="e.g., Computer Science, Arts" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
             </div>
 
@@ -460,22 +460,22 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             <div className="pt-3 mt-4 border-t border-dashed">
                 <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Professional Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-                    <FormField control={control} name={`${pathPrefix}.parent_profession`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.profession`} render={({ field }) => (
                         <FormItem><FormLabel>Profession<span className="text-destructive"> *</span></FormLabel>
                             <Select
                                 onOpenChange={(isOpen) => {
                                     if (!isOpen) {
                                         field.onBlur();
-                                        trigger(`${pathPrefix}.parent_profession`);
+                                        trigger(`${pathPrefix}.profession`);
                                     }
                                 }}
-                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.parent_profession`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Profession" /></SelectTrigger></FormControl>
+                                onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.profession`); }} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select Profession" /></SelectTrigger></FormControl>
                                 <SelectContent>{PARENT_PROFESSION_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
-                    <FormField control={control} name={`${pathPrefix}.parent_organization_name`} render={({ field }) => (<FormItem><FormLabel>Organization Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Organization Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${pathPrefix}.parent_designation`} render={({ field }) => (<FormItem><FormLabel>Designation<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Designation" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${pathPrefix}.parent_annual_income`} render={({ field }) => (
+                    <FormField control={control} name={`${pathPrefix}.organization_name`} render={({ field }) => (<FormItem><FormLabel>Organization Name<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Organization Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${pathPrefix}.designation`} render={({ field }) => (<FormItem><FormLabel>Designation<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="Designation" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${pathPrefix}.annual_income`} render={({ field }) => (
                         <FormItem className="lg:col-span-1">
                             <FormLabel>Annual Income (in INR)<span className="text-destructive"> *</span></FormLabel>
                             <FormControl><Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="e.g., 1000000" {...field} value={field.value ?? ''} /></FormControl>

@@ -229,15 +229,16 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
         "applied_to_ihs_before", "previous_applied_year", "previous_applied_for", "previous_applied_comments",
         "first_name", "last_name", "middle_name", "gender",
         "nationality", "country_of_residence", "country_of_birth", "date_of_birth", "age",
-        "comm_address_country", "comm_address_zip_code", "comm_address_state", "comm_address_city", "comm_address_line_1", "comm_address_line_2",
+        "address_country", "address_zip_code", "address_state", "address_city", "address_line_1", "address_line_2",
         "identification_mark_1", "identification_mark_2", "religion", "other_religion", "community", "other_community",
-        "mother_tongue", "other_mother_tongue", "languages_known", // Note: array validation might need specific handling or be part of a sub-schema validation
+        "mother_tongue", "other_mother_tongue", "student_languages", // Note: array validation might need specific handling or be part of a sub-schema validation
         "has_sibling_in_ihs", "student_siblings",
-        "recent_photograph", "birth_certificate", "id_proof_type", "id_proof_document",
+        "recent_photo", "birth_certificate", "id_proof_type", "id_proof_document",
         "aadhaar_number", "passport_number", "passport_place_of_issue", "passport_date_of_issue", "passport_date_of_expiry"
     ],
     academic: [
-        "is_home_schooled", "current_school_name", "current_school_board_affiliation", "current_school_phone_number",
+        "is_home_schooled", "current_school_name", "current_school_board_affiliation", "current_school_other_board_affiliation",
+        "current_school_phone_number",
         "current_school_email_address", "current_school_country", "current_school_zip_code", "current_school_city",
         "current_school_state", "current_school_address_line1", "current_school_address_line2",
         "been_to_school_previously", "previous_schools", // was_the_applicant_ever_home_schooled (if it's a distinct field)
@@ -253,15 +254,15 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
         "has_hearing_challenges", "hearing_challenges", "has_behavioural_challenges", "behavioural_challenges",
         "has_physical_challenges", "physical_challenges", "has_speech_challenges", "speech_challenges",
         "history_of_accident_injury", "history_of_accident_injury_details", "regular_medication", "regular_medication_details", "medical_prescription",
-        "has_health_issue", "history_of_health_issues", "surgery_hospitalization", "surgery_hospitalization_details",
-        "needs_special_attention", "special_attention_details", "has_allergies", "allergies_details"
+        "history_of_health_issues", "history_of_health_issues_details", "surgery_hospitalization", "surgery_hospitalization_details",
+        "special_attention", "special_attention_details", "has_allergies", "allergies_details"
     ],
     parents: [
         "student_parent", // Validating the array itself (e.g., min length) and its items
         "parent_marital_status",
         "who_is_responsible_for_paying_applicants_tuition_fee", "court_order_document",
-        "who_is_allowed_to_receive_school_communication", "legal_rights_document",
-        "who_is_allowed_to_receive_report_cards", "visit_rights",
+        "who_is_allowed_to_receive_communication", "legal_rights_document",
+        "who_is_allowed_to_receive_report_cards", "who_is_allowed_to_visit_school",
         "parents_are_local_guardians", "student_guardians"
     ],
     subjects: [ // Only if application_for is Class XI
@@ -276,7 +277,7 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
     ],
     billing: [ // Payment tab might not need pre-validation if it's just info + submit
         "billing_first_name", "billing_last_name", "billing_mobile", "billing_email", "billing_country",
-        "billing_zip_code", "billing_city", "billing_state", "billing_address_line1", "billing_address_line2"
+        "billing_zip_code", "billing_city", "billing_state", "billing_address_line_1", "billing_address_line_2"
     ]
     // "instruction" tab has no fields to validate
 };
@@ -284,4 +285,20 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
 // Ensure TAB_KEYS matches the keys in TAB_FIELD_GROUPS (excluding 'instruction')
 export const TAB_ORDER: string[] = [
     "instruction", "personal", "academic", "health", "parents", "subjects", "declaration", "billing"
+
 ];
+export const get = (
+    obj: Record<string, unknown>,
+    path: string,
+    defaultValue?: unknown
+): unknown => {
+    const keys = path.replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '').split('.');
+    let result: unknown = obj;
+    for (const key of keys) {
+        if (result === null || typeof result !== 'object' || !(key in result)) {
+            return defaultValue;
+        }
+        result = (result as Record<string, unknown>)[key];
+    }
+    return result;
+};

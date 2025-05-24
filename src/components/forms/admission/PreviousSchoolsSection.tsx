@@ -51,7 +51,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
     handlePreviewFile,
     // schoolFields,
 }) => {
-    const { trigger, getFieldState } = useFormContext<AdmissionRegistrationFormDataYup>();
+    const { trigger, getFieldState, watch } = useFormContext<AdmissionRegistrationFormDataYup>();
     console.log(fields, "WHY")
     return (
         <div className="md:col-span-2 lg:col-span-3 pt-0 mt-0">
@@ -59,6 +59,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
             <div className="space-y-6">
                 {fields.map((item, index) => {
                     const basePath = `previous_schools.${index}` as const;
+                    const watchedBoardAffiliation = watch(`${basePath}.school_board_affiliation`);
                     return (
                         <div key={item.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/30 shadow-sm">
                             <div className="flex justify-between items-center mb-3 pb-2 border-b">
@@ -76,7 +77,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_name`}
+                                    name={`${basePath}.school_name`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>School Name<span className="text-destructive"> *</span></FormLabel>
@@ -87,14 +88,14 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                 />
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_board_affiliation`}
+                                    name={`${basePath}.school_board_affiliation`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Board Affiliation<span className="text-destructive"> *</span></FormLabel>
                                             <Select
-                                                onValueChange={(value) => { field.onChange(value); trigger(`${basePath}.prev_school_board_affiliation`); }}
+                                                onValueChange={(value) => { field.onChange(value); trigger(`${basePath}.school_board_affiliation`); }}
                                                 value={field.value || ''}
-                                                onOpenChange={(isOpen) => { if (!isOpen && getFieldState(`${basePath}.prev_school_board_affiliation`).isTouched) trigger(`${basePath}.prev_school_board_affiliation`); }}
+                                                onOpenChange={(isOpen) => { if (!isOpen && getFieldState(`${basePath}.school_board_affiliation`).isTouched) trigger(`${basePath}.school_board_affiliation`); }}
                                             >
                                                 <FormControl><SelectTrigger><SelectValue placeholder="Select Board" /></SelectTrigger></FormControl>
                                                 <SelectContent>
@@ -107,9 +108,24 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                         </FormItem>
                                     )}
                                 />
+                                {watchedBoardAffiliation === 'Other' && (
+                                    <FormField
+                                        control={control}
+                                        name={`${basePath}.school_other_board_affiliation`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Specify Other Board<span className="text-destructive"> *</span></FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter board name" {...field} value={field.value ?? ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_from_year`}
+                                    name={`${basePath}.school_from_year`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>From Year (YYYY)<span className="text-destructive"> *</span></FormLabel>
@@ -123,7 +139,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                                     {...field}
                                                     value={field.value ?? ''} // RHF handles number value
                                                     onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
-                                                    onBlur={() => { field.onBlur(); if (getFieldState(`${basePath}.prev_school_from_year`).isTouched) trigger(`${basePath}.prev_school_from_year`); }}
+                                                    onBlur={() => { field.onBlur(); if (getFieldState(`${basePath}.school_from_year`).isTouched) trigger(`${basePath}.school_from_year`); }}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -132,7 +148,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                 />
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_to_year`}
+                                    name={`${basePath}.school_to_year`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>To Year (YYYY)<span className="text-destructive"> *</span></FormLabel>
@@ -146,7 +162,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                                     {...field}
                                                     value={field.value ?? ''}
                                                     onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
-                                                    onBlur={() => { field.onBlur(); if (getFieldState(`${basePath}.prev_school_to_year`).isTouched) trigger(`${basePath}.prev_school_to_year`); }}
+                                                    onBlur={() => { field.onBlur(); if (getFieldState(`${basePath}.school_to_year`).isTouched) trigger(`${basePath}.school_to_year`); }}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -155,14 +171,14 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                 />
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_from_class`}
+                                    name={`${basePath}.school_from_class`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>From Class<span className="text-destructive"> *</span></FormLabel>
                                             <Select
-                                                onValueChange={(value) => { field.onChange(value); trigger(`${basePath}.prev_school_from_class`); }}
+                                                onValueChange={(value) => { field.onChange(value); trigger(`${basePath}.school_from_class`); }}
                                                 value={field.value || ''}
-                                                onOpenChange={(isOpen) => { if (!isOpen && getFieldState(`${basePath}.prev_school_from_class`).isTouched) trigger(`${basePath}.prev_school_from_class`); }}
+                                                onOpenChange={(isOpen) => { if (!isOpen && getFieldState(`${basePath}.school_from_class`).isTouched) trigger(`${basePath}.school_from_class`); }}
                                             >
                                                 <FormControl><SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger></FormControl>
                                                 <SelectContent>
@@ -177,14 +193,14 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                 />
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_to_class`}
+                                    name={`${basePath}.school_to_class`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>To Class<span className="text-destructive"> *</span></FormLabel>
                                             <Select
-                                                onValueChange={(value) => { field.onChange(value); trigger(`${basePath}.prev_school_to_class`); }}
+                                                onValueChange={(value) => { field.onChange(value); trigger(`${basePath}.school_to_class`); }}
                                                 value={field.value || ''}
-                                                onOpenChange={(isOpen) => { if (!isOpen && getFieldState(`${basePath}.prev_school_to_class`).isTouched) trigger(`${basePath}.prev_school_to_class`); }}
+                                                onOpenChange={(isOpen) => { if (!isOpen && getFieldState(`${basePath}.school_to_class`).isTouched) trigger(`${basePath}.school_to_class`); }}
                                             >
                                                 <FormControl><SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger></FormControl>
                                                 <SelectContent>
@@ -199,7 +215,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                 />
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_country`}
+                                    name={`${basePath}.school_country`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Country<span className="text-destructive"> *</span></FormLabel>
@@ -208,9 +224,9 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                                     value={field.value} // field.value should be string (country name)
                                                     onChange={(country?: Country) => {
                                                         field.onChange(country?.name || "");
-                                                        trigger(`${basePath}.prev_school_country`);
+                                                        trigger(`${basePath}.school_country`);
                                                     }}
-                                                    onBlur={() => { field.onBlur(); if (getFieldState(`${basePath}.prev_school_country`).isTouched) trigger(`${basePath}.prev_school_country`); }}
+                                                    onBlur={() => { field.onBlur(); if (getFieldState(`${basePath}.school_country`).isTouched) trigger(`${basePath}.school_country`); }}
                                                     placeholder="Select country"
                                                 />
                                             </FormControl>
@@ -220,7 +236,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                 />
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_zip_code`}
+                                    name={`${basePath}.school_zip_code`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
@@ -231,7 +247,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                 />
                                 <FormField
                                     control={control}
-                                    name={`${basePath}.prev_school_report_card`}
+                                    name={`${basePath}.marksheet`}
                                     render={({ field: { onChange: onFileChange, value: fileValue, ref, ...restFileField } }) => ( // Destructure ref
                                         <FormItem>
                                             <FormLabel>Report Card<span className="text-destructive"> *</span></FormLabel>
@@ -246,7 +262,45 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                                         onChange={(e) => {
                                                             const file = e.target.files ? e.target.files[0] : null;
                                                             onFileChange(file); // RHF's onChange for files
-                                                            trigger(`${basePath}.prev_school_report_card`);
+                                                            trigger(`${basePath}.marksheet`);
+                                                        }}
+                                                        {...restFileField}
+                                                    />
+                                                </FormControl>
+                                                {fileValue && fileValue instanceof File && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost" size="icon" // Adjusted for icon button
+                                                        onClick={() => handlePreviewFile(fileValue)}
+                                                        aria-label="Preview report card"
+                                                        title="Preview report card"
+                                                    >
+                                                        <Eye className="h-5 w-5" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={control}
+                                    name={`${basePath}.proof_of_enrolment`}
+                                    render={({ field: { onChange: onFileChange, value: fileValue, ref, ...restFileField } }) => ( // Destructure ref
+                                        <FormItem>
+                                            <FormLabel>Proof of Enrolment<span className="text-destructive"> *</span></FormLabel>
+                                            <div className="flex items-center space-x-2">
+                                                <FormControl>
+                                                    <Input
+                                                        type="file"
+                                                        className='pt-1.5 flex-grow'
+                                                        accept="application/pdf,image/jpeg,image/png"
+                                                        ref={ref} // Assign ref
+                                                        // name, onBlur are in restFileField
+                                                        onChange={(e) => {
+                                                            const file = e.target.files ? e.target.files[0] : null;
+                                                            onFileChange(file); // RHF's onChange for files
+                                                            trigger(`${basePath}.proof_of_enrolment`);
                                                         }}
                                                         {...restFileField}
                                                     />
@@ -277,15 +331,16 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                     size="sm"
                     onClick={() => append({
                         // Defaults must align with IndividualPreviousSchoolDataYup
-                        prev_school_name: '',
-                        prev_school_board_affiliation: undefined, // Or BOARD_OPTIONS_YUP[0] if you want a default selected
-                        prev_school_from_year: undefined, // Yup number can be undefined
-                        prev_school_to_year: undefined,
-                        prev_school_from_class: undefined, // Or CLASS_LEVEL_OPTIONS_YUP[0]
-                        prev_school_to_class: undefined,
-                        prev_school_country: undefined, // Default to undefined for placeholder
-                        prev_school_zip_code: '',
-                        prev_school_report_card: undefined, // For file, undefined or null
+                        school_name: '',
+                        school_board_affiliation: undefined, // Or BOARD_OPTIONS_YUP[0] if you want a default selected
+                        school_from_year: undefined, // Yup number can be undefined
+                        school_to_year: undefined,
+                        school_from_class: undefined, // Or CLASS_LEVEL_OPTIONS_YUP[0]
+                        school_to_class: undefined,
+                        school_country: undefined, // Default to undefined for placeholder
+                        school_zip_code: '',
+                        marksheet: undefined,
+                        proof_of_enrolment: undefined, // For file, undefined or null
                     } as unknown as IndividualPreviousSchoolDataYup)} // Cast to your Yup type
                     className="mt-4"
                 >

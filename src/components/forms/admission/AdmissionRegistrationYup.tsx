@@ -13,7 +13,12 @@ import {
     // type IndividualLanguageDataYup (if you have one)
 } from './yupSchema'; // Adjust the path as necessary
 
-import { BOARD_OPTIONS_YUP, calculateAge, fetchAddressDetails, getCurrentAcademicYear, getLastNAcademicYears, LANGUAGE_OPTIONS, PARENT_RELATION_OPTIONS_YUP, TAB_FIELD_GROUPS, TAB_ORDER } from './admissionFormTabUtils';
+import {
+    BOARD_OPTIONS_YUP,
+    calculateAge, fetchAddressDetails,
+    getCurrentAcademicYear, getLastNAcademicYears,
+    LANGUAGE_OPTIONS, PARENT_RELATION_OPTIONS_YUP, TAB_ORDER, TAB_FIELD_GROUPS, get
+} from './admissionFormTabUtils';
 import { LanguagesKnownSection } from './LanguagesKnownSection'; // Adjust path if needed
 import { StudentSiblingsSection } from './StudentSiblingsSection'; // <-- NEW IMPORT
 import { PreviousSchoolsSection } from './PreviousSchoolsSection';
@@ -83,11 +88,18 @@ const appliedForOptions = ['Class II', 'Class V', 'Class VIII', 'Class XI'];
 
 
 export function AdmissionRegistrationForm() {
-    const [currentTab, setCurrentTab] = useState(TAB_ORDER[0]); // Existing tab state
-    const currentTabIndex = TAB_ORDER.indexOf(currentTab);
-    const fieldsToValidate = TAB_FIELD_GROUPS[currentTab];
+    const [currentTab, setCurrentTab] = useState<string>(TAB_ORDER[0]);
     const [enabledTabs, setEnabledTabs] = useState<Set<string>>(
-        new Set([TAB_ORDER[0], TAB_ORDER[1]]) // "instruction" and "personal" initially enabled
+        new Set([
+            TAB_ORDER[0],
+            TAB_ORDER[1],
+            TAB_ORDER[2],
+            TAB_ORDER[3],
+            TAB_ORDER[4],
+            TAB_ORDER[5],
+            TAB_ORDER[6],
+            TAB_ORDER[7],
+        ]) // "instruction" and "personal" initially enabled
     );
     const [isCommAddressLoading, setIsCommAddressLoading] = useState(false);
     const [commAddressError, setCommAddressError] = useState<string | null>(null);
@@ -104,7 +116,6 @@ export function AdmissionRegistrationForm() {
         defaultValues: {
             application_academic_year: getCurrentAcademicYear(),
             application_for: 'Class V', // Default from appliedForOptions
-            application_number: 'IHS-202526-001', // Example
             applied_to_ihs_before: 'No',
             // previous_applied_year: previousApplicationYears[0] || '', // Default to most recent or empty
             // previous_applied_for: 'Class II', // Default from appliedForOptions
@@ -118,12 +129,12 @@ export function AdmissionRegistrationForm() {
             country_of_birth: 'India', // Country of Birth
             // date_of_birth: new Date('2010-01-01'), // Example past date
             // age: 14, // Example, or calculate based on DOB
-            // comm_address_country: 'India',
-            // comm_address_zip_code: '110001',
-            comm_address_line_1: 'Plot 403/404 Nakawa Industrial Area, P.O. Box 9547',
-            // comm_address_line_2: 'Apt 1',
-            // comm_address_city: 'New Delhi',
-            // comm_address_state: 'Delhi',
+            // address_country: 'India',
+            // address_zip_code: '110001',
+            address_line_1: 'Plot 403/404 Nakawa Industrial Area, P.O. Box 9547',
+            // address_line_2: 'Apt 1',
+            // address_city: 'New Delhi',
+            // address_state: 'Delhi',
             religion: 'Other', // Default from RELIGION_OPTIONS
             community: 'OC',   // Default from COMMUNITY_OPTIONS
             identification_mark_1: 'Scar on KNee',
@@ -132,13 +143,13 @@ export function AdmissionRegistrationForm() {
             // other_community: '',
             mother_tongue: 'Other', // Example
             other_mother_tongue: 'Njerep',
-            languages_known: [
+            student_languages: [
                 { language: 'Hindi', proficiency: 'Advanced' },
                 { language: 'Other', proficiency: 'Advanced', other_language: 'Njerep' },
             ],
             has_sibling_in_ihs: 'No',
             student_siblings: [], // Will be auto-populated by useEffect if has_sibling_in_ihs is 'Yes' initially
-            // recent_photograph: undefined,
+            // recent_photo: undefined,
             // birth_certificate: undefined,
             // id_proof_type: 'Aadhaar Card', // Default from ID_PROOF_OPTIONS
             // id_proof_document: undefined,
@@ -197,54 +208,54 @@ export function AdmissionRegistrationForm() {
             regular_medication: 'No',
             regular_medication_details: '',
             medical_prescription: undefined,
-            has_health_issue: 'No',
-            history_of_health_issues: '',
+            history_of_health_issues: 'No',
+            history_of_health_issues_details: '',
             surgery_hospitalization: 'No',
             surgery_hospitalization_details: '',
-            needs_special_attention: 'No',
+            special_attention: 'No',
             special_attention_details: '',
             has_allergies: 'No',
             allergies_details: '',
             student_parent: [
                 {
-                    // parent_first_name: 'Parent1 First',
-                    // parent_last_name: 'Parent1 Last',
-                    // parent_relation: 'Father', // Default from PARENT_RELATION_OPTIONS
-                    // parent_nationality: 'India',
-                    // parent_country_of_residence: 'India',
-                    // parent_contact_email: 'parent1@example.com',
-                    // parent_contact_phone: '+919123456780', // E.164
-                    // parent_is_whatsapp_same: true as boolean,
-                    // parent_whatsapp_phone: '',
-                    // parent_is_address_same_as_applicant: 'Yes',
-                    // parent_address_country: '', // Copied if 'Yes'
-                    // parent_address_zipcode: '',
-                    // parent_address_state: '',
-                    // parent_address_city: '',
-                    // parent_address_line1: '',
-                    // parent_address_line2: '',
-                    // parent_education: 'Graduate', // Default from PARENT_EDUCATION_LEVEL_OPTIONS
-                    // parent_field_of_study: 'Business Administration',
-                    // parent_profession: 'Businessman/ Entrepreneur', // Default from PARENT_PROFESSION_OPTIONS
-                    // parent_organization_name: 'Parent1 Inc.',
-                    // parent_designation: 'Director',
-                    // parent_annual_income: '2500000',
+                    // first_name: 'Parent1 First',
+                    // last_name: 'Parent1 Last',
+                    // relation: 'Father', // Default from PARENT_RELATION_OPTIONS
+                    // nationality: 'India',
+                    // country_of_residence: 'India',
+                    // contact_email: 'parent1@example.com',
+                    // contact_phone: '+919123456780', // E.164
+                    // is_whatsapp_same: true as boolean,
+                    // whatsapp_phone: '',
+                    // is_address_same_as_applicant: 'Yes',
+                    // address_country: '', // Copied if 'Yes'
+                    // address_zipcode: '',
+                    // address_state: '',
+                    // address_city: '',
+                    // address_line1: '',
+                    // address_line2: '',
+                    // education: 'Graduate', // Default from PARENT_EDUCATION_LEVEL_OPTIONS
+                    // field_of_study: 'Business Administration',
+                    // profession: 'Businessman/ Entrepreneur', // Default from PARENT_PROFESSION_OPTIONS
+                    // organization_name: 'Parent1 Inc.',
+                    // designation: 'Director',
+                    // annual_income: '2500000',
                 }
                 // You can add a second default parent object here if needed
                 // ,{
-                //   parent_first_name: 'Parent2 First',
-                //   parent_last_name: 'Parent2 Last',
-                //   parent_relation: 'Mother',
+                //   first_name: 'Parent2 First',
+                //   last_name: 'Parent2 Last',
+                //   relation: 'Mother',
                 //   ... (similarly fill all fields)
                 // }
             ],
-            parent_marital_status: 'Divorced', // Default from PARENT_MARITAL_STATUS_OPTIONS
+            marital_status: 'Divorced', // Default from PARENT_MARITAL_STATUS_OPTIONS
             // who_is_responsible_for_paying_applicants_tuition_fee: 'Both', // Default from options
             // court_order_document: undefined,
-            // who_is_allowed_to_receive_school_communication: 'Both',
+            // who_is_allowed_to_receive_communication: 'Both',
             // legal_rights_document: undefined,
             // who_is_allowed_to_receive_report_cards: 'Both',
-            // visit_rights: 'Both',
+            // who_is_allowed_to_visit_school: 'Both',
             parents_are_local_guardians: 'Yes', // Default to Yes, so guardian section is initially hidden
             student_guardians: [],            // Will be auto-populated by useEffect if parents_are_local_guardians is 'No'
             // group_a: undefined, // For Class XI
@@ -298,13 +309,14 @@ export function AdmissionRegistrationForm() {
     const watchedDateOfBirth = form.watch("date_of_birth");
 
     //To auto Fill the State and City based on the country selected
-    const watchCommCountry = form.watch("comm_address_country");
-    const watchCommZipcode = form.watch("comm_address_zip_code");
+    const watchCommCountry = form.watch("address_country");
+    const watchCommZipcode = form.watch("address_zip_code");
 
     const watchBillingCountry = form.watch("billing_country");
     const watchBillingZipcode = form.watch("billing_zip_code");
 
     // Watch fields for Current School Address
+    const watchCurrentSchoolBoardAffiliation = form.watch("current_school_board_affiliation");
     const watchCurrentSchoolCountry = form.watch("current_school_country"); // Make sure this field exists in schema/form
     const watchCurrentSchoolZipcode = form.watch("current_school_zip_code");
 
@@ -317,11 +329,11 @@ export function AdmissionRegistrationForm() {
     const watchSpeech = form.watch("has_speech_challenges");
     const watchInjury = form.watch("history_of_accident_injury");
     const watchMedication = form.watch("regular_medication");
-    const watchHealthIssue = form.watch("has_health_issue");
+    const watchHealthIssue = form.watch("history_of_health_issues");
     const watchHospitalized = form.watch("surgery_hospitalization");
-    const watchSpecialAttention = form.watch("needs_special_attention");
+    const watchSpecialAttention = form.watch("special_attention");
     const watchAllergies = form.watch("has_allergies"); // Fixed typo
-    const watchMaritalStatus = form.watch("parent_marital_status");
+    const watchMaritalStatus = form.watch("marital_status");
     const watchParentsAreLocalGuardians = form.watch("parents_are_local_guardians");
     // Used for divorce section
     // const watchParentsAreGuardians = form.watch("parents_are_local_guardians"); // Used for guardian section
@@ -332,7 +344,7 @@ export function AdmissionRegistrationForm() {
 
     const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
         control: form.control,
-        name: "languages_known"
+        name: "student_languages"
     });
     const { fields: siblingFields, append: appendSibling, remove: removeSibling } = useFieldArray({
         control: form.control,
@@ -353,69 +365,68 @@ export function AdmissionRegistrationForm() {
         name: "student_guardians"
     });
 
+    const getContentTabSequence = () => {
+        let sequence = TAB_ORDER.filter(t => t !== "instruction" && t !== "billing");
+        if (watchAppliedFor !== 'Class XI') {
+            sequence = sequence.filter(t => t !== "subjects");
+        }
+        return sequence;
+    };
+
+    const contentTabsInFlow = getContentTabSequence();
+    const lastContentEntryTab = contentTabsInFlow.length > 0 ? contentTabsInFlow[contentTabsInFlow.length - 1] : "personal"; // Fallback if array is empty (should not happen with your TAB_ORDER)
+
+    // ... (handleNextTab, handleBackTab, onSubmit - ensure onSubmit checks isOverallFormValid)
+
+    // Helper function from lodash or implement your own (if not already present
+
     const handleNextTab = async () => {
+        const currentTabIndexInOrder = TAB_ORDER.indexOf(currentTab);
+        const fieldsForCurrentTab = TAB_FIELD_GROUPS[currentTab];
 
-        let currentTabIsValid = true;
-        if (fieldsToValidate && fieldsToValidate.length > 0) {
-            // Trigger validation for only the fields in the current tab
-            // For array fields, RHF will validate the array and its items based on the schema
-            await trigger(fieldsToValidate);
-
-            // Check if any of the validated fields now have errors
-            currentTabIsValid = !fieldsToValidate.some(field => get(errors, field));
-            // A more robust check:
-            // const validationResults = await Promise.all(fieldsToValidate.map(field => trigger(field)));
-            // currentTabIsValid = validationResults.every(isValid => isValid);
-            // console.log(`Validation for tab ${currentTab}:`, currentTabIsValid, errors);
+        let isCurrentTabContentValid = true;
+        if (fieldsForCurrentTab && fieldsForCurrentTab.length > 0) {
+            await trigger(fieldsForCurrentTab); // Validate only fields in the current tab
+            // Check for errors specifically within the triggered fields
+            isCurrentTabContentValid = !fieldsForCurrentTab.some(field => get(errors, field as string));
+            // console.log(`Validation for tab ${currentTab}: ${isCurrentTabContentValid}`, errors);
         }
 
+        if (isCurrentTabContentValid) {
+            let nextTabKey: string | undefined = undefined;
+            let nextTabIndex = currentTabIndexInOrder + 1;
 
-        if (currentTabIsValid) {
-            let nextTabIndex = currentTabIndex + 1;
-            // Skip "subjects" tab if not Class XI
-            if (TAB_ORDER[currentTabIndex] === "parents" && watchAppliedFor !== 'Class XI') {
-                nextTabIndex++; // Skip "subjects" and go to "declaration"
+            // Skip "subjects" if not Class XI
+            if (TAB_ORDER[nextTabIndex] === "subjects" && watchAppliedFor !== 'Class XI') {
+                nextTabIndex++;
             }
 
             if (nextTabIndex < TAB_ORDER.length) {
-                const nextTabKey = TAB_ORDER[nextTabIndex];
-                setEnabledTabs(prev => new Set(prev).add(nextTabKey));
-                setCurrentTab(nextTabKey);
+                nextTabKey = TAB_ORDER[nextTabIndex];
+                setEnabledTabs(prev => new Set(prev).add(nextTabKey!));
+                setCurrentTab(nextTabKey!);
                 window.scrollTo(0, 0);
             }
         } else {
-            // Errors will be displayed by FormMessage components.
-            // You could optionally show a toast or alert.
-            console.log(`Validation failed for tab: ${currentTab}`, errors);
-            // Focus the first field with an error on the current tab
-            const firstErrorField = fieldsToValidate.find(field => get(errors, field));
+            console.log(`Validation failed for tab: ${currentTab}. Errors:`, errors);
+            // Optionally focus the first error field
+            const firstErrorField = fieldsForCurrentTab?.find(field => get(errors, field as string));
             if (firstErrorField) {
-                const fieldElement = document.getElementsByName(firstErrorField as string)[0];
-                fieldElement?.focus();
+                try {
+                    // Attempt to focus. This is best-effort as field might be complex.
+                    (document.getElementsByName(firstErrorField as string)[0] as HTMLElement)?.focus();
+                } catch (e) { console.warn("Could not focus error field:", e); }
             }
         }
     };
-
-    // Helper function from lodash or implement your own
-    const get = (obj: any, path: Path<AdmissionRegistrationFormDataYup> | string, defaultValue?: any) => {
-        const keys = (path as string).replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '').split('.');
-        let result = obj;
-        for (const key of keys) {
-            if (result === null || typeof result !== 'object' || !(key in result)) {
-                return defaultValue;
-            }
-            result = result[key];
-        }
-        return result;
-    };
-
 
     const handleBackTab = () => {
-        const currentTabIndex = TAB_ORDER.indexOf(currentTab);
-        let prevTabIndex = currentTabIndex - 1;
-        // Skip "subjects" tab if not Class XI when going back from "declaration"
-        if (TAB_ORDER[currentTabIndex] === "declaration" && watchAppliedFor !== 'Class XI') {
-            prevTabIndex--; // Skip "subjects" and go to "parents"
+        const currentTabIndexInOrder = TAB_ORDER.indexOf(currentTab);
+        let prevTabIndex = currentTabIndexInOrder - 1;
+
+        // Skip "subjects" if not Class XI when going back from "declaration" or "billing"
+        if (TAB_ORDER[prevTabIndex] === "subjects" && watchAppliedFor !== 'Class XI') {
+            prevTabIndex--;
         }
 
         if (prevTabIndex >= 0) {
@@ -423,6 +434,7 @@ export function AdmissionRegistrationForm() {
             window.scrollTo(0, 0);
         }
     };
+
 
     // --- Modal State and Handlers ---
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -504,15 +516,15 @@ export function AdmissionRegistrationForm() {
     useEffect(() => {
         if (watchStudiedPreviously === 'Yes' && schoolFields.length === 0) {
             appendSchool({
-                prev_school_name: '',
-                prev_school_board_affiliation: '', // Or a default from BOARD_AFFILIATION_OPTIONS
-                prev_school_from_year: undefined,
-                prev_school_to_year: undefined,
-                prev_school_from_class: '', // Or a default from CLASS_LEVEL_OPTIONS
-                prev_school_to_class: '',   // Or a default
-                prev_school_country: 'India', // Or empty
-                prev_school_zip_code: '',
-                prev_school_report_card: undefined,
+                school_name: '',
+                school_board_affiliation: '', // Or a default from BOARD_AFFILIATION_OPTIONS
+                school_from_year: undefined,
+                school_to_year: undefined,
+                school_from_class: '', // Or a default from CLASS_LEVEL_OPTIONS
+                school_to_class: '',   // Or a default
+                school_country: 'India', // Or empty
+                school_zip_code: '',
+                marksheet: undefined,
             } as unknown as IndividualPreviousSchoolDataYup); // Type assertion
         }
         // Optional: Clear previous schools if 'No' is selected
@@ -524,24 +536,24 @@ export function AdmissionRegistrationForm() {
     useEffect(() => {
         if (watchParentsAreLocalGuardians === 'No' && guardianDetailFields.length === 0) {
             appendGuardianDetail({
-                guardian_relation: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
-                guardian_first_name: '',
-                guardian_last_name: '',
-                guardian_nationality: '',
-                guardian_country_of_residence: '',
-                guardian_contact_email: '',
-                guardian_contact_phone: '',
-                guardian_is_whatsapp_same: true,
-                guardian_whatsapp_phone: '',
-                guardian_is_address_same_as_applicant: '',
-                guardian_address_country: '',
-                guardian_address_zipcode: '',
-                guardian_address_state: '',
-                guardian_address_city: '',
-                guardian_address_line1: '',
-                guardian_address_line2: '',
-                guardian_education: '', // Or a default
-                guardian_field_of_study: '',
+                relation: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
+                first_name: '',
+                last_name: '',
+                nationality: '',
+                country_of_residence: '',
+                contact_email: '',
+                contact_phone: '',
+                is_whatsapp_same: true,
+                whatsapp_phone: '',
+                is_address_same_as_applicant: '',
+                address_country: '',
+                address_zipcode: '',
+                address_state: '',
+                address_city: '',
+                address_line1: '',
+                address_line2: '',
+                education: '', // Or a default
+                field_of_study: '',
             } as unknown as IndividualGuardianDetailDataYup);
         }
         // Optional: Clear guardians if 'Yes' is selected
@@ -563,8 +575,8 @@ export function AdmissionRegistrationForm() {
                         // setCommCityOptions, // REMOVED
                         setIsCommAddressLoading,
                         setCommAddressError,
-                        "comm_address_state",
-                        "comm_address_city",
+                        "address_state",
+                        "address_city",
                         setValue
                     );
                 }, 800);
@@ -573,15 +585,15 @@ export function AdmissionRegistrationForm() {
                 // setCommStateOptions([]); // No longer needed
                 // setCommCityOptions([]); // No longer needed
                 setCommAddressError("Invalid country selected or country code not found.");
-                setValue("comm_address_state", "" as any, { shouldValidate: false });
-                setValue("comm_address_city", "" as any, { shouldValidate: false });
+                setValue("address_state", "" as any, { shouldValidate: false });
+                setValue("address_city", "" as any, { shouldValidate: false });
             }
         } else {
             // setCommStateOptions([]); // No longer needed
             // setCommCityOptions([]); // No longer needed
             if (!watchCommZipcode && watchCommCountry) { // Only clear if zipcode is cleared but country remains
-                setValue("comm_address_state", "" as any, { shouldValidate: false });
-                setValue("comm_address_city", "" as any, { shouldValidate: false });
+                setValue("address_state", "" as any, { shouldValidate: false });
+                setValue("address_city", "" as any, { shouldValidate: false });
             }
             setCommAddressError(null); // Clear error if conditions not met
         }
@@ -691,24 +703,34 @@ export function AdmissionRegistrationForm() {
     // 3. Define submit handler (remains the same conceptually)
     const onSubmit: SubmitHandler<AdmissionRegistrationFormDataYup> = async (values) => {
         // Check for errors (keep this part)
-        console.log("Form validation errors at submit:", errors); // Log errors if any
-        // The check below is still very important as a final safeguard
-        if (!isOverallFormValid) { // Use isOverallFormValid from formState
-            alert("Please ensure all sections of the form are correctly filled out.");
-            // Optionally, find the first tab with errors and switch to it
+        console.log("Form validation errors at submit:", errors);
+        console.log("Attempting final submission. Overall form valid:", isOverallFormValid);
+        console.log("Current errors:", errors);
+
+        // Final check for overall validity. Tab-by-tab should catch most things.
+        if (!isOverallFormValid) {
+            alert("Please ensure all sections of the form are correctly filled out and valid before submitting.");
+            // Try to find the first tab with an error and navigate to it
             for (const tabKey of TAB_ORDER) {
                 if (tabKey === "instruction") continue;
                 const fieldsInTab = TAB_FIELD_GROUPS[tabKey];
-                if (fieldsInTab && fieldsInTab.some(field => get(errors, field))) {
+                if (tabKey === "subjects" && watchAppliedFor !== 'Class XI') continue; // Skip subjects if not applicable
+
+                if (fieldsInTab && fieldsInTab.some(field => get(errors, field as string))) {
                     setCurrentTab(tabKey);
-                    // Attempt to focus the first error in that tab
-                    const firstErrorField = fieldsInTab.find(field => get(errors, field));
+                    // Attempt to focus first error in that tab
+                    const firstErrorField = fieldsInTab.find(field => get(errors, field as string));
                     if (firstErrorField) {
-                        const fieldElement = document.getElementsByName(firstErrorField as string)[0];
-                        fieldElement?.focus();
+                        try {
+                            (document.getElementsByName(firstErrorField as string)[0] as HTMLElement)?.focus();
+                        } catch (e) { console.warn("Could not focus error field on submit:", e); }
                     }
-                    break;
+                    return; // Stop submission
                 }
+            }
+            // If no specific field error found but form is invalid (e.g. schema-level test fail)
+            if (Object.keys(errors).length === 0) {
+                alert("There's an issue with the form data. Please review all sections.");
             }
             return;
         }
@@ -735,7 +757,7 @@ export function AdmissionRegistrationForm() {
             // Iterate and build the payload object
             for (const [key, value] of Object.entries(values)) {
                 // Handle file uploads by converting to Base64
-                if (key === 'recent_photograph' || key === 'birth_certificate' || key === 'id_proof_document' || key === 'vaccine_certificates' || key === 'medical_prescription' || key === 'court_order_document' || key === 'legal_rights_document') {
+                if (key === 'recent_photo' || key === 'birth_certificate' || key === 'id_proof_document' || key === 'vaccine_certificates' || key === 'medical_prescription' || key === 'court_order_document' || key === 'legal_rights_document') {
                     if (value instanceof File) {
                         // Store filename separately if needed by backend
                         payload[`${key}_filename`] = value.name;
@@ -745,7 +767,7 @@ export function AdmissionRegistrationForm() {
                     }
                 }
                 // Handle arrays (tables) - keep them as arrays for JSON
-                else if (key === 'optional_language_table' || key === 'previous_schools' || key === 'guardian_information' || key === 'payment_program_links') {
+                else if (key === 'optional_language_table' || key === 'previous_schools' || key === 'information' || key === 'payment_program_links') {
                     payload[key] = Array.isArray(value) ? value : []; // Ensure it's an array
                 }
                 // Handle boolean (send as boolean for JSON)
@@ -828,7 +850,7 @@ export function AdmissionRegistrationForm() {
                         <FormLabel>{labelContent}</FormLabel>
                         <FormControl>
                             <div>
-                                {fieldName === "application_academic_year" || fieldName === "application_number" ? (
+                                {fieldName === "application_academic_year" ? (
                                     <Input
                                         value={field.value ?? ''}
                                         disabled
@@ -982,9 +1004,8 @@ export function AdmissionRegistrationForm() {
 
     // Tab state for navigation
     const [tab, setTab] = useState(TAB_ORDER[0]);
-    const tabIndex = TAB_ORDER.indexOf(tab);
-    const isFirstTab = tabIndex === 0;
-    const isLastTab = tabIndex === TAB_ORDER.length - 1;
+    const currentTabIndexGlobal = TAB_ORDER.indexOf(currentTab);
+
 
     useEffect(() => {
         window.scrollTo({
@@ -992,11 +1013,20 @@ export function AdmissionRegistrationForm() {
             behavior: 'smooth'
         });
     }, [tab]);
-    console.log("form state errors", form.formState.errors, form.formState.isValid, watch());
 
+    console.log("form state errors", form.formState.errors, form.formState.isValid, watch());
     return (
         <Form {...form}>
-            <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
+            <Tabs value={currentTab}
+                onValueChange={(newTab) => {
+                    // Allow navigation only to enabled tabs OR if going backwards
+                    const newTabIndex = TAB_ORDER.indexOf(newTab);
+                    const currentContentIndex = TAB_ORDER.indexOf(currentTab);
+                    if (enabledTabs.has(newTab) || newTabIndex < currentContentIndex) {
+                        setCurrentTab(newTab);
+                    }
+                }}
+                className="w-full">
                 <TabsList className="w-full flex flex-wrap justify-between mb-4 overflow-x-auto">
                     <TabsTrigger value="instruction" className="flex-1 min-w-[120px]">Instructions</TabsTrigger>
                     <TabsTrigger value="personal" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("personal")}>Personal</TabsTrigger>
@@ -1009,11 +1039,14 @@ export function AdmissionRegistrationForm() {
                     <TabsTrigger value="declaration" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("declaration")}>Declaration</TabsTrigger>
                     <TabsTrigger value="billing" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("billing")}>Payment</TabsTrigger>
                 </TabsList>
-                {/* @ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly */}
+                <p className='text-center text-base font-medium'>IHS-202526-001</p>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <TabsContent value="instruction">
                         <section className="space-y-6">
-                            <AdmissionProcedure onAgree={() => setTab(TAB_ORDER[1])} />
+                            <AdmissionProcedure onAgree={() => {
+                                setEnabledTabs(prev => new Set(prev).add("personal")); // Should already be enabled
+                                setCurrentTab("personal");
+                            }} />
                         </section>
                     </TabsContent>
                     <TabsContent value="personal">
@@ -1024,7 +1057,6 @@ export function AdmissionRegistrationForm() {
                                 {/* Application Details */}
                                 {renderField("application_academic_year", { label: "Application Academic Year", fieldtype: "Link", options: "IHS Academic Year", reqd: 1 })}
                                 {renderField("application_for", { label: "Application For", fieldtype: "Select", options: "Class II\nClass V\nClass VIII\nClass XI", reqd: 1 })}
-                                {renderField("application_number", { label: "Application Number", fieldtype: "Link", options: "User", read_only: 1 })}
 
                                 {/* Previous Application */}
                                 <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
@@ -1146,7 +1178,7 @@ export function AdmissionRegistrationForm() {
                                         <FormField
                                             //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                             control={form.control}
-                                            name="comm_address_country"
+                                            name="address_country"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>Country<span className="text-destructive"> *</span></FormLabel>
@@ -1157,9 +1189,9 @@ export function AdmissionRegistrationForm() {
                                                             onChange={(country: Country | undefined) => {
                                                                 field.onChange(country?.name || "");
                                                                 // When country changes, clear zipcode, state, city and their options
-                                                                setValue("comm_address_zip_code", "");
-                                                                setValue("comm_address_state", "");
-                                                                setValue("comm_address_city", "");
+                                                                setValue("address_zip_code", "");
+                                                                setValue("address_state", "");
+                                                                setValue("address_city", "");
                                                                 setCommAddressError(null);
                                                             }}
                                                             placeholder="Select country"
@@ -1173,7 +1205,7 @@ export function AdmissionRegistrationForm() {
                                         <FormField
                                             //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormData exactly
                                             control={form.control}
-                                            name="comm_address_zip_code" // Assuming this is your zipcode field
+                                            name="address_zip_code" // Assuming this is your zipcode field
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
@@ -1195,7 +1227,7 @@ export function AdmissionRegistrationForm() {
                                         {/* State Dropdown */}
                                         <FormField
                                             control={form.control} // Assuming 'form' is your useForm() result
-                                            name="comm_address_state"
+                                            name="address_state"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
@@ -1217,7 +1249,7 @@ export function AdmissionRegistrationForm() {
                                         {/* City Text Input (Enabled) */}
                                         <FormField
                                             control={form.control}
-                                            name="comm_address_city"
+                                            name="address_city"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
@@ -1234,8 +1266,8 @@ export function AdmissionRegistrationForm() {
                                                 </FormItem>
                                             )}
                                         />
-                                        {renderField("comm_address_line_1", { label: "Address Line 1", fieldtype: "Data", reqd: 1 })}
-                                        {renderField("comm_address_line_2", { label: "Address Line 2", fieldtype: "Data" })}
+                                        {renderField("address_line_1", { label: "Address Line 1", fieldtype: "Data", reqd: 1 })}
+                                        {renderField("address_line_2", { label: "Address Line 2", fieldtype: "Data" })}
                                     </div>
                                 </div>
 
@@ -1298,7 +1330,7 @@ export function AdmissionRegistrationForm() {
                                 <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
                                     <h3 className="font-medium text-md mb-3">Supporting Documents</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-                                        {renderField("recent_photograph", { label: "Recent Photograph", fieldtype: "Attach", reqd: 1 })}
+                                        {renderField("recent_photo", { label: "Recent Photograph", fieldtype: "Attach", reqd: 1 })}
                                         {renderField("birth_certificate", { label: "Birth Certificate", fieldtype: "Attach", reqd: 1 })}
                                         {renderField("id_proof_type", { label: "ID Proof Type", fieldtype: "Select", options: "\nAadhaar Card\nPassport", reqd: 1 })}
                                         {renderField("id_proof_document", { label: "ID Proof Document", fieldtype: "Attach", reqd: 1 })}
@@ -1351,6 +1383,21 @@ export function AdmissionRegistrationForm() {
                                                     </FormItem>
                                                 )}
                                             />
+                                            {watchCurrentSchoolBoardAffiliation === 'Other' && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="current_school_other_board_affiliation"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-col space-y-1.5">
+                                                            <FormLabel>Specify Other Board<span className="text-destructive"> *</span></FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder="Enter board name" {...field} value={field.value ?? ''} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
                                             {/* {renderField("board_affiliation_data2", { label: "Board Affiliation", fieldtype: "Data", mandatory_depends_on: "No" })} Assuming data2 is correct */}
                                             {renderField("current_school_phone_number", { label: "School Phone Number", fieldtype: "PhoneInput", reqd: watchIsHomeSchooled === 'No' ? 1 : 0, placeholder: "Enter school phone" })}
                                             {renderField("current_school_email_address", { label: "School Email Address", fieldtype: "Data", options: "Email", mandatory_depends_on: "No", reqd: 1 })}
@@ -1579,11 +1626,11 @@ export function AdmissionRegistrationForm() {
                                     {renderField("regular_medication", { label: "Is the Applicant on regular medication? (Including Ayurvedic, Siddha, Homeopathic and Alternative Medicines)", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
                                     {watchMedication === 'Yes' && renderField("regular_medication_details", { label: "Regular Medication Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {watchMedication === 'Yes' && renderField("medical_prescription", { label: "Medical Prescription", fieldtype: "Attach", mandatory_depends_on: "Yes", reqd: 1 })}
-                                    {renderField("has_health_issue", { label: "Does the applicant have History of any health Issue?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
-                                    {watchHealthIssue === 'Yes' && renderField("history_of_health_issues", { label: "Health Issue Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
+                                    {renderField("history_of_health_issues", { label: "Does the applicant have History of any health Issue?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
+                                    {watchHealthIssue === 'Yes' && renderField("history_of_health_issues_details", { label: "Health Issue Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {renderField("surgery_hospitalization", { label: "Does the applicant have history of any hospitalization and/ or surgery?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
                                     {watchHospitalized === 'Yes' && renderField("surgery_hospitalization_details", { label: "Hospitalization/ Surgery Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
-                                    {renderField("needs_special_attention", { label: "Does the applicant have any other health issue that needs special attention?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
+                                    {renderField("special_attention", { label: "Does the applicant have any other health issue that needs special attention?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
                                     {watchSpecialAttention === 'Yes' && renderField("special_attention_details", { label: "Special Attention Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {renderField("has_allergies", { label: "Does the applicant have any food/ drug allergies?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
                                     {watchAllergies === 'Yes' && renderField("allergies_details", { label: "Allergy Details", fieldtype: "Small Text", mandatory_depends_on: "Yes", reqd: 1 })}
@@ -1618,31 +1665,31 @@ export function AdmissionRegistrationForm() {
                                         variant="outline"
                                         onClick={() => {
                                             const newParentEntry: Partial<IndividualParentDetailDataYup> = { // Use Partial for type safety
-                                                parent_first_name: '',
-                                                parent_last_name: '',
-                                                parent_relation: parentFields.length === 0 ? PARENT_RELATION_OPTIONS_YUP[0] : PARENT_RELATION_OPTIONS_YUP[1], // Suggests 'Father' then 'Mother'
-                                                parent_nationality: undefined, // For CountryDropdown to show placeholder
-                                                parent_country_of_residence: undefined, // For CountryDropdown
-                                                parent_contact_email: '',
-                                                parent_contact_phone: '', // PhoneInput usually handles empty string well
-                                                parent_is_whatsapp_same: true, // Default boolean
-                                                parent_whatsapp_phone: '',    // Will be shown/required based on parent_is_whatsapp_same
-                                                parent_is_address_same_as_applicant: undefined, // For Select to show placeholder
-                                                // Address fields are optional in Yup schema if parent_is_address_same_as_applicant is 'Yes'
+                                                first_name: '',
+                                                last_name: '',
+                                                relation: parentFields.length === 0 ? PARENT_RELATION_OPTIONS_YUP[0] : PARENT_RELATION_OPTIONS_YUP[1], // Suggests 'Father' then 'Mother'
+                                                nationality: undefined, // For CountryDropdown to show placeholder
+                                                country_of_residence: undefined, // For CountryDropdown
+                                                contact_email: '',
+                                                contact_phone: '', // PhoneInput usually handles empty string well
+                                                is_whatsapp_same: true, // Default boolean
+                                                whatsapp_phone: '',    // Will be shown/required based on is_whatsapp_same
+                                                is_address_same_as_applicant: undefined, // For Select to show placeholder
+                                                // Address fields are optional in Yup schema if is_address_same_as_applicant is 'Yes'
                                                 // They will become required via .when() if it's 'No'.
                                                 // So, their default can be undefined.
-                                                parent_address_country: undefined,
-                                                parent_address_zipcode: '', // Or undefined
-                                                parent_address_state: undefined,
-                                                parent_address_city: undefined,
-                                                parent_address_line1: '', // Or undefined
-                                                parent_address_line2: '', // Or undefined
-                                                parent_education: undefined, // For Select to show placeholder
-                                                parent_field_of_study: '',
-                                                parent_profession: undefined, // For Select to show placeholder
-                                                parent_organization_name: '',
-                                                parent_designation: '',
-                                                parent_annual_income: '',
+                                                address_country: undefined,
+                                                address_zipcode: '', // Or undefined
+                                                address_state: undefined,
+                                                address_city: undefined,
+                                                address_line1: '', // Or undefined
+                                                address_line2: '', // Or undefined
+                                                education: undefined, // For Select to show placeholder
+                                                field_of_study: '',
+                                                profession: undefined, // For Select to show placeholder
+                                                organization_name: '',
+                                                designation: '',
+                                                annual_income: '',
                                             };
                                             appendParent(newParentEntry as IndividualParentDetailDataYup); // Cast needed because RHF append expects full type
                                         }}
@@ -1653,13 +1700,13 @@ export function AdmissionRegistrationForm() {
                                 )}
                                 {/* --- Marital Status & Divorce Details --- */}
                                 <div className="pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-                                    {renderField("parent_marital_status", { label: "Parent Marital Status", fieldtype: "Select", options: "\nMarried\nSeparated\nDivorced\nSingle Parent", reqd: 1 })}
+                                    {renderField("marital_status", { label: "Parent Marital Status", fieldtype: "Select", options: "\nMarried\nSeparated\nDivorced\nSingle Parent", reqd: 1 })}
                                     {/* Conditional Divorce Fields */}
                                     {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_paying_applicants_tuition_fee", { label: "Who is resposible for paying applicant's tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
                                     {watchMaritalStatus === 'Divorced' && renderField("court_order_document", { label: "Court Order Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_school_communication", { label: "Who is allowed to receive school communication?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_communication", { label: "Who is allowed to receive school communication?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
                                     {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_report_cards", { label: "Who is allowed to receive report cards?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
-                                    {watchMaritalStatus === 'Divorced' && renderField("visit_rights", { label: "Who is allowed to visit child?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_visit_school", { label: "Who is allowed to visit child?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
                                     {watchMaritalStatus === 'Divorced' && renderField("legal_rights_document", { label: "Legal Rights Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
                                 </div>
 
@@ -1689,24 +1736,24 @@ export function AdmissionRegistrationForm() {
                                                 type="button"
                                                 variant="outline"
                                                 onClick={() => appendGuardianDetail({
-                                                    guardian_relation: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
-                                                    guardian_first_name: '',
-                                                    guardian_last_name: '',
-                                                    guardian_nationality: '',
-                                                    guardian_country_of_residence: '',
-                                                    guardian_contact_email: '',
-                                                    guardian_contact_phone: '',
-                                                    guardian_is_whatsapp_same: true,
-                                                    guardian_whatsapp_phone: '',
-                                                    guardian_is_address_same_as_applicant: '',
-                                                    guardian_address_country: '',
-                                                    guardian_address_zipcode: '',
-                                                    guardian_address_state: '',
-                                                    guardian_address_city: '',
-                                                    guardian_address_line1: '',
-                                                    guardian_address_line2: '',
-                                                    guardian_education: '', // Or a default
-                                                    guardian_field_of_study: '',
+                                                    relation: '', // Or a default like GUARDIAN_RELATION_OPTIONS[0]
+                                                    first_name: '',
+                                                    last_name: '',
+                                                    nationality: '',
+                                                    country_of_residence: '',
+                                                    contact_email: '',
+                                                    contact_phone: '',
+                                                    is_whatsapp_same: true,
+                                                    whatsapp_phone: '',
+                                                    is_address_same_as_applicant: '',
+                                                    address_country: '',
+                                                    address_zipcode: '',
+                                                    address_state: '',
+                                                    address_city: '',
+                                                    address_line1: '',
+                                                    address_line2: '',
+                                                    education: '', // Or a default
+                                                    field_of_study: '',
                                                 } as unknown as IndividualGuardianDetailDataYup)}
                                                 className="mt-6"
                                             >
@@ -1955,8 +2002,8 @@ export function AdmissionRegistrationForm() {
                                             </FormItem>
                                         )}
                                     />
-                                    {renderField("billing_address_line1", { label: "Address Line 1", fieldtype: "Data", reqd: 1 })}
-                                    {renderField("billing_address_line2", { label: "Address Line 2", fieldtype: "Data" })}
+                                    {renderField("billing_address_line_1", { label: "Address Line 1", fieldtype: "Data", reqd: 1 })}
+                                    {renderField("billing_address_line_2", { label: "Address Line 2", fieldtype: "Data" })}
                                 </div>
 
                                 {/* Payment Status (Read-only section) */}
@@ -1971,11 +2018,9 @@ export function AdmissionRegistrationForm() {
                             </div>
                         </section>
                     </TabsContent>
-                    {isLastTab && (
-                        <div className="flex justify-center pt-8 mt-8 border-t">
-                            <Button type="submit" size="lg">
-                                {form.formState.isSubmitting ? "Submitting..." : "Submit And Pay"}
-                            </Button>
+                    {currentTab === "billing" && (
+                        <div className="hidden"> {/* Hidden but part of the form */}
+                            <Button type="submit" data-testid="hidden-submit">Submit</Button>
                         </div>
                     )}
                 </form>
@@ -1986,21 +2031,26 @@ export function AdmissionRegistrationForm() {
                             type="button"
                             variant="outline"
                             onClick={handleBackTab}
-                            disabled={currentTabIndex === 0 || currentTabIndex === 1 && TAB_ORDER[0] === "instruction"} // Disable back on first user-editable tab
+                            disabled={currentTab === TAB_ORDER[1]} // Disable if on "personal"
                         >
                             Back
                         </Button>
 
-                        {/* Show "Next" button if not on the last logical tab */}
-                        {!(currentTab === "billing" || (currentTab === "declaration" && watchAppliedFor !== 'Class XI')) && (
+                        {/* Show "Next" button if current tab is NOT "billing" */}
+                        {currentTab !== "billing" && (
                             <Button type="button" onClick={handleNextTab}>
                                 Next
                             </Button>
                         )}
 
-                        {/* Show "Submit" button only on the last logical tab */}
-                        {(currentTab === "billing" || (currentTab === "declaration" && watchAppliedFor !== 'Class XI')) && (
-                            <Button type="submit" size="lg" disabled={isSubmitting || !isOverallFormValid}>
+                        {/* Show "Submit And Pay" button ONLY on the "billing" tab */}
+                        {currentTab === "billing" && (
+                            <Button
+                                type="submit" // Will programmatically submit the form
+                                // Use RHF's handleSubmit
+                                size="lg"
+                                disabled={isSubmitting || !isOverallFormValid} // Optional: disable if whole form isn't valid yet
+                            >
                                 {isSubmitting ? "Submitting..." : "Submit And Pay"}
                             </Button>
                         )}
