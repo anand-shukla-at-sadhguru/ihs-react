@@ -92,39 +92,39 @@ export type IndividualSiblingDataYup = yup.InferType<typeof individualSiblingSch
 // Example Previous School:
 const individualPreviousSchoolSchemaYup = yup.object().shape({
     school_name: yup.string().required("School Name is required."),
-    school_board_affiliation: yup.string().oneOf(BOARD_OPTIONS_YUP, 'Invalid selection.').required("Board Affiliation is required."), // Assuming BOARD_OPTIONS_YUP is defined
-    school_other_board_affiliation: yup.string() // New field
-        .when('school_board_affiliation', {
+    board_affiliation: yup.string().oneOf(BOARD_OPTIONS_YUP, 'Invalid selection.').required("Board Affiliation is required."), // Assuming BOARD_OPTIONS_YUP is defined
+    other_board_affiliation: yup.string() // New field
+        .when('board_affiliation', {
             is: 'Other',
             then: schema => schema.required('Please specify the board affiliation.').min(1),
             otherwise: schema => schema.optional().nullable().transform(() => undefined),
         }),
-    school_from_year: yup.number().typeError("From Year must be a number.").required("From Year is required.")
+    from_class: yup.string().oneOf(CLASS_LEVEL_OPTIONS_YUP, 'Invalid selection.').required("From Class is required."),
+    from_year: yup.number().typeError("From Year must be a number.").required("From Year is required.")
         .integer("From Year must be a whole number.")
         .min(1980, "From Year must be 1980 or later.")
         .max(currentYear, `From Year cannot be later than ${currentYear}.`),
-    school_to_year: yup.number().typeError("To Year must be a number.").required("To Year is required.")
+    to_year: yup.number().typeError("To Year must be a number.").required("To Year is required.")
         .integer("To Year must be a whole number.")
         .min(1980, "To Year must be 1980 or later.")
         .max(currentYear, `To Year cannot be later than ${currentYear}.`)
         .test('is-gte-from-year', 'To Year must be greater than or equal to From Year.', function (value) {
-            const fromYear = this.parent.school_from_year;
+            const fromYear = this.parent.from_year;
             if (typeof fromYear === 'number' && typeof value === 'number') {
                 return value >= fromYear;
             }
             return true; // Let other validations handle if fromYear is not a number
         }),
-    school_from_class: yup.string().oneOf(CLASS_LEVEL_OPTIONS_YUP, 'Invalid selection.').required("From Class is required."),
-    school_to_class: yup.string().oneOf(CLASS_LEVEL_OPTIONS_YUP, 'Invalid selection.').required("To Class is required.")
+    to_class: yup.string().oneOf(CLASS_LEVEL_OPTIONS_YUP, 'Invalid selection.').required("To Class is required.")
         .test('is-gte-from-class', 'To Class must be the same as or later than From Class.', function (value) {
-            const fromClass = this.parent.school_from_class;
+            const fromClass = this.parent.from_class;
             if (fromClass && value) {
                 return CLASS_LEVEL_OPTIONS_YUP.indexOf(value) >= CLASS_LEVEL_OPTIONS_YUP.indexOf(fromClass);
             }
             return true;
         }),
-    school_country: yup.string().required("Country is required."),
-    school_zip_code: yup.string().required("PIN / ZIP Code is required.").matches(/^[a-zA-Z0-9\s-]{3,20}$/, "Invalid zipcode format."),
+    country: yup.string().required("Country is required."),
+    zip_code: yup.string().required("PIN / ZIP Code is required.").matches(/^[a-zA-Z0-9\s-]{3,20}$/, "Invalid zipcode format."),
     marksheet: yupFileSchema(true, "Report card is required."),
     proof_of_enrolment: yupFileSchema(true, "Proof of Enrolment is required."),
 });
@@ -146,33 +146,33 @@ export const individualParentDetailSchemaYup = yup.object().shape({
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
     is_address_same_as_applicant: yup.string().oneOf(YES_NO_OPTIONS_YUP).required("Please specify if address is same."),
-    address_country: yup.string().when('is_address_same_as_applicant', {
+    country: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address country is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_zipcode: yup.string().when('is_address_same_as_applicant', {
+    zipcode: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address zipcode is required.")
             .matches(/^[a-zA-Z0-9\s-]{3,20}$/, "Invalid zipcode format."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_state: yup.string().when('is_address_same_as_applicant', {
+    state: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address state is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_city: yup.string().when('is_address_same_as_applicant', {
+    city: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address city is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_line1: yup.string().when('is_address_same_as_applicant', {
+    address_line_1: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address line 1 is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_line2: yup.string().optional().nullable().transform(val => val === "" ? null : val),
+    address_line_2: yup.string().optional().nullable().transform(val => val === "" ? null : val),
     education: yup.string().oneOf(PARENT_EDUCATION_LEVEL_OPTIONS_YUP).required("Parent's Education level is required."),
     field_of_study: yup.string().required("Field of Study is required."),
     profession: yup.string().oneOf(PARENT_PROFESSION_OPTIONS_YUP).required("Parent's Profession is required."),
@@ -201,33 +201,33 @@ export const individualGuardianDetailSchemaYup = yup.object().shape({
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
     is_address_same_as_applicant: yup.string().oneOf(YES_NO_OPTIONS_YUP).required("Please specify if address is same."),
-    address_country: yup.string().when('is_address_same_as_applicant', {
+    country: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address country is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_zipcode: yup.string().when('is_address_same_as_applicant', {
+    zipcode: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address zipcode is required.")
             .matches(/^[a-zA-Z0-9\s-]{3,20}$/, "Invalid zipcode format."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_state: yup.string().when('is_address_same_as_applicant', {
+    state: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address state is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_city: yup.string().when('is_address_same_as_applicant', {
+    city: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address city is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_line1: yup.string().when('is_address_same_as_applicant', {
+    address_line_1: yup.string().when('is_address_same_as_applicant', {
         is: 'No',
         then: schema => schema.required("Parent's address line 1 is required."),
         otherwise: schema => schema.optional().nullable().transform(() => undefined)
     }),
-    address_line2: yup.string().optional().nullable().transform(val => val === "" ? null : val),
+    address_line_2: yup.string().optional().nullable().transform(val => val === "" ? null : val),
     education: yup.string()
         .transform(value => (value === "" || value === null) ? undefined : value) // Transform empty string or null to undefined
         .oneOf(PARENT_EDUCATION_LEVEL_OPTIONS_YUP, "Please select a valid education level.") // Use the centralized constant
@@ -288,13 +288,13 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
         .min(0, 'Age cannot be negative.')
         .integer(),
     // Communication Address
-    address_country: yup.string().required('Country is required.'),
-    address_zip_code: yup.string().required("Area Code/ Pincode is required.")
+    country: yup.string().required('Country is required.'),
+    zipcode: yup.string().required("Area Code/ Pincode is required.")
         .matches(/^\d{4,9}$/, 'Area Code/ Pincode must be between 4 and 9 digits.'),
+    city: yup.string().required('City/ Town is required.'),
+    state: yup.string().required('State is required.'),
     address_line_1: yup.string().required('Address Line 1 is required.'),
     address_line_2: yup.string().optional().nullable(),
-    address_city: yup.string().required('City/ Town is required.'),
-    address_state: yup.string().required('State is required.'),
     // Other Personal Information
     identification_mark_1: yup.string().required('Identification Mark 1 is required.'),
     identification_mark_2: yup.string().required('Identification Mark 2 is required.'),
@@ -390,12 +390,12 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
         }),
     current_school_phone_number: yupE164Phone().when('is_home_schooled', { is: 'No', then: () => yupE164Phone(true, "School Phone is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_country: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Country is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    current_school_zip_code: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Area Code is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    current_school_zipcode: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Area Code is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_city: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School City is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_state: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School State is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_email_address: yup.string().email("Invalid email.").when('is_home_schooled', { is: 'No', then: s => s.required("School Email is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    current_school_address_line1: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Address Line 1 is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
-    current_school_address_line2: yup.string().optional().nullable(),
+    current_school_address_line_1: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Address Line 1 is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    current_school_address_line_2: yup.string().optional().nullable(),
 
     been_to_school_previously: yup.string().oneOf(YES_NO_OPTIONS_YUP).required('Please specify if applicant studied previously.'),
     previous_schools: yup.array().of(individualPreviousSchoolSchemaYup).when('been_to_school_previously', {
@@ -468,7 +468,7 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
             return true;
         }),
     marital_status: yup.string().oneOf(PARENT_MARITAL_STATUS_OPTIONS_YUP).required('Parent Marital Status is required.'),
-    who_is_responsible_for_paying_applicants_tuition_fee: yup.string().when('marital_status', { is: 'Divorced', then: s => s.oneOf(FATHER_MOTHER_BOTH_OPTIONS_YUP).required("Tuition payer is required for divorced status."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
+    who_is_responsible_for_fee_payment: yup.string().when('marital_status', { is: 'Divorced', then: s => s.oneOf(FATHER_MOTHER_BOTH_OPTIONS_YUP).required("Tuition payer is required for divorced status."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     court_order_document: yupFileSchema().when('marital_status', { is: 'Divorced', then: () => yupFileSchema(true, "Court Order Document is required for divorced status."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     who_is_allowed_to_receive_communication: yup.string().when('marital_status', { is: 'Divorced', then: s => s.oneOf(FATHER_MOTHER_BOTH_OPTIONS_YUP).required("Communication receiver is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }), // Assuming options similar to FATHER_MOTHER_BOTH_OPTIONS_YUP
     legal_rights_document: yupFileSchema().when('marital_status', { is: 'Divorced', then: () => yupFileSchema(true, "Legal Rights Document is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
@@ -521,7 +521,7 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
     billing_mobile: yupE164Phone(true),
     billing_email: yup.string().email('Invalid Billing Email format.').required("Billing Email is required."),
     billing_country: yup.string().required('Billing Country is required.'),
-    billing_zip_code: yup.string().required('Billing Area Code/ Pincode is required.'),
+    billing_zipcode: yup.string().required('Billing Area Code/ Pincode is required.'),
     billing_city: yup.string().required('Billing City/ Town is required.'),
     billing_state: yup.string().required('Billing State is required.'), // Assuming state is required for billing
     billing_address_line_1: yup.string().required('Billing Address Line 1 is required.'),

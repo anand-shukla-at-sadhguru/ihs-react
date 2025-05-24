@@ -53,8 +53,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
 
     const watchIsWhatsappSame = watch(`${pathPrefix}.is_whatsapp_same`);
     const watchIsAddressSame = watch(`${pathPrefix}.is_address_same_as_applicant`);
-    const parentAddressCountryName = watch(`${pathPrefix}.address_country`);
-    const parentAddressZipcode = watch(`${pathPrefix}.address_zipcode`);
+    const parentAddressCountryName = watch(`${pathPrefix}.country`);
+    const parentAddressZipcode = watch(`${pathPrefix}.zipcode`);
 
     const [isParentAddrLoading, setIsParentAddrLoading] = useState(false);
     const [parentAddrError, setParentAddrError] = useState<string | null>(null);
@@ -74,8 +74,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             setParentAddrError(null);
 
             const apiUrl = `https://cdi-gateway.isha.in/contactinfovalidation/api/countries/${countryISO2}/pincodes/${zipcode}`;
-            const rhfStateField = `${pathPrefix}.address_state`;
-            const rhfCityField = `${pathPrefix}.address_city`;
+            const rhfStateField = `${pathPrefix}.state`;
+            const rhfCityField = `${pathPrefix}.city`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -125,22 +125,22 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
     // Effect: When address same as applicant toggles, copy or clear fields
     useEffect(() => {
         const fieldsToTrigger: Path<AdmissionRegistrationFormDataYup>[] = [
-            `${pathPrefix}.address_country` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.address_zipcode` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.address_state` as Path<AdmissionRegistrationFormDataYup>,
-            `${pathPrefix}.address_city` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.country` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.zipcode` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.state` as Path<AdmissionRegistrationFormDataYup>,
+            `${pathPrefix}.city` as Path<AdmissionRegistrationFormDataYup>,
             `${pathPrefix}.address_line1` as Path<AdmissionRegistrationFormDataYup>,
             `${pathPrefix}.address_line2` as Path<AdmissionRegistrationFormDataYup>,
         ];
 
         if (watchIsAddressSame === 'Yes') {
             // Copy applicant's communication address fields
-            setValue(`${pathPrefix}.address_country`, getValues("address_country"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.address_zipcode`, getValues("address_zip_code"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.address_state`, getValues("address_state"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.address_city`, getValues("address_city"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.address_line1`, getValues("address_line_1"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-            setValue(`${pathPrefix}.address_line2`, getValues("address_line_2") || "", { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.country`, getValues("country"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.zipcode`, getValues("zipcode"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.state`, getValues("state"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.city`, getValues("city"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_line_1`, getValues("address_line_1"), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            setValue(`${pathPrefix}.address_line_2`, getValues("address_line_2") || "", { shouldValidate: true, shouldDirty: true, shouldTouch: true });
 
             setParentAddrError(null);
             setIsParentAddrLoading(false);
@@ -149,8 +149,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
             trigger(fieldsToTrigger);
         } else if (watchIsAddressSame === 'No') {
             // Optionally clear state/city if switching to 'No'
-            setValue(`${pathPrefix}.address_state`, "", { shouldValidate: true });
-            setValue(`${pathPrefix}.address_city`, "", { shouldValidate: true });
+            setValue(`${pathPrefix}.state`, "", { shouldValidate: true });
+            setValue(`${pathPrefix}.city`, "", { shouldValidate: true });
             setParentAddrError(null);
             trigger(fieldsToTrigger);
         }
@@ -161,8 +161,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
         if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
 
         if (watchIsAddressSame !== 'No') {
-            setValue(`${pathPrefix}.address_state`, getValues("address_state") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
-            setValue(`${pathPrefix}.address_city`, getValues("address_city") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
+            setValue(`${pathPrefix}.state`, getValues("state") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
+            setValue(`${pathPrefix}.city`, getValues("city") || "", { shouldValidate: watchIsAddressSame === 'Yes' });
             setParentAddrError(null);
             setIsParentAddrLoading(false);
             activeFetchIdentifier.current = null;
@@ -183,15 +183,15 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 debounceTimeoutRef.current = setTimeout(() => {
                     if (
                         watchIsAddressSame === 'No' &&
-                        getValues(`${pathPrefix}.address_country`) === parentAddressCountryName &&
-                        getValues(`${pathPrefix}.address_zipcode`) === parentAddressZipcode
+                        getValues(`${pathPrefix}.country`) === parentAddressCountryName &&
+                        getValues(`${pathPrefix}.zipcode`) === parentAddressZipcode
                     ) {
                         fetchParentAddressDetails(countryISO2, parentAddressZipcode);
                     }
                 }, 800);
             } else {
-                setValue(`${pathPrefix}.address_state`, "" as any, { shouldValidate: false });
-                setValue(`${pathPrefix}.address_city`, "" as any, { shouldValidate: false });
+                setValue(`${pathPrefix}.state`, "" as string, { shouldValidate: false });
+                setValue(`${pathPrefix}.city`, "" as string, { shouldValidate: false });
                 if (parentAddressCountryName) {
                     setParentAddrError(`Invalid country ('${parentAddressCountryName}') or ISO code not found.`);
                 } else {
@@ -201,8 +201,8 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 activeFetchIdentifier.current = null;
             }
         } else {
-            setValue(`${pathPrefix}.address_state`, "" as string, { shouldValidate: false });
-            setValue(`${pathPrefix}.address_city`, "" as string, { shouldValidate: false });
+            setValue(`${pathPrefix}.state`, "" as string, { shouldValidate: false });
+            setValue(`${pathPrefix}.city`, "" as string, { shouldValidate: false });
 
             if (parentAddressCountryName && parentAddressZipcode && parentAddressZipcode.length > 0 && parentAddressZipcode.length < 3) {
                 setParentAddrError("PIN / ZIP Code is too short (minimum 3 characters).");
@@ -359,7 +359,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 <div className="pt-3 mt-4 border-t border-dashed">
                     <h4 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Parent Address Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 items-end">
-                        <FormField control={control} name={`${pathPrefix}.address_country`} render={({ field }) => (
+                        <FormField control={control} name={`${pathPrefix}.country`} render={({ field }) => (
                             <FormItem><FormLabel>Country<span className="text-destructive"> *</span></FormLabel><FormControl>
                                 <CountryDropdown
                                     value={field.value}
@@ -367,19 +367,17 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                     onChange={(country?: Country) => {
                                         const countryName = country?.name || "";
                                         field.onChange(countryName);
-                                        trigger(`${pathPrefix}.address_country`);
-                                        setValue(`${pathPrefix}.address_zipcode` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false }); // Clear zip on country change
-                                        setValue(`${pathPrefix}.address_state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                                        setValue(`${pathPrefix}.address_city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
-                                        setParentAddrStateOptions([]);
-                                        setParentAddrCityOptions([]);
+                                        trigger(`${pathPrefix}.country`);
+                                        setValue(`${pathPrefix}.zipcode` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false }); // Clear zip on country change
+                                        setValue(`${pathPrefix}.state` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
+                                        setValue(`${pathPrefix}.city` as keyof AdmissionRegistrationFormDataYup, "", { shouldValidate: false });
                                         setParentAddrError(null);
                                     }}
                                     placeholder="Select Country"
                                 />
                             </FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField control={control} name={`${pathPrefix}.address_zipcode`} render={({ field }) => (
+                        <FormField control={control} name={`${pathPrefix}.zipcode`} render={({ field }) => (
                             <FormItem><FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
                                 <FormControl><Input placeholder="PIN / ZIP Code" {...field} value={field.value ?? ''} disabled={!parentAddressCountryName} /></FormControl>
                                 {isParentAddrLoading && <FormDescription>Loading address...</FormDescription>}
@@ -389,7 +387,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                         )} />
                         <FormField
                             control={control}
-                            name={`${pathPrefix}.address_state`}
+                            name={`${pathPrefix}.state`}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
@@ -411,7 +409,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                         {/* Parent City (Enabled Text Input) */}
                         <FormField
                             control={control}
-                            name={`${pathPrefix}.address_city`}
+                            name={`${pathPrefix}.city`}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>

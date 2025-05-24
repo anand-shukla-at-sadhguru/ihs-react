@@ -124,7 +124,7 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
                             </div>
 
                             {/* Conditionally render the "Specify Other Language" field */}
-                            {currentLanguageValue === 'Other' && (
+                            {typeof currentLanguageValue === 'string' && currentLanguageValue === 'Other' && (
                                 <div className="flex-1 w-full sm:w-auto">
                                     <FormField
                                         control={control}

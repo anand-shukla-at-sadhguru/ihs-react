@@ -229,7 +229,7 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
         "applied_to_ihs_before", "previous_applied_year", "previous_applied_for", "previous_applied_comments",
         "first_name", "last_name", "middle_name", "gender",
         "nationality", "country_of_residence", "country_of_birth", "date_of_birth", "age",
-        "address_country", "address_zip_code", "address_state", "address_city", "address_line_1", "address_line_2",
+        "country", "zipcode", "state", "city", "address_line_1", "address_line_2",
         "identification_mark_1", "identification_mark_2", "religion", "other_religion", "community", "other_community",
         "mother_tongue", "other_mother_tongue", "student_languages", // Note: array validation might need specific handling or be part of a sub-schema validation
         "has_sibling_in_ihs", "student_siblings",
@@ -239,8 +239,8 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
     academic: [
         "is_home_schooled", "current_school_name", "current_school_board_affiliation", "current_school_other_board_affiliation",
         "current_school_phone_number",
-        "current_school_email_address", "current_school_country", "current_school_zip_code", "current_school_city",
-        "current_school_state", "current_school_address_line1", "current_school_address_line2",
+        "current_school_email_address", "current_school_country", "current_school_zipcode", "current_school_city",
+        "current_school_state", "current_school_address_line_1", "current_school_address_line_2",
         "been_to_school_previously", "previous_schools", // was_the_applicant_ever_home_schooled (if it's a distinct field)
         "academic_strengths_and_weaknesses", "hobbies_interests_and_extra_curricular",
         "temperament_and_personality", "learning_disability", "other_details_of_importance"
@@ -259,8 +259,8 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
     ],
     parents: [
         "student_parent", // Validating the array itself (e.g., min length) and its items
-        "parent_marital_status",
-        "who_is_responsible_for_paying_applicants_tuition_fee", "court_order_document",
+        "marital_status",
+        "who_is_responsible_for_fee_payment", "court_order_document",
         "who_is_allowed_to_receive_communication", "legal_rights_document",
         "who_is_allowed_to_receive_report_cards", "who_is_allowed_to_visit_school",
         "parents_are_local_guardians", "student_guardians"
@@ -277,7 +277,7 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
     ],
     billing: [ // Payment tab might not need pre-validation if it's just info + submit
         "billing_first_name", "billing_last_name", "billing_mobile", "billing_email", "billing_country",
-        "billing_zip_code", "billing_city", "billing_state", "billing_address_line_1", "billing_address_line_2"
+        "billing_zipcode", "billing_city", "billing_state", "billing_address_line_1", "billing_address_line_2"
     ]
     // "instruction" tab has no fields to validate
 };

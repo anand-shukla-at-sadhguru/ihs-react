@@ -129,12 +129,12 @@ export function AdmissionRegistrationForm() {
             country_of_birth: 'India', // Country of Birth
             // date_of_birth: new Date('2010-01-01'), // Example past date
             // age: 14, // Example, or calculate based on DOB
-            // address_country: 'India',
-            // address_zip_code: '110001',
+            // country: 'India',
+            // zip_code: '110001',
+            // city: 'New Delhi',
+            // state: 'Delhi',
             address_line_1: 'Plot 403/404 Nakawa Industrial Area, P.O. Box 9547',
             // address_line_2: 'Apt 1',
-            // address_city: 'New Delhi',
-            // address_state: 'Delhi',
             religion: 'Other', // Default from RELIGION_OPTIONS
             community: 'OC',   // Default from COMMUNITY_OPTIONS
             identification_mark_1: 'Scar on KNee',
@@ -163,12 +163,12 @@ export function AdmissionRegistrationForm() {
             current_school_board_affiliation: 'State Board', // Default from BOARD_AFFILIATION_OPTIONS
             current_school_phone_number: '+919988776655', // E.164 format
             current_school_country: 'India',
-            current_school_zip_code: '110002',
+            current_school_zipcode: '110002',
             current_school_city: 'New Delhi',
             current_school_state: 'Delhi',
             current_school_email_address: 'currentschool@example.com',
-            current_school_address_line1: '456 School Rd',
-            current_school_address_line2: '',
+            current_school_address_line_1: '456 School Rd',
+            current_school_address_line_2: '',
             // was_the_applicant_ever_home_schooled: 'No',
             // been_to_school_previously: 'No', // Set to No so previous_schools_table is initially empty
             previous_schools: [],
@@ -250,7 +250,7 @@ export function AdmissionRegistrationForm() {
                 // }
             ],
             marital_status: 'Divorced', // Default from PARENT_MARITAL_STATUS_OPTIONS
-            // who_is_responsible_for_paying_applicants_tuition_fee: 'Both', // Default from options
+            // who_is_responsible_for_fee_payment: 'Both', // Default from options
             // court_order_document: undefined,
             // who_is_allowed_to_receive_communication: 'Both',
             // legal_rights_document: undefined,
@@ -274,11 +274,11 @@ export function AdmissionRegistrationForm() {
             billing_mobile: '+919000000000', // E.164
             billing_email: 'billing@example.com',
             billing_country: 'India',
-            billing_zip_code: '110001',
+            billing_zipcode: '110001',
             billing_city: 'New Delhi',
             billing_state: 'Delhi',
-            billing_address_line1: '789 Billing St',
-            billing_address_lin2: '',
+            billing_address_line_1: '789 Billing St',
+            billing_address_line_2: '',
             // application_fee_status: 'Pending', // Default from options
             // program: 'General', // Example
             // payment_program_links: [],
@@ -309,16 +309,16 @@ export function AdmissionRegistrationForm() {
     const watchedDateOfBirth = form.watch("date_of_birth");
 
     //To auto Fill the State and City based on the country selected
-    const watchCommCountry = form.watch("address_country");
-    const watchCommZipcode = form.watch("address_zip_code");
+    const watchCommCountry = form.watch("country");
+    const watchCommZipcode = form.watch("zipcode");
 
     const watchBillingCountry = form.watch("billing_country");
-    const watchBillingZipcode = form.watch("billing_zip_code");
+    const watchBillingZipcode = form.watch("billing_zipcode");
 
     // Watch fields for Current School Address
     const watchCurrentSchoolBoardAffiliation = form.watch("current_school_board_affiliation");
     const watchCurrentSchoolCountry = form.watch("current_school_country"); // Make sure this field exists in schema/form
-    const watchCurrentSchoolZipcode = form.watch("current_school_zip_code");
+    const watchCurrentSchoolZipcode = form.watch("current_school_zipcode");
 
     // const watchCurrentSchoolState = form.watch("current_school_state");
     const watchWearsGlasses = form.watch("wears_glasses_or_lens");
@@ -337,7 +337,7 @@ export function AdmissionRegistrationForm() {
     const watchParentsAreLocalGuardians = form.watch("parents_are_local_guardians");
     // Used for divorce section
     // const watchParentsAreGuardians = form.watch("parents_are_local_guardians"); // Used for guardian section
-    // const watchWhoPaysTuition = form.watch("who_is_responsible_for_paying_applicants_tuition_fee"); // Fixed typo
+    // const watchWhoPaysTuition = form.watch("who_is_responsible_for_fee_payment"); // Fixed typo
 
     const { control, getValues, setValue, watch, trigger, getFieldState, formState } = form;
     const { errors, isValid: isOverallFormValid, isSubmitting } = formState;
@@ -517,13 +517,13 @@ export function AdmissionRegistrationForm() {
         if (watchStudiedPreviously === 'Yes' && schoolFields.length === 0) {
             appendSchool({
                 school_name: '',
-                school_board_affiliation: '', // Or a default from BOARD_AFFILIATION_OPTIONS
-                school_from_year: undefined,
-                school_to_year: undefined,
-                school_from_class: '', // Or a default from CLASS_LEVEL_OPTIONS
-                school_to_class: '',   // Or a default
-                school_country: 'India', // Or empty
-                school_zip_code: '',
+                board_affiliation: '', // Or a default from BOARD_AFFILIATION_OPTIONS
+                from_year: undefined,
+                to_year: undefined,
+                from_class: '', // Or a default from CLASS_LEVEL_OPTIONS
+                to_class: '',   // Or a default
+                country: 'India', // Or empty
+                zipcode: '',
                 marksheet: undefined,
             } as unknown as IndividualPreviousSchoolDataYup); // Type assertion
         }
@@ -550,8 +550,8 @@ export function AdmissionRegistrationForm() {
                 address_zipcode: '',
                 address_state: '',
                 address_city: '',
-                address_line1: '',
-                address_line2: '',
+                address_line_1: '',
+                address_line_2: '',
                 education: '', // Or a default
                 field_of_study: '',
             } as unknown as IndividualGuardianDetailDataYup);
@@ -1189,9 +1189,9 @@ export function AdmissionRegistrationForm() {
                                                             onChange={(country: Country | undefined) => {
                                                                 field.onChange(country?.name || "");
                                                                 // When country changes, clear zipcode, state, city and their options
-                                                                setValue("address_zip_code", "");
-                                                                setValue("address_state", "");
-                                                                setValue("address_city", "");
+                                                                setValue("zipcode", "");
+                                                                setValue("state", "");
+                                                                setValue("city", "");
                                                                 setCommAddressError(null);
                                                             }}
                                                             placeholder="Select country"
@@ -1205,7 +1205,7 @@ export function AdmissionRegistrationForm() {
                                         <FormField
                                             //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormData exactly
                                             control={form.control}
-                                            name="address_zip_code" // Assuming this is your zipcode field
+                                            name="zipcode" // Assuming this is your zipcode field
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
@@ -1402,7 +1402,7 @@ export function AdmissionRegistrationForm() {
                                             {renderField("current_school_phone_number", { label: "School Phone Number", fieldtype: "PhoneInput", reqd: watchIsHomeSchooled === 'No' ? 1 : 0, placeholder: "Enter school phone" })}
                                             {renderField("current_school_email_address", { label: "School Email Address", fieldtype: "Data", options: "Email", mandatory_depends_on: "No", reqd: 1 })}
                                             {/* {renderField("current_school_country", { label: "School Country", fieldtype: "Link", options: "Country", mandatory_depends_on: "No" })} */}
-                                            {/* {renderField("current_school_zip_code", { label: "School PIN / ZIP Code", fieldtype: "Data" })} */}
+                                            {/* {renderField("current_school_zipcode", { label: "School PIN / ZIP Code", fieldtype: "Data" })} */}
                                             {/* {renderField("current_school_city", { label: "School City/ Town", fieldtype: "Data", mandatory_depends_on: "No" })} */}
                                             {/* {renderField("current_school_state", { label: "School State", fieldtype: "Data" })} */}
                                             {/* --- NEW: Current School Country Dropdown --- */}
@@ -1420,11 +1420,9 @@ export function AdmissionRegistrationForm() {
                                                                 onChange={(country: Country | undefined) => {
                                                                     field.onChange(country?.name || "");
                                                                     // When country changes, clear school zipcode, state, city and their options
-                                                                    form.setValue("current_school_zip_code", "");
+                                                                    form.setValue("current_school_zipcode", "");
                                                                     form.setValue("current_school_state", "");
                                                                     form.setValue("current_school_city", "");
-                                                                    setCurrentSchoolStateOptions([]);
-                                                                    setCurrentSchoolCityOptions([]);
                                                                     setCurrentSchoolAddressError(null);
                                                                 }}
                                                                 placeholder="Select school country"
@@ -1440,7 +1438,7 @@ export function AdmissionRegistrationForm() {
                                             <FormField
                                                 //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                                 control={form.control}
-                                                name="current_school_zip_code"
+                                                name="current_school_zipcode"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col space-y-1.5">
                                                         <FormLabel>School PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
@@ -1509,8 +1507,8 @@ export function AdmissionRegistrationForm() {
                                                     </FormItem>
                                                 )}
                                             />
-                                            {renderField("current_school_address_line1", { label: "School Address Line 1", fieldtype: "Data", mandatory_depends_on: "No", reqd: 1 })}
-                                            {renderField("current_school_address_line2", { label: "School Address Line 2", fieldtype: "Data" })}
+                                            {renderField("current_school_address_line_1", { label: "School Address Line 1", fieldtype: "Data", mandatory_depends_on: "No", reqd: 1 })}
+                                            {renderField("current_school_address_line_2", { label: "School Address Line 2", fieldtype: "Data" })}
                                         </div>
                                     </div>
                                 )}
@@ -1678,12 +1676,12 @@ export function AdmissionRegistrationForm() {
                                                 // Address fields are optional in Yup schema if is_address_same_as_applicant is 'Yes'
                                                 // They will become required via .when() if it's 'No'.
                                                 // So, their default can be undefined.
-                                                address_country: undefined,
-                                                address_zipcode: '', // Or undefined
-                                                address_state: undefined,
-                                                address_city: undefined,
-                                                address_line1: '', // Or undefined
-                                                address_line2: '', // Or undefined
+                                                country: undefined,
+                                                zipcode: '', // Or undefined
+                                                state: undefined,
+                                                city: undefined,
+                                                address_line_1: '', // Or undefined
+                                                address_line_2: '', // Or undefined
                                                 education: undefined, // For Select to show placeholder
                                                 field_of_study: '',
                                                 profession: undefined, // For Select to show placeholder
@@ -1702,7 +1700,7 @@ export function AdmissionRegistrationForm() {
                                 <div className="pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                     {renderField("marital_status", { label: "Parent Marital Status", fieldtype: "Select", options: "\nMarried\nSeparated\nDivorced\nSingle Parent", reqd: 1 })}
                                     {/* Conditional Divorce Fields */}
-                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_paying_applicants_tuition_fee", { label: "Who is resposible for paying applicant's tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
+                                    {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_fee_payment", { label: "Who is resposible for paying applicant's tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
                                     {watchMaritalStatus === 'Divorced' && renderField("court_order_document", { label: "Court Order Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
                                     {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_communication", { label: "Who is allowed to receive school communication?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
                                     {watchMaritalStatus === 'Divorced' && renderField("who_is_allowed_to_receive_report_cards", { label: "Who is allowed to receive report cards?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })}
@@ -1746,12 +1744,12 @@ export function AdmissionRegistrationForm() {
                                                     is_whatsapp_same: true,
                                                     whatsapp_phone: '',
                                                     is_address_same_as_applicant: '',
-                                                    address_country: '',
-                                                    address_zipcode: '',
-                                                    address_state: '',
-                                                    address_city: '',
-                                                    address_line1: '',
-                                                    address_line2: '',
+                                                    country: '',
+                                                    zipcode: '',
+                                                    state: '',
+                                                    city: '',
+                                                    address_line_1: '',
+                                                    address_line_2: '',
                                                     education: '', // Or a default
                                                     field_of_study: '',
                                                 } as unknown as IndividualGuardianDetailDataYup)}
@@ -1874,12 +1872,12 @@ export function AdmissionRegistrationForm() {
                                 <FormField
                                     //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                     control={form.control}
-                                    name="declaration"
+                                    name="agree_declaration"
                                     render={({ field }) => (
                                         <FormItem className="flex items-start space-x-2">
                                             <FormControl>
                                                 <Checkbox
-                                                    id="declaration"
+                                                    id="agree_declaration"
                                                     checked={!!field.value}
                                                     onCheckedChange={field.onChange}
                                                 />
@@ -1924,7 +1922,7 @@ export function AdmissionRegistrationForm() {
                                                         onChange={(country: Country | undefined) => {
                                                             field.onChange(country?.name || "");
                                                             // When country changes, clear zipcode, state, city and their options
-                                                            setValue("billing_zip_code", "");
+                                                            setValue("billing_zipcode", "");
                                                             setValue("billing_state", "");
                                                             setValue("billing_city", "");
                                                             setBillAddressError(null);
@@ -1940,7 +1938,7 @@ export function AdmissionRegistrationForm() {
                                     <FormField
                                         //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormData exactly
                                         control={form.control}
-                                        name="billing_zip_code"
+                                        name="billing_zipcode"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col space-y-1.5">
                                                 <FormLabel>PIN / ZIP Code<span className="text-destructive"> *</span></FormLabel>
