@@ -43,9 +43,9 @@ export const calculateAge = (dobString: string | undefined): number | null => {
     }
 };
 // Example: Yup Helper for File (Basic)
-export const MAX_FILE_SIZE_MB_YUP = 5;
-export const MAX_FILE_SIZE_BYTES_YUP = MAX_FILE_SIZE_MB_YUP * 1024 * 1024;
-export const ACCEPTABLE_FILE_TYPES_YUP = ["application/pdf", "image/jpeg", "image/png"];
+export const MAX_FILE_SIZE_MB = 5;
+export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+export const ACCEPTABLE_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
 // Helper to get last N academic years as strings (can be reused)
 export function getCurrentAcademicYear() {
@@ -67,37 +67,6 @@ export const getLastNAcademicYears = (n: number): string[] => {
     return years.reverse();
 };
 
-export const currentYear = new Date().getFullYear();
-
-// --- Define Yup constants for dropdown options ---
-// (You'll need to extract all these from your Zod schema or form)
-export const GENDER_OPTIONS_YUP = ['Male', 'Female', 'Other'] as const;
-export const YES_NO_OPTIONS_YUP = ['Yes', 'No'] as const;
-export const APPLIED_FOR_OPTIONS_YUP = ['Class II', 'Class V', 'Class VIII', 'Class XI'] as const;
-export const PREVIOUS_APP_YEAR_OPTIONS_YUP_RAW = getLastNAcademicYears(5).filter(year => {
-    const startYear = parseInt(year.split('-')[0], 10);
-    return startYear >= 2020;
-});
-// Yup's .oneOf expects a non-empty array. Provide a fallback if empty.
-export const PREVIOUS_APP_YEAR_OPTIONS_YUP = PREVIOUS_APP_YEAR_OPTIONS_YUP_RAW.length > 0 ? PREVIOUS_APP_YEAR_OPTIONS_YUP_RAW : ['2019-20'];
-
-export const RELIGION_OPTIONS_YUP = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jew', 'Other'] as const;
-export const COMMUNITY_OPTIONS_YUP = ['OC', 'BC', 'BC-Others', 'MBC', 'SC-Arunthathiyar', 'SC-Others', 'DNC (Denotified Communities)', 'ST', 'Other'] as const;
-export const ID_PROOF_OPTIONS_YUP = ['Aadhaar Card', 'Passport'] as const;
-export const LANGUAGE_OPTIONS_YUP = ['English', 'Tamil', 'Hindi', 'French', 'German', 'Spanish', 'Arabic', 'Mandarin', 'Japanese', 'Other'] as const; // Example
-export const LANGUAGE_PROFICIENCY_YUP = ['Native', 'Advanced', 'Intermediate', 'Basic'] as const;
-
-export const BOARD_OPTIONS_YUP = [
-    "CBSE – Central Board of Secondary Education", "ICSE - Indian Certificate of Secondary Education",
-    "SSC - Secondary School Certificate", "IB - International Baccalaureate", "Cambridge International",
-    "State Board", "Other"
-] as const;
-export const BLOOD_GROUP_OPTIONS_YUP = ['Blood Group A+', 'Blood Group A-', 'Blood Group B+', 'Blood Group B-', 'Blood Group O+', 'Blood Group O-', 'Blood Group AB+', 'Blood Group AB-'] as const;
-export const PARENT_MARITAL_STATUS_OPTIONS_YUP = ['Married', 'Separated', 'Divorced', 'Single Parent'] as const;
-export const FATHER_MOTHER_BOTH_OPTIONS_YUP = ['Father', 'Mother', 'Both'] as const;
-export const CLASS_LEVEL_OPTIONS_YUP = ['LKG', 'UKG', 'Class I', 'Class II', 'Class III', 'Class IV', 'Class V', 'Class VI', 'Class VII', 'Class VIII', 'Class IX', 'Class X', 'Class XI', 'Class XII'] as const;
-
-// Generic function to fetch address detailsconst
 export const fetchAddressDetails = async (
     countryISO2: string,
     zipcode: string,
@@ -171,24 +140,59 @@ export type Country = {
     status: string;
 };
 
+export const get = (
+    obj: Record<string, unknown>,
+    path: string,
+    defaultValue?: unknown
+): unknown => {
+    const keys = path.replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '').split('.');
+    let result: unknown = obj;
+    for (const key of keys) {
+        if (result === null || typeof result !== 'object' || !(key in result)) {
+            return defaultValue;
+        }
+        result = (result as Record<string, unknown>)[key];
+    }
+    return result;
+};
+
+export const currentYear = new Date().getFullYear();
+
+// --- Define Yup constants for dropdown options ---
+export const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
+export const APPLIED_FOR_OPTIONS = ['Class 2', 'Class 5', 'Class 8', 'Class 11'] as const;
+export const BRANCHS = ['IYC', 'SSB'] as const; // Assuming these are the only two branches
+// export const PREVIOUS_APP_YEAR_OPTIONS_RAW = getLastNAcademicYears(5).filter(year => {
+//     const startYear = parseInt(year.split('-')[0], 10);
+//     return startYear >= 2020;
+// });
+// Yup's .oneOf expects a non-empty array. Provide a fallback if empty.
+// export const PREVIOUS_APP_YEAR_OPTIONS = PREVIOUS_APP_YEAR_OPTIONS_RAW.length > 0 ? PREVIOUS_APP_YEAR_OPTIONS_RAW : ['2019-20'];
+export const ID_PROOF_OPTIONS = ['Aadhaar Card', 'Passport'] as const;
+export const LANGUAGE_PROFICIENCY = ['Native', 'Advanced', 'Intermediate', 'Basic'] as const;
+
+export const PARENT_MARITAL_STATUS_OPTIONS = ['Married', 'Separated', 'Divorced', 'Single Parent'] as const;
+export const FATHER_MOTHER_BOTH_OPTIONS = ['Father', 'Mother', 'Both'] as const;
+export const CLASS_LEVEL_OPTIONS = ['LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'] as const;
+
+// Generic function to fetch address detailsconst
+
 export const LANGUAGE_OPTIONS = ['English', 'Tamil', 'Hindi', 'French', 'German', 'Spanish', 'Arabic', 'Mandarin', 'Japanese', 'Other'] as const;
 export const PROFICIENCY_OPTIONS = ['Native', 'Advanced', 'Intermediate', 'Basic'] as const;
-export const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
 export const YES_NO_OPTIONS = ['Yes', 'No'] as const; // For many of your "Select Yes/No" fields
-export const APPLIED_FOR_OPTIONS = ['Class II', 'Class V', 'Class VIII', 'Class XI'] as const;
-export const PREVIOUS_APP_YEAR_OPTIONS = getLastNAcademicYears(4) as [string, ...string[]]; // Assuming getLastNAcademicYears returns string[]
+// export const PREVIOUS_APP_YEAR_OPTIONS = getLastNAcademicYears(4) as [string, ...string[]]; // Assuming getLastNAcademicYears returns string[]
 
-export const RELIGION_OPTIONS_ARRAY = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jew', 'Other'] as const;
-export const COMMUNITY_OPTIONS_ARRAY = ['OC', 'BC', 'BC-Others', 'MBC', 'SC-Arunthathiyar', 'SC-Others', 'DNC (Denotified Communities)', 'ST', 'Other'] as const;
+export const RELIGION_OPTIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jew', 'Jain', 'Other'] as const;
+export const COMMUNITY_OPTIONS = ['OC', 'BC', 'BC-Others', 'MBC', 'SC-Arunthathiyar', 'SC-Others', 'DNC (Denotified Communities)', 'ST', 'Other'] as const;
 export const ID_PROOF_OPTIONS_ARRAY = ['Aadhaar Card', 'Passport'] as const;
 export const BOARD_OPTIONS = [
     "CBSE – Central Board of Secondary Education", "ICSE - Indian Certificate of Secondary Education",
     "SSC - Secondary School Certificate", "IB - International Baccalaureate", "Cambridge International",
     "State Board", "Other"
 ] as const;
-export const GUARDIAN_RELATION_OPTIONS_YUP = ["Grand Father", "Grand Mother", "Sibling", "Uncle", "Aunt", "Family Friend", "Other"] as const;
-export const PARENT_RELATION_OPTIONS_YUP = ['Father', 'Mother'] as const;
-export const PARENT_EDUCATION_LEVEL_OPTIONS_YUP = [
+export const GUARDIAN_RELATION_OPTIONS = ["Grand Father", "Grand Mother", "Sibling", "Uncle", "Aunt", "Family Friend", "Other"] as const;
+export const PARENT_RELATION_OPTIONS = ['Father', 'Mother'] as const;
+export const PARENT_EDUCATION_LEVEL_OPTIONS = [
     "Class VIII or below",
     "SSLC/ PUC",
     "Higher Secondary",
@@ -198,7 +202,7 @@ export const PARENT_EDUCATION_LEVEL_OPTIONS_YUP = [
     "PhD",
     "Post-Doctoral"
 ] as const;
-export const PARENT_PROFESSION_OPTIONS_YUP = [
+export const PARENT_PROFESSION_OPTIONS = [
     "Academia-Professors, Research Scholars, Scientists",
     "Arts, Music, Entertainment",
     "Architecture and Construction",
@@ -212,16 +216,12 @@ export const PARENT_PROFESSION_OPTIONS_YUP = [
     "Others"
 ] as const;
 
-export const BLOOD_GROUP_OPTIONS_ARRAY = ['Blood Group A+', 'Blood Group A-', 'Blood Group B+', 'Blood Group B-', 'Blood Group O+', 'Blood Group O-', 'Blood Group AB+', 'Blood Group AB-'] as const;
+export const BLOOD_GROUP_OPTIONS = ['Blood Group A+', 'Blood Group A-', 'Blood Group B+', 'Blood Group B-', 'Blood Group O+', 'Blood Group O-', 'Blood Group AB+', 'Blood Group AB-'] as const;
 export const PARENT_MARITAL_STATUS_OPTIONS_ARRAY = ['Married', 'Separated', 'Divorced', 'Single Parent'] as const;
-export const FATHER_MOTHER_BOTH_OPTIONS = ['Father', 'Mother', 'Both'] as const;
 export const PHYSICS_ACCOUNTS_HISTORY_OPTIONS = ['Physics', 'Accounts', 'History'] as const;
 export const BIOLOGY_CS_COMMERCE_POLSCI_OPTIONS = ['Biology', 'Computer Science', 'Commerce', 'Political Science'] as const;
 export const CHEMISTRY_ECONOMICS_OPTIONS = ['Chemistry', 'Economics'] as const;
 export const MATH_ENV_FINEARTS_OPTIONS = ['Mathematics', 'Environmental Studies', 'Fine Arts'] as const;
-export const PARENT_RELATION_OPTIONS = ['Father', 'Mother'] as const;
-export const PARENT_EDUCATION_LEVEL_OPTIONS_STRING = "Class VIII or below\nSSLC/ PUC\nHigher Secondary\nGraduate\nPost-Graduate\nM. Phil\nPhD\nPost-Doctoral";
-export const PARENT_PROFESSION_OPTIONS_STRING = "Academia-Professors, Research Scholars, Scientists\nArts, Music, Entertainment\nArchitecture and Construction\nAgriculture\nArmed Forces\nBanking and Finance and Financial Services\nBusinessman/ Entrepreneur\nEducation and Training\nInformation Technology\nHealthcare\nOthers";
 
 export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormDataYup>[]> = {
     personal: [
@@ -287,18 +287,3 @@ export const TAB_ORDER: string[] = [
     "instruction", "personal", "academic", "health", "parents", "subjects", "declaration", "billing"
 
 ];
-export const get = (
-    obj: Record<string, unknown>,
-    path: string,
-    defaultValue?: unknown
-): unknown => {
-    const keys = path.replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '').split('.');
-    let result: unknown = obj;
-    for (const key of keys) {
-        if (result === null || typeof result !== 'object' || !(key in result)) {
-            return defaultValue;
-        }
-        result = (result as Record<string, unknown>)[key];
-    }
-    return result;
-};

@@ -14,10 +14,15 @@ import {
 } from './yupSchema'; // Adjust the path as necessary
 
 import {
-    BOARD_OPTIONS_YUP,
+    BOARD_OPTIONS,
     calculateAge, fetchAddressDetails,
     getCurrentAcademicYear, getLastNAcademicYears,
-    LANGUAGE_OPTIONS, PARENT_RELATION_OPTIONS_YUP, TAB_ORDER, TAB_FIELD_GROUPS, get
+    LANGUAGE_OPTIONS, PARENT_RELATION_OPTIONS, TAB_ORDER, TAB_FIELD_GROUPS, get,
+    RELIGION_OPTIONS,
+    COMMUNITY_OPTIONS,
+    YES_NO_OPTIONS,
+    APPLIED_FOR_OPTIONS,
+    BRANCHS
 } from './admissionFormTabUtils';
 import { LanguagesKnownSection } from './LanguagesKnownSection'; // Adjust path if needed
 import { StudentSiblingsSection } from './StudentSiblingsSection'; // <-- NEW IMPORT
@@ -84,7 +89,7 @@ const parseSelectOptions = (optionsString: string | null | undefined): string[] 
     return optionsString.split('\n').map(o => o.trim()).filter(o => o.length > 0);
 };
 
-const appliedForOptions = ['Class II', 'Class V', 'Class VIII', 'Class XI'];
+const appliedForOptions = ['Class 2', 'Class V', 'Class VIII', 'Class 11'];
 
 
 export function AdmissionRegistrationForm() {
@@ -101,10 +106,7 @@ export function AdmissionRegistrationForm() {
             TAB_ORDER[7],
         ]) // "instruction" and "personal" initially enabled
     );
-    const [applicationForContext, setApplicationForContext] = useState<string | undefined>(
-        // Initialize with a potential default if your form has one, otherwise undefined
-        // This will be updated by the watch effect
-    );
+
     const [isCommAddressLoading, setIsCommAddressLoading] = useState(false);
     const [commAddressError, setCommAddressError] = useState<string | null>(null);
     const [isBillAddressLoading, setIsBillAddressLoading] = useState(false);
@@ -119,10 +121,10 @@ export function AdmissionRegistrationForm() {
         // Updated default values reflecting the flattened schema for parents/siblings
         defaultValues: {
             application_academic_year: getCurrentAcademicYear(),
-            application_for: 'Class V', // Default from appliedForOptions
+            application_for: 'Class 5', // Default from appliedForOptions
             applied_to_ihs_before: 'No',
             // previous_applied_year: previousApplicationYears[0] || '', // Default to most recent or empty
-            // previous_applied_for: 'Class II', // Default from appliedForOptions
+            // previous_applied_for: 'Class 2', // Default from appliedForOptions
             // previous_applied_comments: '',
             first_name: 'Jhon',
             middle_name: '',
@@ -197,8 +199,8 @@ export function AdmissionRegistrationForm() {
             wears_glasses_or_lens: 'No',
             // right_eye_power: '',
             // left_eye_power: '',
-            toilet_trained: 'Yes', // Relevant if application_for is Class II
-            // bed_wet: 'No',           // Relevant if application_for is Class II
+            toilet_trained: 'Yes', // Relevant if application_for is Class 2
+            // bed_wet: 'No',           // Relevant if application_for is Class 2
             has_hearing_challenges: 'No',
             // hearing_challenges: '',
             has_behavioural_challenges: 'No',
@@ -256,7 +258,7 @@ export function AdmissionRegistrationForm() {
             // who_is_allowed_to_visit_school: 'Both',
             parents_are_local_guardians: 'Yes', // Default to Yes, so guardian section is initially hidden
             student_guardians: [],            // Will be auto-populated by useEffect if parents_are_local_guardians is 'No'
-            // group_a: undefined, // For Class XI
+            // group_a: undefined, // For Class 11
             // group_b: undefined,
             // group_c: undefined,
             // group_d: undefined,
@@ -293,9 +295,6 @@ export function AdmissionRegistrationForm() {
             // interview_feedback: '',
         },
         mode: 'onBlur', // Validate on blur
-        context: { // This context is passed to Yup's validation functions
-            applicationFor: applicationForContext // Dynamically updated
-        }
     });
     // 2. Watch fields (Keep existing watches, they are still relevant for conditional logic)
     const watchAppliedFor = form.watch("application_for");
@@ -384,8 +383,8 @@ export function AdmissionRegistrationForm() {
             let nextTabKey: string | undefined = undefined;
             let nextTabIndex = currentTabIndexInOrder + 1;
 
-            // Skip "subjects" if not Class XI
-            if (TAB_ORDER[nextTabIndex] === "subjects" && watchAppliedFor !== 'Class XI') {
+            // Skip "subjects" if not Class 11
+            if (TAB_ORDER[nextTabIndex] === "subjects" && watchAppliedFor !== 'Class 11') {
                 nextTabIndex++;
             }
 
@@ -412,8 +411,8 @@ export function AdmissionRegistrationForm() {
         const currentTabIndexInOrder = TAB_ORDER.indexOf(currentTab);
         let prevTabIndex = currentTabIndexInOrder - 1;
 
-        // Skip "subjects" if not Class XI when going back from "declaration" or "billing"
-        if (TAB_ORDER[prevTabIndex] === "subjects" && watchAppliedFor !== 'Class XI') {
+        // Skip "subjects" if not Class 11 when going back from "declaration" or "billing"
+        if (TAB_ORDER[prevTabIndex] === "subjects" && watchAppliedFor !== 'Class 11') {
             prevTabIndex--;
         }
 
@@ -702,7 +701,7 @@ export function AdmissionRegistrationForm() {
             for (const tabKey of TAB_ORDER) {
                 if (tabKey === "instruction") continue;
                 const fieldsInTab = TAB_FIELD_GROUPS[tabKey];
-                if (tabKey === "subjects" && watchAppliedFor !== 'Class XI') continue; // Skip subjects if not applicable
+                if (tabKey === "subjects" && watchAppliedFor !== 'Class 11') continue; // Skip subjects if not applicable
 
                 if (fieldsInTab && fieldsInTab.some(field => get(errors, field as string))) {
                     setCurrentTab(tabKey);
@@ -844,29 +843,6 @@ export function AdmissionRegistrationForm() {
                                         disabled
                                         className="bg-muted cursor-not-allowed"
                                     />
-                                ) : fieldName === "application_for" ? (
-                                    <Select
-                                        onValueChange={field.onChange}
-                                        value={field.value ?? ''}
-                                        onOpenChange={(isOpen) => {
-                                            if (!isOpen) {
-                                                field.onBlur(); // Crucial for isTouched
-                                                if (form.getFieldState("application_for").isTouched) {
-                                                    form.trigger("application_for");
-                                                }
-                                            }
-                                        }}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select Grade" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Class II">Class II</SelectItem>
-                                            <SelectItem value="Class V">Class V</SelectItem>
-                                            <SelectItem value="Class VIII">Class VIII</SelectItem>
-                                            <SelectItem value="Class XI">Class XI</SelectItem>
-                                        </SelectContent>
-                                    </Select>
                                 ) : fieldName === 'age' ? (
                                     <Input
                                         {...field} // Spread field to get name, onBlur, etc.
@@ -921,32 +897,46 @@ export function AdmissionRegistrationForm() {
                                             </div>
                                         )}
                                         {fieldtype === 'Attach' && (
-                                            <div className="flex items-center space-x-2">
-                                                <Input
-                                                    type="file"
-                                                    className='pt-1.5 flex-grow'
-                                                    name={field.name} // Pass the name
-                                                    onBlur={field.onBlur} // Pass onBlur
-                                                    accept="application/pdf,image/jpeg,image/png"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files ? e.target.files[0] : null;
-                                                        field.onChange(file);
-                                                        if (fieldName) { // Ensure fieldName is available
-                                                            trigger(fieldName);
-                                                        }
-                                                    }}
-                                                />
-                                                {field.value && field.value instanceof File && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handlePreviewFile(field.value)}
-                                                        className="inline-flex items-center justify-center rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:hover:bg-muted"
-                                                        aria-label="Preview file"
-                                                        title="Preview file"
-                                                    >
-                                                        <Eye className="h-5 w-5" />
-                                                    </button>
-                                                )}
+                                            <div className=' flex items-center'>
+                                                <div className="flex items-center space-x-2">
+                                                    <Input
+                                                        type="file"
+                                                        className='pt-1.5 flex-grow'
+                                                        name={field.name}
+                                                        accept={fieldName === "recent_photo" ? ".jpeg,.jpg,.png" : "application/pdf,image/jpeg,image/png"}
+                                                        onChange={(e) => {
+                                                            const file = e.target.files ? e.target.files[0] : null;
+                                                            field.onChange(file);
+                                                            if (fieldName) {
+                                                                trigger(fieldName);
+                                                            }
+                                                        }}
+                                                    />
+                                                    {/* Small square image preview if image file is selected */}
+
+                                                    {field.value && field.value instanceof File && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handlePreviewFile(field.value)}
+                                                            className="inline-flex items-center justify-center rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:hover:bg-muted"
+                                                            aria-label="Preview file"
+                                                            title="Preview file"
+                                                        >
+                                                            <Eye className="h-5 w-5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    {field.value && field.value instanceof File && field.value.type.startsWith('image/') && (
+                                                        <img
+                                                            src={URL.createObjectURL(field.value)}
+                                                            alt="Preview"
+                                                            className="w-24 h-16 object-cover rounded border"
+                                                            // style={{ minWidth: 40, minHeight: 40 }}
+                                                            onLoad={e => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                                                        />
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                         {fieldtype === 'Link' && (
@@ -989,8 +979,9 @@ export function AdmissionRegistrationForm() {
                         </FormControl>
                         {ff.description && <FormDescription>{ff.description}</FormDescription>}
                         <FormMessage />
-                    </FormItem>
-                )}
+                    </FormItem >
+                )
+                }
             />
         );
     };
@@ -1021,7 +1012,7 @@ export function AdmissionRegistrationForm() {
                     <TabsTrigger value="academic" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("academic")}>Academic</TabsTrigger>
                     <TabsTrigger value="health" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("health")}>Health</TabsTrigger>
                     <TabsTrigger value="parents" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("parents")}>Parents</TabsTrigger>
-                    {watchAppliedFor === 'Class XI' &&
+                    {watchAppliedFor === 'Class 11' &&
                         <TabsTrigger value="subjects" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("subjects")}>Preferences</TabsTrigger>
                     }
                     <TabsTrigger value="declaration" className="flex-1 min-w-[120px]" disabled={!enabledTabs.has("declaration")}>Declaration</TabsTrigger>
@@ -1044,8 +1035,8 @@ export function AdmissionRegistrationForm() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4"> {/* Reduced gap-y */}
                                 {/* Application Details */}
                                 {renderField("application_academic_year", { label: "Application Academic Year", fieldtype: "Link", options: "IHS Academic Year", reqd: 1 })}
-                                {renderField("application_for", { label: "Application For", fieldtype: "Select", options: "Class II\nClass V\nClass VIII\nClass XI", reqd: 1 })}
-
+                                {renderField("application_for", { label: "Application For", fieldtype: "Select", options: APPLIED_FOR_OPTIONS, reqd: 1 })}
+                                {renderField("branch", { label: "Branch", fieldtype: "Select", options: BRANCHS })}
                                 {/* Previous Application */}
                                 <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
                                     <h3 className="font-medium text-md mb-3">Previous Application</h3>
@@ -1265,9 +1256,9 @@ export function AdmissionRegistrationForm() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                         {renderField("identification_mark_1", { label: "Identification Mark 1", fieldtype: "Data", reqd: 1 })}
                                         {renderField("identification_mark_2", { label: "Identification Mark 2", fieldtype: "Data", reqd: 1 })}
-                                        {renderField("religion", { label: "Religion", fieldtype: "Select", options: "\nHindu\nMuslim\nChristian\nSikh\nJew\nOther", reqd: 1 })}
+                                        {renderField("religion", { label: "Religion", fieldtype: "Select", options: RELIGION_OPTIONS, reqd: 1 })}
                                         {watchReligion === 'Other' && renderField("other_religion", { label: "Other Religion", fieldtype: "Data", mandatory_depends_on: "Other", reqd: 1 })}
-                                        {renderField("community", { label: "Community", fieldtype: "Select", options: "\nOC\nBC\nBC-Others\nMBC\nSC-Arunthathiyar\nSC-Others\nDNC (Denotified Communities)\nST\nOther", reqd: 1 })}
+                                        {renderField("community", { label: "Community", fieldtype: "Select", options: COMMUNITY_OPTIONS, reqd: 1 })}
                                         {watchCommunity === 'Other' && renderField("other_community", { label: "Other Community", fieldtype: "Data", mandatory_depends_on: "Other", reqd: 1 })}
                                     </div>
                                 </div>
@@ -1301,7 +1292,7 @@ export function AdmissionRegistrationForm() {
                                 <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
                                     <h3 className="font-medium text-md mb-3">Sibling Information</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-                                        {renderField("has_sibling_in_ihs", { label: "Does the Applicant have a sibling studying/ studied in IHS?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
+                                        {renderField("has_sibling_in_ihs", { label: "Does the Applicant have a sibling studying/ studied in IHS?", fieldtype: "Select", options: YES_NO_OPTIONS, reqd: 1 })}
                                     </div>
                                 </div>
                                 {/* --- Conditional Sibling Table Section --- */}
@@ -1360,7 +1351,7 @@ export function AdmissionRegistrationForm() {
                                                                 <SelectValue placeholder="Select Board" />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                {BOARD_OPTIONS_YUP.map(board => (
+                                                                {BOARD_OPTIONS.map(board => (
                                                                     <SelectItem key={board} value={board}>
                                                                         {board}
                                                                     </SelectItem>
@@ -1580,13 +1571,13 @@ export function AdmissionRegistrationForm() {
                                     {renderField("wears_glasses_or_lens", { label: "Wears glasses or lenses?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
                                     {watchWearsGlasses === 'Yes' && renderField("right_eye_power", { label: "Right Eye Power", fieldtype: "Data", mandatory_depends_on: "Yes", reqd: 1 })}
                                     {watchWearsGlasses === 'Yes' && renderField("left_eye_power", { label: "Left Eye Power", fieldtype: "Data", mandatory_depends_on: "Yes", reqd: 1 })}
-                                    {/* Hygiene for Class II */}
-                                    {/* {watchAppliedFor === 'Class II' && renderField("toilet_trained", { label: "Is Applicant toilet-trained?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class II" })} */}
-                                    {/* {watchAppliedFor === 'Class II' && renderField("bed_wet", { label: "Does Applicant bed-wet?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class II" })} */}
+                                    {/* Hygiene for Class 2 */}
+                                    {/* {watchAppliedFor === 'Class 2' && renderField("toilet_trained", { label: "Is Applicant toilet-trained?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class 2" })} */}
+                                    {/* {watchAppliedFor === 'Class 2' && renderField("bed_wet", { label: "Does Applicant bed-wet?", fieldtype: "Select", options: "\nYes\nNo", mandatory_depends_on: "Class 2" })} */}
                                 </div>
 
                                 {/* Hygiene & Sleep Habits */}
-                                {watchAppliedFor === 'Class II' && <><h3 className="font-medium text-md pt-4 border-t mt-4">Hygiene & Sleep Habits</h3>
+                                {watchAppliedFor === 'Class 2' && <><h3 className="font-medium text-md pt-4 border-t mt-4">Hygiene & Sleep Habits</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                         {renderField("toilet_trained", { label: "Is the Applicant Toilet trained?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
                                         {renderField("bed_wet", { label: "Does the Applicant wet Bed?", fieldtype: "Select", options: "\nYes\nNo", reqd: 1 })}
@@ -1654,7 +1645,7 @@ export function AdmissionRegistrationForm() {
                                             const newParentEntry: Partial<IndividualParentDetailDataYup> = { // Use Partial for type safety
                                                 first_name: '',
                                                 last_name: '',
-                                                relation: parentFields.length === 0 ? PARENT_RELATION_OPTIONS_YUP[0] : PARENT_RELATION_OPTIONS_YUP[1], // Suggests 'Father' then 'Mother'
+                                                relation: parentFields.length === 0 ? PARENT_RELATION_OPTIONS[0] : PARENT_RELATION_OPTIONS[1], // Suggests 'Father' then 'Mother'
                                                 nationality: undefined, // For CountryDropdown to show placeholder
                                                 country_of_residence: undefined, // For CountryDropdown
                                                 contact_email: '',
@@ -1688,8 +1679,8 @@ export function AdmissionRegistrationForm() {
                                 {/* --- Marital Status & Divorce Details --- */}
                                 <div className="pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                     {renderField("marital_status", { label: "Parent Marital Status", fieldtype: "Select", options: "\nMarried\nSeparated\nDivorced\nSingle Parent", reqd: 1 })}
-                                    {renderField("primary_point_of_contact", { label: "Primary Point of Contact", fieldtype: "Select", options: PARENT_RELATION_OPTIONS_YUP, reqd: 1 })}
-                                    {renderField("secondary_point_of_contact", { label: "Secondary Point of Contact", fieldtype: "Select", options: PARENT_RELATION_OPTIONS_YUP })}
+                                    {renderField("primary_point_of_contact", { label: "Primary Point of Contact", fieldtype: "Select", options: PARENT_RELATION_OPTIONS, reqd: 1 })}
+                                    {renderField("secondary_point_of_contact", { label: "Secondary Point of Contact", fieldtype: "Select", options: PARENT_RELATION_OPTIONS })}
                                     {/* Conditional Divorce Fields */}
                                     {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_fee_payment", { label: "Who is resposible for paying applicant's tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
                                     {watchMaritalStatus === 'Divorced' && renderField("court_order_document", { label: "Court Order Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}
@@ -1755,10 +1746,10 @@ export function AdmissionRegistrationForm() {
                         </section>
                     </TabsContent>
                     <TabsContent value="subjects">
-                        {/* === Section: Preferences & More (Conditional - Class XI) === */}
-                        {watchAppliedFor === 'Class XI' ? (
+                        {/* === Section: Preferences & More (Conditional - Class 11) === */}
+                        {watchAppliedFor === 'Class 11' ? (
                             <section className="space-y-6">
-                                <h2 className="text-xl font-semibold border-b pb-2">Subject Preferences & Additional Questions (Class XI)</h2>
+                                <h2 className="text-xl font-semibold border-b pb-2">Subject Preferences & Additional Questions (Class 11)</h2>
                                 {/* --- Sub Description --- */}
                                 <div className="mb-4">
                                     <p className="text-base mb-2">
@@ -1781,10 +1772,10 @@ export function AdmissionRegistrationForm() {
                                 <div className="space-y-6">
                                     <h3 className="font-medium text-md">Subject Selection</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
-                                        {renderField("group_a", { label: "Group A", fieldtype: "Select", options: "\nPhysics\nAccounts\nHistory", mandatory_depends_on: "Class XI", reqd: 1 })}
-                                        {renderField("group_b", { label: "Group B", fieldtype: "Select", options: "\nChemistry\nEconomics", mandatory_depends_on: "Class XI", reqd: 1 })}
-                                        {renderField("group_c", { label: "Group C", fieldtype: "Select", options: "\nBiology\nComputer Science\nCommerce\nPolitical Science", mandatory_depends_on: "Class XI", reqd: 1 })}
-                                        {renderField("group_d", { label: "Group D", fieldtype: "Select", options: "\nMathematics\nEnvironmental Studies\nFine Arts", mandatory_depends_on: "Class XI", reqd: 1 })}
+                                        {renderField("group_a", { label: "Group A", fieldtype: "Select", options: "\nPhysics\nAccounts\nHistory", mandatory_depends_on: "Class 11", reqd: 1 })}
+                                        {renderField("group_b", { label: "Group B", fieldtype: "Select", options: "\nChemistry\nEconomics", mandatory_depends_on: "Class 11", reqd: 1 })}
+                                        {renderField("group_c", { label: "Group C", fieldtype: "Select", options: "\nBiology\nComputer Science\nCommerce\nPolitical Science", mandatory_depends_on: "Class 11", reqd: 1 })}
+                                        {renderField("group_d", { label: "Group D", fieldtype: "Select", options: "\nMathematics\nEnvironmental Studies\nFine Arts", mandatory_depends_on: "Class 11", reqd: 1 })}
                                     </div>
                                     {/* Applicant Questions */}
                                     <h3 className="font-medium text-md pt-4 border-t mt-4">Note to Applicant</h3>
@@ -1846,7 +1837,7 @@ export function AdmissionRegistrationForm() {
                         ) : (
                             <section>
                                 <h2 className="text-xl font-semibold border-b pb-2">Subject Preferences & Additional Questions</h2>
-                                <p className="text-muted-foreground">Subject selection and questions are only required for Class XI applicants.</p>
+                                <p className="text-muted-foreground">Subject selection and questions are only required for Class 11 applicants.</p>
                             </section>
                         )}
                     </TabsContent>

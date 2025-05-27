@@ -23,7 +23,7 @@ import { CountryDropdown } from "@/components/ui/country-dropdown";
 import { PhoneInput } from "@/components/ui/phone-input";
 import type { AdmissionRegistrationFormDataYup } from './yupSchema'; // Use Yup schema type
 import { countries } from "country-data-list";
-import { Country, GUARDIAN_RELATION_OPTIONS_YUP, PARENT_EDUCATION_LEVEL_OPTIONS_YUP, PARENT_PROFESSION_OPTIONS_YUP } from './admissionFormTabUtils';
+import { Country, GUARDIAN_RELATION_OPTIONS, PARENT_EDUCATION_LEVEL_OPTIONS, PARENT_PROFESSION_OPTIONS } from './admissionFormTabUtils';
 
 interface StudentGuardianDetailSectionProps {
     control: Control<AdmissionRegistrationFormDataYup, undefined>;
@@ -283,7 +283,7 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                                 >
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select Relation" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        {GUARDIAN_RELATION_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                        {GUARDIAN_RELATION_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -462,7 +462,7 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                                 }}
                                 onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.education`); }} value={field.value ?? ''}
                             ><FormControl><SelectTrigger><SelectValue placeholder="Select Education Level" /></SelectTrigger></FormControl>
-                                <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={control} name={`${pathPrefix}.field_of_study`} render={({ field }) => (<FormItem><FormLabel>Field of Study<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="e.g., Computer Science, Arts" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
@@ -490,7 +490,7 @@ export const StudentGuardianDetailSection: React.FC<StudentGuardianDetailSection
                                 >
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select Profession" /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        {PARENT_PROFESSION_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                        {PARENT_PROFESSION_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

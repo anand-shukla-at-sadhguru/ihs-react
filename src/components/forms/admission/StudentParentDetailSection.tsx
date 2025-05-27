@@ -1,7 +1,7 @@
 // src/components/forms/admission/StudentParentDetailSection.tsx
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Control, useFormContext, UseFormSetValue, UseFormGetValues, Path } from 'react-hook-form';
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     FormControl,
@@ -24,13 +24,8 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import type { AdmissionRegistrationFormDataYup } from './yupSchema';
 
 import { countries } from "country-data-list";
-import { Country, PARENT_EDUCATION_LEVEL_OPTIONS_YUP } from './admissionFormTabUtils';
-
-const PARENT_RELATION_OPTIONS = ['Father', 'Mother'] as const;
-
-const PARENT_PROFESSION_OPTIONS_STRING = "Academia-Professors, Research Scholars, Scientists\nArts, Music, Entertainment\nArchitecture and Construction\nAgriculture\nArmed Forces\nBanking and Finance and Financial Services\nBusinessman/ Entrepreneur\nEducation and Training\nInformation Technology\nHealthcare\nOthers";
-const PARENT_PROFESSION_OPTIONS = PARENT_PROFESSION_OPTIONS_STRING.split('\n').map(o => o.trim()).filter(Boolean);
-
+import { Country, PARENT_EDUCATION_LEVEL_OPTIONS } from './admissionFormTabUtils';
+import { PARENT_RELATION_OPTIONS, PARENT_PROFESSION_OPTIONS } from './admissionFormTabUtils';
 interface StudentParentDetailSectionProps {
     control: Control<AdmissionRegistrationFormDataYup>;
     index: number;
@@ -447,7 +442,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                                 }}
                                 onValueChange={(value) => { field.onChange(value); trigger(`${pathPrefix}.education`); }} value={field.value ?? ''}
                             ><FormControl><SelectTrigger><SelectValue placeholder="Select Education Level" /></SelectTrigger></FormControl>
-                                <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS_YUP.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                <SelectContent>{PARENT_EDUCATION_LEVEL_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                             </Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={control} name={`${pathPrefix}.field_of_study`} render={({ field }) => (<FormItem><FormLabel>Field of Study<span className="text-destructive"> *</span></FormLabel><FormControl><Input placeholder="e.g., Computer Science, Arts" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />

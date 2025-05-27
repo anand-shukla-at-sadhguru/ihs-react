@@ -22,8 +22,8 @@ import { Eye } from 'lucide-react';
 
 // Import Yup-specific types and constants
 import {
-    BOARD_OPTIONS_YUP,      // Assuming you have this defined for Yup
-    CLASS_LEVEL_OPTIONS_YUP,// Assuming you have this defined for Yup
+    BOARD_OPTIONS,      // Assuming you have this defined for Yup
+    CLASS_LEVEL_OPTIONS,// Assuming you have this defined for Yup
     Country // This can remain if your CountryDropdown uses it
 } from "./admissionFormTabUtils"; // Or from where Yup constants are defined
 
@@ -99,7 +99,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                             >
                                                 <FormControl><SelectTrigger><SelectValue placeholder="Select Board" /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    {BOARD_OPTIONS_YUP.map(board => ( // Use Yup constant
+                                                    {BOARD_OPTIONS.map(board => ( // Use Yup constant
                                                         <SelectItem key={board} value={board}>{board}</SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -182,7 +182,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                             >
                                                 <FormControl><SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    {CLASS_LEVEL_OPTIONS_YUP.map(cls => ( // Use Yup constant
+                                                    {CLASS_LEVEL_OPTIONS.map(cls => ( // Use Yup constant
                                                         <SelectItem key={cls} value={cls}>{cls}</SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -204,7 +204,7 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                             >
                                                 <FormControl><SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    {CLASS_LEVEL_OPTIONS_YUP.map(cls => ( // Use Yup constant
+                                                    {CLASS_LEVEL_OPTIONS.map(cls => ( // Use Yup constant
                                                         <SelectItem key={cls} value={cls}>{cls}</SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -338,10 +338,10 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                     onClick={() => append({
                         // Defaults must align with IndividualPreviousSchoolDataYup
                         school_name: '',
-                        board_affiliation: undefined, // Or BOARD_OPTIONS_YUP[0] if you want a default selected
+                        board_affiliation: undefined, // Or BOARD_OPTIONS[0] if you want a default selected
                         from_year: undefined, // Yup number can be undefined
                         to_year: undefined,
-                        from_class: undefined, // Or CLASS_LEVEL_OPTIONS_YUP[0]
+                        from_class: undefined, // Or CLASS_LEVEL_OPTIONS[0]
                         to_class: undefined,
                         country: undefined, // Default to undefined for placeholder
                         zip_code: '',
