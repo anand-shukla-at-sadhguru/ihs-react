@@ -23,6 +23,7 @@ import {
     PARENT_EDUCATION_LEVEL_OPTIONS_YUP,
     PARENT_MARITAL_STATUS_OPTIONS_YUP,
     PARENT_PROFESSION_OPTIONS_YUP,
+    PARENT_RELATION_OPTIONS,
     PARENT_RELATION_OPTIONS_YUP,
     PHYSICS_ACCOUNTS_HISTORY_OPTIONS,
     PREVIOUS_APP_YEAR_OPTIONS_YUP,
@@ -126,7 +127,7 @@ const individualPreviousSchoolSchemaYup = yup.object().shape({
     country: yup.string().required("Country is required."),
     zip_code: yup.string().required("PIN / ZIP Code is required.").matches(/^[a-zA-Z0-9\s-]{3,20}$/, "Invalid zipcode format."),
     marksheet: yupFileSchema(true, "Report card is required."),
-    proof_of_enrolment: yupFileSchema(true, "Proof of Enrolment is required."),
+    proof_of_enrolment: yupFileSchema(true, "Proof of Enrolment is required.")
 });
 export type IndividualPreviousSchoolDataYup = yup.InferType<typeof individualPreviousSchoolSchemaYup>;
 
@@ -388,6 +389,7 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
             then: schema => schema.required('Please specify the board affiliation.').min(1),
             otherwise: schema => schema.optional().nullable().transform(() => undefined),
         }),
+    current_school_emis: yup.string().when('is_home_schooled', { is: 'No', then: _ => _.optional(), otherwise: _ => _.optional().nullable().transform(() => undefined) }),
     current_school_phone_number: yupE164Phone().when('is_home_schooled', { is: 'No', then: () => yupE164Phone(true, "School Phone is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_country: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Country is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     current_school_zipcode: yup.string().when('is_home_schooled', { is: 'No', then: s => s.required("School Area Code is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
@@ -468,6 +470,8 @@ export const admissionRegistrationSchemaYup = yup.object().shape({
             return true;
         }),
     marital_status: yup.string().oneOf(PARENT_MARITAL_STATUS_OPTIONS_YUP).required('Parent Marital Status is required.'),
+    primary_point_of_contact: yup.string().oneOf(PARENT_RELATION_OPTIONS_YUP).required('Primary Point of Contact is required.'),
+    secondary_point_of_contact: yup.string().oneOf(PARENT_RELATION_OPTIONS_YUP).optional().nullable(),
     who_is_responsible_for_fee_payment: yup.string().when('marital_status', { is: 'Divorced', then: s => s.oneOf(FATHER_MOTHER_BOTH_OPTIONS_YUP).required("Tuition payer is required for divorced status."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     court_order_document: yupFileSchema().when('marital_status', { is: 'Divorced', then: () => yupFileSchema(true, "Court Order Document is required for divorced status."), otherwise: s => s.optional().nullable().transform(() => undefined) }),
     who_is_allowed_to_receive_communication: yup.string().when('marital_status', { is: 'Divorced', then: s => s.oneOf(FATHER_MOTHER_BOTH_OPTIONS_YUP).required("Communication receiver is required."), otherwise: s => s.optional().nullable().transform(() => undefined) }), // Assuming options similar to FATHER_MOTHER_BOTH_OPTIONS_YUP

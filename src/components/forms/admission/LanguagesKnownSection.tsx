@@ -29,7 +29,7 @@ interface LanguagesKnownSectionProps {
 export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ control }) => {
     const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
         control,
-        name: "languages_known"
+        name: "student_languages"
     });
 
     const { watch, trigger, getFieldState, setValue } = useFormContext<AdmissionRegistrationFormDataYup>();
@@ -38,10 +38,10 @@ export const LanguagesKnownSection: React.FC<LanguagesKnownSectionProps> = ({ co
         <div className="md:col-span-2 lg:col-span-3 pt-4 mt-4 border-t">
             <h3 className="font-medium text-md mb-3">Languages Known</h3>
             <div className="space-y-4">
-                {languageFields.map((item: FieldArrayWithId<AdmissionRegistrationFormDataYup, "languages_known", "id">, index: number) => {
-                    const languageFieldName = `languages_known.${index}.language` as const;
-                    const proficiencyFieldName = `languages_known.${index}.proficiency` as const;
-                    const otherLanguageFieldName = `languages_known.${index}.other_language` as const; // Correct field name
+                {languageFields.map((item: FieldArrayWithId<AdmissionRegistrationFormDataYup, "student_languages", "id">, index: number) => {
+                    const languageFieldName = `student_languages.${index}.language` as const;
+                    const proficiencyFieldName = `student_languages.${index}.proficiency` as const;
+                    const otherLanguageFieldName = `student_languages.${index}.other_language` as const; // Correct field name
 
                     const currentLanguageValue = watch(languageFieldName); // Watch the current language selection
 

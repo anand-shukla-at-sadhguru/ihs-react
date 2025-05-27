@@ -234,7 +234,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                 <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                     Parent Details
                 </h3>
-                {totalParents > 1 && (
+                {/* {totalParents > 1 && (
                     <Button
                         type="button"
                         variant="destructive"
@@ -243,7 +243,7 @@ export const StudentParentDetailSection: React.FC<StudentParentDetailSectionProp
                         onClick={() => removeParent(index)}>
                         Remove Parent {index + 1}
                     </Button>
-                )}
+                )} */}
             </div>
 
             {/* Basic Information */}

@@ -101,6 +101,10 @@ export function AdmissionRegistrationForm() {
             TAB_ORDER[7],
         ]) // "instruction" and "personal" initially enabled
     );
+    const [applicationForContext, setApplicationForContext] = useState<string | undefined>(
+        // Initialize with a potential default if your form has one, otherwise undefined
+        // This will be updated by the watch effect
+    );
     const [isCommAddressLoading, setIsCommAddressLoading] = useState(false);
     const [commAddressError, setCommAddressError] = useState<string | null>(null);
     const [isBillAddressLoading, setIsBillAddressLoading] = useState(false);
@@ -144,8 +148,8 @@ export function AdmissionRegistrationForm() {
             mother_tongue: 'Other', // Example
             other_mother_tongue: 'Njerep',
             student_languages: [
-                { language: 'Hindi', proficiency: 'Advanced' },
-                { language: 'Other', proficiency: 'Advanced', other_language: 'Njerep' },
+                { language: undefined, proficiency: undefined },
+                // { language: 'Other', proficiency: 'Advanced', other_language: 'Njerep' },
             ],
             has_sibling_in_ihs: 'No',
             student_siblings: [], // Will be auto-populated by useEffect if has_sibling_in_ihs is 'Yes' initially
@@ -216,39 +220,33 @@ export function AdmissionRegistrationForm() {
             special_attention_details: '',
             has_allergies: 'No',
             allergies_details: '',
-            student_parent: [
-                {
-                    // first_name: 'Parent1 First',
-                    // last_name: 'Parent1 Last',
-                    // relation: 'Father', // Default from PARENT_RELATION_OPTIONS
-                    // nationality: 'India',
-                    // country_of_residence: 'India',
-                    // contact_email: 'parent1@example.com',
-                    // contact_phone: '+919123456780', // E.164
-                    // is_whatsapp_same: true as boolean,
-                    // whatsapp_phone: '',
-                    // is_address_same_as_applicant: 'Yes',
-                    // address_country: '', // Copied if 'Yes'
-                    // address_zipcode: '',
-                    // address_state: '',
-                    // address_city: '',
-                    // address_line1: '',
-                    // address_line2: '',
-                    // education: 'Graduate', // Default from PARENT_EDUCATION_LEVEL_OPTIONS
-                    // field_of_study: 'Business Administration',
-                    // profession: 'Businessman/ Entrepreneur', // Default from PARENT_PROFESSION_OPTIONS
-                    // organization_name: 'Parent1 Inc.',
-                    // designation: 'Director',
-                    // annual_income: '2500000',
-                }
-                // You can add a second default parent object here if needed
-                // ,{
-                //   first_name: 'Parent2 First',
-                //   last_name: 'Parent2 Last',
-                //   relation: 'Mother',
-                //   ... (similarly fill all fields)
-                // }
-            ],
+            student_parent: [{}, {}],
+            // student_parent: [
+            //     {
+            //         first_name: 'Parent1 First',
+            //         last_name: 'Parent1 Last',
+            //         relation: 'Father', // Default from PARENT_RELATION_OPTIONS
+            //         nationality: 'India',
+            //         country_of_residence: 'India',
+            //         contact_email: 'parent1@example.com',
+            //         contact_phone: '+919123456780', // E.164
+            //         is_whatsapp_same: true as boolean,
+            //         whatsapp_phone: '',
+            //         is_address_same_as_applicant: 'Yes',
+            //         country: '', // Copied if 'Yes'
+            //         zipcode: '',
+            //         state: '',
+            //         city: '',
+            //         address_line1: '',
+            //         address_line2: '',
+            //         education: 'Graduate', // Default from PARENT_EDUCATION_LEVEL_OPTIONS
+            //         field_of_study: 'Business Administration',
+            //         profession: 'Businessman/ Entrepreneur', // Default from PARENT_PROFESSION_OPTIONS
+            //         organization_name: 'Parent1 Inc.',
+            //         designation: 'Director',
+            //         annual_income: '2500000',
+            //     }
+            // ],
             marital_status: 'Divorced', // Default from PARENT_MARITAL_STATUS_OPTIONS
             // who_is_responsible_for_fee_payment: 'Both', // Default from options
             // court_order_document: undefined,
@@ -295,13 +293,16 @@ export function AdmissionRegistrationForm() {
             // interview_feedback: '',
         },
         mode: 'onBlur', // Validate on blur
+        context: { // This context is passed to Yup's validation functions
+            applicationFor: applicationForContext // Dynamically updated
+        }
     });
     // 2. Watch fields (Keep existing watches, they are still relevant for conditional logic)
+    const watchAppliedFor = form.watch("application_for");
     const watchAppliedBefore = form.watch("applied_to_ihs_before");
     const watchMotherTongue = form.watch("mother_tongue");
     const watchReligion = form.watch("religion");
     const watchCommunity = form.watch("community");
-    const watchAppliedFor = form.watch("application_for");
     const watchHasSibling = form.watch("has_sibling_in_ihs"); // Used for sibling section visibility
     const watchIdProof = form.watch("id_proof_type");
     const watchIsHomeSchooled = form.watch("is_home_schooled");
@@ -355,30 +356,17 @@ export function AdmissionRegistrationForm() {
         name: "previous_schools"
     });
 
-    const { fields: parentFields, append: appendParent, remove: removeParent } = useFieldArray({
-        control, // same as form.control
-        name: "student_parent"
-    });
+    const { fields: parentFields,
+        // append: appendParent, 
+        remove: removeParent } = useFieldArray({
+            control, // same as form.control
+            name: "student_parent"
+        });
 
     const { fields: guardianDetailFields, append: appendGuardianDetail, remove: removeGuardianDetail } = useFieldArray({
         control,
         name: "student_guardians"
     });
-
-    const getContentTabSequence = () => {
-        let sequence = TAB_ORDER.filter(t => t !== "instruction" && t !== "billing");
-        if (watchAppliedFor !== 'Class XI') {
-            sequence = sequence.filter(t => t !== "subjects");
-        }
-        return sequence;
-    };
-
-    const contentTabsInFlow = getContentTabSequence();
-    const lastContentEntryTab = contentTabsInFlow.length > 0 ? contentTabsInFlow[contentTabsInFlow.length - 1] : "personal"; // Fallback if array is empty (should not happen with your TAB_ORDER)
-
-    // ... (handleNextTab, handleBackTab, onSubmit - ensure onSubmit checks isOverallFormValid)
-
-    // Helper function from lodash or implement your own (if not already present
 
     const handleNextTab = async () => {
         const currentTabIndexInOrder = TAB_ORDER.indexOf(currentTab);
@@ -546,10 +534,10 @@ export function AdmissionRegistrationForm() {
                 is_whatsapp_same: true,
                 whatsapp_phone: '',
                 is_address_same_as_applicant: '',
-                address_country: '',
-                address_zipcode: '',
-                address_state: '',
-                address_city: '',
+                country: '',
+                zipcode: '',
+                state: '',
+                city: '',
                 address_line_1: '',
                 address_line_2: '',
                 education: '', // Or a default
@@ -575,8 +563,8 @@ export function AdmissionRegistrationForm() {
                         // setCommCityOptions, // REMOVED
                         setIsCommAddressLoading,
                         setCommAddressError,
-                        "address_state",
-                        "address_city",
+                        "state",
+                        "city",
                         setValue
                     );
                 }, 800);
@@ -585,15 +573,15 @@ export function AdmissionRegistrationForm() {
                 // setCommStateOptions([]); // No longer needed
                 // setCommCityOptions([]); // No longer needed
                 setCommAddressError("Invalid country selected or country code not found.");
-                setValue("address_state", "" as any, { shouldValidate: false });
-                setValue("address_city", "" as any, { shouldValidate: false });
+                setValue("state", "" as any, { shouldValidate: false });
+                setValue("city", "" as any, { shouldValidate: false });
             }
         } else {
             // setCommStateOptions([]); // No longer needed
             // setCommCityOptions([]); // No longer needed
             if (!watchCommZipcode && watchCommCountry) { // Only clear if zipcode is cleared but country remains
-                setValue("address_state", "" as any, { shouldValidate: false });
-                setValue("address_city", "" as any, { shouldValidate: false });
+                setValue("state", "" as any, { shouldValidate: false });
+                setValue("city", "" as any, { shouldValidate: false });
             }
             setCommAddressError(null); // Clear error if conditions not met
         }
@@ -937,10 +925,15 @@ export function AdmissionRegistrationForm() {
                                                 <Input
                                                     type="file"
                                                     className='pt-1.5 flex-grow'
+                                                    name={field.name} // Pass the name
+                                                    onBlur={field.onBlur} // Pass onBlur
                                                     accept="application/pdf,image/jpeg,image/png"
                                                     onChange={(e) => {
                                                         const file = e.target.files ? e.target.files[0] : null;
                                                         field.onChange(file);
+                                                        if (fieldName) { // Ensure fieldName is available
+                                                            trigger(fieldName);
+                                                        }
                                                     }}
                                                 />
                                                 {field.value && field.value instanceof File && (
@@ -1002,17 +995,12 @@ export function AdmissionRegistrationForm() {
         );
     };
 
-    // Tab state for navigation
-    const [tab, setTab] = useState(TAB_ORDER[0]);
-    const currentTabIndexGlobal = TAB_ORDER.indexOf(currentTab);
-
-
     useEffect(() => {
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
         });
-    }, [tab]);
+    }, [currentTab]);
 
     console.log("form state errors", form.formState.errors, form.formState.isValid, watch());
     return (
@@ -1086,7 +1074,7 @@ export function AdmissionRegistrationForm() {
                                                                     <SelectValue placeholder="Select Year" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
-                                                                    {getLastNAcademicYears(5).map(opt => (
+                                                                    {getLastNAcademicYears(10).map(opt => (
                                                                         <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                                                                     ))}
                                                                 </SelectContent>
@@ -1178,7 +1166,7 @@ export function AdmissionRegistrationForm() {
                                         <FormField
                                             //@ts-expect-error -- ignore type error for now, as react-hook-form types may not match AdmissionRegistrationFormDataYup exactly
                                             control={form.control}
-                                            name="address_country"
+                                            name="country"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>Country<span className="text-destructive"> *</span></FormLabel>
@@ -1227,7 +1215,7 @@ export function AdmissionRegistrationForm() {
                                         {/* State Dropdown */}
                                         <FormField
                                             control={form.control} // Assuming 'form' is your useForm() result
-                                            name="address_state"
+                                            name="state"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>State<span className="text-destructive"> *</span></FormLabel>
@@ -1249,7 +1237,7 @@ export function AdmissionRegistrationForm() {
                                         {/* City Text Input (Enabled) */}
                                         <FormField
                                             control={form.control}
-                                            name="address_city"
+                                            name="city"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col space-y-1.5">
                                                     <FormLabel>City/ Town<span className="text-destructive"> *</span></FormLabel>
@@ -1383,6 +1371,7 @@ export function AdmissionRegistrationForm() {
                                                     </FormItem>
                                                 )}
                                             />
+                                            {renderField("current_school_emis", { label: "EMIS", fieldtype: "Data", mandatory_depends_on: "No" })}
                                             {watchCurrentSchoolBoardAffiliation === 'Other' && (
                                                 <FormField
                                                     control={form.control}
@@ -1657,7 +1646,7 @@ export function AdmissionRegistrationForm() {
                                 </div>
 
                                 {/* --- Add Parent Button (conditional, max 2 parents) --- */}
-                                {parentFields.length < 2 && (
+                                {/* {parentFields.length < 2 && (
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -1699,6 +1688,8 @@ export function AdmissionRegistrationForm() {
                                 {/* --- Marital Status & Divorce Details --- */}
                                 <div className="pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                     {renderField("marital_status", { label: "Parent Marital Status", fieldtype: "Select", options: "\nMarried\nSeparated\nDivorced\nSingle Parent", reqd: 1 })}
+                                    {renderField("primary_point_of_contact", { label: "Primary Point of Contact", fieldtype: "Select", options: PARENT_RELATION_OPTIONS_YUP, reqd: 1 })}
+                                    {renderField("secondary_point_of_contact", { label: "Secondary Point of Contact", fieldtype: "Select", options: PARENT_RELATION_OPTIONS_YUP })}
                                     {/* Conditional Divorce Fields */}
                                     {watchMaritalStatus === 'Divorced' && renderField("who_is_responsible_for_fee_payment", { label: "Who is resposible for paying applicant's tuition fee?", fieldtype: "Select", options: "\nFather\nMother\nBoth", mandatory_depends_on: "Divorced", reqd: 1 })} {/* Fixed typo */}
                                     {watchMaritalStatus === 'Divorced' && renderField("court_order_document", { label: "Court Order Document", fieldtype: "Attach", mandatory_depends_on: "Divorced", reqd: 1 })}

@@ -283,44 +283,50 @@ export const PreviousSchoolsSection: React.FC<PreviousSchoolsSectionProps> = ({
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={control}
-                                    name={`${basePath}.proof_of_enrolment`}
-                                    render={({ field: { onChange: onFileChange, value: fileValue, ref, ...restFileField } }) => ( // Destructure ref
-                                        <FormItem>
-                                            <FormLabel>Proof of Enrolment<span className="text-destructive"> *</span></FormLabel>
-                                            <div className="flex items-center space-x-2">
-                                                <FormControl>
-                                                    <Input
-                                                        type="file"
-                                                        className='pt-1.5 flex-grow'
-                                                        accept="application/pdf,image/jpeg,image/png"
-                                                        ref={ref} // Assign ref
-                                                        // name, onBlur are in restFileField
-                                                        onChange={(e) => {
-                                                            const file = e.target.files ? e.target.files[0] : null;
-                                                            onFileChange(file); // RHF's onChange for files
-                                                            trigger(`${basePath}.proof_of_enrolment`);
-                                                        }}
-                                                        {...restFileField}
-                                                    />
-                                                </FormControl>
-                                                {fileValue && fileValue instanceof File && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost" size="icon" // Adjusted for icon button
-                                                        onClick={() => handlePreviewFile(fileValue)}
-                                                        aria-label="Preview report card"
-                                                        title="Preview report card"
-                                                    >
-                                                        <Eye className="h-5 w-5" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className="md:col-span-2 lg:col-span-3">
+                                    <FormField
+                                        control={control}
+                                        name={`${basePath}.proof_of_enrolment`}
+                                        render={({ field: { onChange: onFileChange, value: fileValue, ref, ...restFileField } }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Proof of Enrolment ("Please merge all documents into a single .pdf file before you attach.")
+                                                    <span className="text-destructive"> *</span>
+                                                </FormLabel>
+                                                <div className="flex items-center space-x-2">
+                                                    <FormControl>
+                                                        <Input
+                                                            type="file"
+                                                            className="pt-1.5 flex-grow"
+                                                            accept="application/pdf,image/jpeg,image/png"
+                                                            ref={ref}
+                                                            onChange={(e) => {
+                                                                const file = e.target.files ? e.target.files[0] : null;
+                                                                onFileChange(file);
+                                                                trigger(`${basePath}.proof_of_enrolment`);
+                                                            }}
+                                                            {...restFileField}
+                                                        />
+                                                    </FormControl>
+                                                    {fileValue && fileValue instanceof File && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handlePreviewFile(fileValue)}
+                                                            aria-label="Preview report card"
+                                                            title="Preview report card"
+                                                        >
+                                                            <Eye className="h-5 w-5" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
                             </div>
                         </div>
                     );

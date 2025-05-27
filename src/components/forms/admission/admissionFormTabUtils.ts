@@ -259,7 +259,7 @@ export const TAB_FIELD_GROUPS: Record<string, Path<AdmissionRegistrationFormData
     ],
     parents: [
         "student_parent", // Validating the array itself (e.g., min length) and its items
-        "marital_status",
+        "marital_status", "primary_point_of_contact",
         "who_is_responsible_for_fee_payment", "court_order_document",
         "who_is_allowed_to_receive_communication", "legal_rights_document",
         "who_is_allowed_to_receive_report_cards", "who_is_allowed_to_visit_school",
